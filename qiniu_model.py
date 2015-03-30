@@ -33,8 +33,9 @@ class Qiniu:
     def set_conf(self, key, value):
         from ConfigParser import ConfigParser
         config = ConfigParser()
+        config.read(self.config_pos)
         config.set('base', key, value)
-        fp = open(self.config_pos)
+        fp = open(self.config_pos, 'w')
         config.write(fp)
         fp.close()
         self.qiniu_conf()
@@ -137,6 +138,7 @@ class Qiniu:
         else:
             print '空间中没有这个→_→ {} 额'.format(file_name)
 
+
 def argSeeker(header):
     temp = argv
     for i in temp:
@@ -191,5 +193,4 @@ if __name__ == '__main__':
         qiniu.download(argSeeker('--download'))
         exit(0)
     print '--help 可以帮助你'
-
 
