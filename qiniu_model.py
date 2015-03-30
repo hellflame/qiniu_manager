@@ -134,7 +134,8 @@ class Qiniu:
             for i in ret:
                 length = terminal_width - len(i) - len(ret[i])
                 print ' ' * 30 + i + ' ' * 5 + '-' * (length - 70) + ' ' * 5 + ret[i] + ' ' * 30
-
+        else:
+            print '空间中没有这个→_→ {} 额'.format(file_name)
 
 def argSeeker(header):
     temp = argv
