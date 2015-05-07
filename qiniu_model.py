@@ -138,6 +138,10 @@ class Qiniu:
         else:
             print '空间中没有这个→_→ {} 额'.format(file_name)
 
+    def private_link(self, file_name):
+        base_link = "http://{}.qiniudn.com/{}".format(self.space_name, file_name)
+        print self.handle.private_download_url(base_link, expires=3600)
+
 
 def argSeeker(header):
     temp = argv
@@ -159,7 +163,8 @@ if __name__ == '__main__':
         '--space': '修改将要操作的空间名',
         '--help': '帮助',
         '--del': '删除云文件',
-        '--download': '下载文件'
+        '--download': '下载文件',
+        '--private': '获取私有文件链接'
     }
 
     if len(argv) <= 1 or '--help' in argv or '-h' in argv:
@@ -174,6 +179,7 @@ if __name__ == '__main__':
         qiniu.set_conf('secret_key', argSeeker('--secret'))
     if '--space' in argv:
         qiniu.set_conf('space_name', argSeeker('--space'))
+        exit(0)
     if len(argv) == 2 and not argv[1].startswith('--'):
         qiniu.upload(argv[1])
         exit(0)
@@ -192,5 +198,9 @@ if __name__ == '__main__':
     if '--download' in argv:
         qiniu.download(argSeeker('--download'))
         exit(0)
+    if '--private' in argv:
+        qiniu.private_link(argSeeker('--private'))
+        exit(0)
+
     print '--help 可以帮助你'
 
