@@ -1,3 +1,4 @@
+#!/usr/bin/python
 __author__ = 'linux'
 from urllib2 import urlopen, Request, HTTPCookieProcessor, install_opener, build_opener, HTTPHandler
 from urllib import urlencode
