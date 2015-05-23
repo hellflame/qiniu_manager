@@ -52,13 +52,12 @@ class Qiniu:
         key = abs_location.split('/')[-1]
         token = self.handle.upload_token(self.space_name, key)
         mime_type = self.get_mime_type(abs_location)
-        progress_handler = lambda progress, total: progress
         ret, info = put_file(up_token=token,
                              key=key,
                              mime_type=mime_type,
                              check_crc=True,
-                             file_path=abs_location,
-                             progress_handler=progress_handler)
+                             file_path=abs_location
+                             )
         result = info.exception
         if not result:
             print '上传成功～～～～～～'
