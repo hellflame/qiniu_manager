@@ -62,7 +62,7 @@ class Qiniu:
         if not result:
             print '上传成功～～～～～～'
             return True
-        print '上传失败了诶～～～～发生异常{}'.format(result)
+        print '上传失败了诶～～～～发生异常\n{}'.format(result.message)
         return False
 
     def download(self, file_name):
@@ -87,6 +87,9 @@ class Qiniu:
         handle = BucketManager(self.handle)
         ret, eof, info = handle.list(self.space_name,
                                      limit=10)
+        if not ret:
+            print ("无法获取列表!!\n请检查网络或配置文件")
+            return None
         self.terminal_print(ret['items'])
         while not eof:
             inputs = raw_input('\nnext page? [y/n] ')
@@ -105,6 +108,8 @@ class Qiniu:
             print '→_→ {} 不存在诶'.format(file_name)
         elif info.status_code == 200:
             print '{} 删除成功'.format(file_name)
+        elif info.connect_failed():
+            print "网络连接失败"
         else:
             print '发生未知错误23333'
 
