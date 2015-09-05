@@ -1,6 +1,8 @@
 #!/usr/bin/python
 #coding=utf8
 __author__ = 'linux'
+
+# change to your own directory
 current_dir = __file__.replace('qiniu_model.py', '')
 from qiniu import Auth, put_file, BucketManager
 from os import popen, path
