@@ -3,11 +3,11 @@
 __author__ = 'linux'
 
 # change to your own directory
-current_dir = __file__.replace('qiniu_model.py', '')
+current_dir = __file__.replace('manager.py', '')
 from qiniu import Auth, put_file, BucketManager
 from os import popen, path
 from sys import argv
-if not path.exists(current_dir + 'qiniu.conf'):
+if not path.exists(current_dir + 'conf/qiniu.conf'):
     print '''
     config file not found
     [base]
@@ -21,7 +21,7 @@ if not path.exists(current_dir + 'qiniu.conf'):
 class Qiniu:
     def __init__(self):
         self.handle = ''
-        self.config_pos = current_dir + 'qiniu.conf'
+        self.config_pos = current_dir + 'conf/qiniu.conf'
         self.config = self.qiniu_conf()
         self.space_name = self.config.get('base', 'space_name')
 
@@ -158,7 +158,7 @@ def argSeeker(header):
     return False
 
 
-if __name__ == '__main__':
+def main():
     map_desc = {
         '': '输入文件名即开始上传文件',
         '--upload': '选择要上传的文件',
@@ -210,3 +210,5 @@ if __name__ == '__main__':
 
     print '--help 可以帮助你'
 
+if __name__ == '__main__':
+    main()

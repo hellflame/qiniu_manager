@@ -1,9 +1,11 @@
 [base]
-access_key = 
+access_key =
 secret_key =
 space_name =
 
+
+# optional
 [ext]
 username =
 password =
-login_url = https://portal.qiniu.com/signin
+login_url =
