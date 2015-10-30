@@ -10,12 +10,15 @@ current_dir = __file__.replace(__file__.split('/')[-1], '')
 
 if not path.exists(current_dir + 'conf/qiniu.conf'):
     print '''
-    config file not found, copy the qiniu.conf.example as the qiniu.conf file please
+    config file not found, I will create the configuration file as {}
+    it is like
     [base]
     access_key =
     secret_key =
     space_name =
-    '''
+    '''.format(current_dir + 'conf/qiniu.conf')
+    with open(current_dir + 'conf/qiniu.conf') as handle:
+        handle.write("[base]\naccess_key = \nsecret_key = \nspace_name = \n")
     exit(1)
 
 
