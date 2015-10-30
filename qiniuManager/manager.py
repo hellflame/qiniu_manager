@@ -16,8 +16,15 @@ if not path.exists(current_dir + 'conf/qiniu.conf'):
     access_key =
     secret_key =
     space_name =
+
+    →_→ However YOU HAVE TO CONFIG THE FILE YOURSELF BY DEPLOY LIKE
+    qiniu --access "access key"
+    qiniu --secret "secret key"
+    qiniu --space "space name"
+
+    above all three are essential
     '''.format(current_dir + 'conf/qiniu.conf')
-    with open(current_dir + 'conf/qiniu.conf') as handle:
+    with open(current_dir + 'conf/qiniu.conf', 'w') as handle:
         handle.write("[base]\naccess_key = \nsecret_key = \nspace_name = \n")
     exit(1)
 
