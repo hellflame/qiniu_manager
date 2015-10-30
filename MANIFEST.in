@@ -1,2 +1,4 @@
 include qiniu_manager/conf/qiniu.conf.example
 
+include qiniu_manager/*.py
+include LICENSE README
