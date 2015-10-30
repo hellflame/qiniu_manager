@@ -14,7 +14,12 @@ setup(
     author=__author__,
     author_email='hellflamedly@gmail.com',
     url='https://github.com/hellflame/qiniu',
-    packages=find_packages(),
+    packages=[
+        'qiniu_manager'
+    ],
+    install_requires=[
+        'qiniu'
+    ],
     platforms="linux, mac os",
     classifiers=[
         'Development Status :: 4 - Beta',
