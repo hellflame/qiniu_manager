@@ -29,7 +29,10 @@ class Qiniu:
         from ConfigParser import ConfigParser
         config = ConfigParser()
         config.read(self.config_pos)
-        self.handle = Auth(config.get('base', 'access_key'), config.get('base', 'secret_key'))
+        try:
+            self.handle = Auth(config.get('base', 'access_key'), config.get('base', 'secret_key'))
+        except ValueError:
+            pass
         return config
 
     def set_conf(self, key, value):
@@ -153,7 +156,7 @@ def argSeeker(header):
     temp = argv
     for i in temp:
         index = temp.index(i)
-        if i == header and not temp[index + 1].startswith("--"):
+        if i == header and len(temp) - 1 > index and not temp[index + 1].startswith("--"):
             return temp[index + 1]
     return False
 
@@ -180,11 +183,25 @@ def main():
         exit(0)
     qiniu = Qiniu()
     if '--access' in argv:
-        qiniu.set_conf('access_key', argSeeker('--access'))
+        access = argSeeker('--access')
+        if access:
+            qiniu.set_conf('access_key', access)
+        else:
+            print("请输入 access key")
+        exit(0)
     if '--secret' in argv:
-        qiniu.set_conf('secret_key', argSeeker('--secret'))
+        secret = argSeeker('--secret')
+        if secret:
+            qiniu.set_conf('secret_key', secret)
+        else:
+            print("请输入 secret key")
+        exit(0)
     if '--space' in argv:
-        qiniu.set_conf('space_name', argSeeker('--space'))
+        space = argSeeker('--space')
+        if space:
+            qiniu.set_conf('space_name', space)
+        else:
+            print("请输入 空间名称")
         exit(0)
     if len(argv) == 2 and not argv[1].startswith('--'):
         qiniu.upload(argv[1])
