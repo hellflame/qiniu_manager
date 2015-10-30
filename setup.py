@@ -7,13 +7,13 @@ __author__ = 'hellflame'
 
 setup(
     name='qiniuManager',
-    version='0.9.6',
+    version='0.9.10',
     keywords=('qiniu', 'qiniu console manager', 'qiniu upload'),
     description="终端管理七牛云空间",
     license="MIT",
     author=__author__,
     author_email='hellflamedly@gmail.com',
-    url='https://github.com/hellflame/qiniu',
+    url='https://github.com/hellflame/qiniu_manager',
     packages=[
         'qiniuManager'
     ],
