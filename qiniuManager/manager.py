@@ -6,16 +6,12 @@ from sys import argv
 __author__ = 'linux'
 
 # change to your own directory
-current_dir = __file__.replace(__file__.split('/')[-1], '')
+home = popen("echo $HOME").read().strip()
+conf_path = home + '/.qiniuManager/qiniu.conf'
 
-if not path.exists(current_dir + 'conf/qiniu.conf'):
+if not path.exists(conf_path):
     print '''
-    config file not found, I will create the configuration file as {}
-    it is like
-    [base]
-    access_key =
-    secret_key =
-    space_name =
+    config file not found, I will create the configuration file @ {}
 
     →_→ However YOU HAVE TO CONFIG THE FILE YOURSELF BY DEPLOY LIKE
     qiniu --access "access key"
@@ -23,10 +19,10 @@ if not path.exists(current_dir + 'conf/qiniu.conf'):
     qiniu --space "space name"
 
     above all three are essential
-    '''.format(current_dir + 'conf/qiniu.conf')
-    if not path.exists(current_dir + 'conf'):
-        mkdir(current_dir + 'conf')
-    with open(current_dir + 'conf/qiniu.conf', 'w') as handle:
+    '''.format(conf_path)
+    if not path.exists(home + '/.qiniuManager'):
+        mkdir(home + '/.qiniuManager')
+    with open(conf_path, 'w') as handle:
         handle.write("[base]\naccess_key = \nsecret_key = \nspace_name = \n")
     exit(1)
 
@@ -34,7 +30,7 @@ if not path.exists(current_dir + 'conf/qiniu.conf'):
 class Qiniu:
     def __init__(self):
         self.handle = ''
-        self.config_pos = current_dir + 'conf/qiniu.conf'
+        self.config_pos = conf_path
         self.config = self.qiniu_conf()
         self.space_name = self.config.get('base', 'space_name')
 
