@@ -1,7 +1,7 @@
 #!/usr/bin/python
 #coding=utf8
 from qiniu import Auth, put_file, BucketManager
-from os import popen, path
+from os import popen, path, mkdir
 from sys import argv
 __author__ = 'linux'
 
@@ -24,6 +24,8 @@ if not path.exists(current_dir + 'conf/qiniu.conf'):
 
     above all three are essential
     '''.format(current_dir + 'conf/qiniu.conf')
+    if not path.exists(current_dir + 'conf'):
+        mkdir(current_dir + 'conf')
     with open(current_dir + 'conf/qiniu.conf', 'w') as handle:
         handle.write("[base]\naccess_key = \nsecret_key = \nspace_name = \n")
     exit(1)
