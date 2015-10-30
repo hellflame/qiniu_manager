@@ -1,8 +1,13 @@
 #!/usr/bin/python
-__author__ = 'linux'
+"""
+    this python file is specially designed to deal with some case that failed to get private space links
+    some how .... the main function sometimes seemed to work fine with private links
+"""
+
 from urllib2 import urlopen, Request, HTTPCookieProcessor, install_opener, build_opener, HTTPHandler
 from urllib import urlencode
 from cookielib import LWPCookieJar
+__author__ = 'linux'
 
 
 class Private:
