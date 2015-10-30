@@ -1,4 +1,3 @@
-include qiniu_manager/conf/qiniu.conf.example
+recursive-include qiniu_manager *.py
 
-include qiniu_manager/*.py
 include LICENSE README
