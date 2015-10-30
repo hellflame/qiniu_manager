@@ -7,7 +7,7 @@ __author__ = 'hellflame'
 
 setup(
     name='qiniuManager',
-    version='0.9.0',
+    version='0.9.2',
     keywords=('qiniu', 'console manager', 'qiniu upload'),
     description="终端管理七牛云空间",
     license="MIT",
@@ -15,7 +15,7 @@ setup(
     author_email='hellflamedly@gmail.com',
     url='https://github.com/hellflame/qiniu',
     packages=[
-        'qiniu_manager'
+        'qiniuManager'
     ],
     install_requires=[
         'qiniu'
@@ -34,7 +34,7 @@ setup(
     ],
     entry_points={
         'console_scripts': [
-            'qiniu=qiniu_manager.manager:main'
+            'qiniu=qiniuManager.manager:main'
         ]
     }
 )
