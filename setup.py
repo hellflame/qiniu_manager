@@ -1,10 +1,9 @@
 # coding=utf8
-__author__ = 'hellflame'
-
 import sys
+from setuptools import setup, find_packages
 reload(sys)
 sys.setdefaultencoding('utf8')
-from setuptools import setup, find_packages
+__author__ = 'hellflame'
 
 setup(
     name='qiniuManager',
@@ -12,7 +11,7 @@ setup(
     keywords=('qiniu', 'console manager', 'qiniu upload'),
     description="终端管理七牛云空间",
     license="MIT",
-    author='hellflame',
+    author=__author__,
     author_email='hellflamedly@gmail.com',
     url='https://github.com/hellflame/qiniu',
     packages=find_packages(),

@@ -9,7 +9,7 @@ from os import popen, path
 from sys import argv
 if not path.exists(current_dir + 'conf/qiniu.conf'):
     print '''
-    config file not found
+    config file not found, copy the qiniu.conf.example as the qiniu.conf file please
     [base]
     access_key =
     secret_key =
