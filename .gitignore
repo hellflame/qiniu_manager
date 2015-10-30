@@ -1,6 +1,6 @@
 *.pyc
 .idea
-qiniu_manager/conf/qiniu.conf
+qiniuManager/conf/qiniu.conf
 #packages
 
 *.egg
