@@ -1,12 +1,13 @@
 #!/usr/bin/python
 #coding=utf8
-__author__ = 'linux'
-
-# change to your own directory
-current_dir = __file__.replace('manager.py', '')
 from qiniu import Auth, put_file, BucketManager
 from os import popen, path
 from sys import argv
+__author__ = 'linux'
+
+# change to your own directory
+current_dir = __file__.replace(__file__.split('/')[-1], '')
+
 if not path.exists(current_dir + 'conf/qiniu.conf'):
     print '''
     config file not found, copy the qiniu.conf.example as the qiniu.conf file please
