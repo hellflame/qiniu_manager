@@ -3,6 +3,9 @@
 from qiniu import Auth, put_file, BucketManager
 from os import popen, path, mkdir
 from sys import argv
+import sys
+reload(sys)
+sys.setdefaultencoding('utf8')
 __author__ = 'linux'
 
 # change to your own directory
@@ -190,8 +193,13 @@ def main():
 
     if len(argv) <= 1 or '--help' in argv or '-h' in argv:
         print '\n*********帮助模式*********\n'
+        deploy_ex = "\tdeploy like this\n\t\t" \
+                    "qiniu your.file\n\t\t" \
+                    "qiniu --access 'your access key'\n\t\t" \
+                    "qiniu --secret 'your secret key'\n\t\tqiniu --space 'space name'\n"
+        print(deploy_ex)
         for i in map_desc:
-            print '  ' + i + ' ===> ' + map_desc[i]
+            print '\t' + i + ' ===> ' + map_desc[i]
         exit(0)
     qiniu = Qiniu()
     if '--access' in argv:
