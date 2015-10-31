@@ -7,7 +7,7 @@ __author__ = 'hellflame'
 
 setup(
     name='qiniuManager',
-    version='0.9.11',
+    version='0.9.12',
     keywords=('qiniu', 'qiniu console manager', 'qiniu upload'),
     description="终端管理七牛云空间",
     license="MIT",
