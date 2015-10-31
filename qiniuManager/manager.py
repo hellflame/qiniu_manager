@@ -113,7 +113,10 @@ class Qiniu:
                 ret, eof, info = handle.list(self.space_name,
                                              marker=ret['marker'],
                                              limit=10)
-                self.terminal_print(ret.get('items'))
+                if ret:
+                    self.terminal_print(ret.get('items'))
+                else:
+                    print("\t暂时无法获取列表！！")
 
     def file_del(self, file_name):
         handle = BucketManager(self.handle)
