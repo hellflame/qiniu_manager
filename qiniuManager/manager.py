@@ -5,6 +5,7 @@ from os import popen, path, mkdir
 from sys import argv
 import sys
 from commands import getstatusoutput
+from ConfigParser import ConfigParser, NoOptionError
 reload(sys)
 sys.setdefaultencoding('utf8')
 __author__ = 'linux'
@@ -39,7 +40,6 @@ class Qiniu:
         self.space_name = self.config.get('base', 'space_name')
 
     def qiniu_conf(self):
-        from ConfigParser import ConfigParser
         config = ConfigParser()
         config.read(self.config_pos)
         try:
@@ -49,7 +49,7 @@ class Qiniu:
         return config
 
     def set_conf(self, key, value):
-        from ConfigParser import ConfigParser
+
         config = ConfigParser()
         config.read(self.config_pos)
         config.set('base', key, value)
@@ -57,6 +57,14 @@ class Qiniu:
         config.write(fp)
         fp.close()
         self.qiniu_conf()
+
+    def get_conf(self, key):
+        config = ConfigParser()
+        config.read(self.config_pos)
+        try:
+            return config.get('base', key)
+        except NoOptionError:
+            return "未配置"
 
     def get_mime_type(self, abs_location):
         from commands import getoutput
@@ -230,21 +238,24 @@ def main():
         if access:
             qiniu.set_conf('access_key', access)
         else:
-            print("请输入 access key")
+            print("当前 access key")
+            print(qiniu.get_conf('access_key'))
         exit(0)
     if '--secret' in argv:
         secret = argSeeker('--secret')
         if secret:
             qiniu.set_conf('secret_key', secret)
         else:
-            print("请输入 secret key")
+            print("当前 secret key")
+            print(qiniu.get_conf('secret_key'))
         exit(0)
     if '--space' in argv:
         space = argSeeker('--space')
         if space:
             qiniu.set_conf('space_name', space)
         else:
-            print("请输入 空间名称")
+            print("当前空间名")
+            print(qiniu.get_conf('space_name'))
         exit(0)
     if len(argv) == 2 and not argv[1].startswith('--'):
         qiniu.upload(argv[1])
