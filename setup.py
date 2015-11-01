@@ -1,6 +1,6 @@
 # coding=utf8
 import sys
-from setuptools import setup, find_packages
+from setuptools import setup
 reload(sys)
 sys.setdefaultencoding('utf8')
 __author__ = 'hellflame'
