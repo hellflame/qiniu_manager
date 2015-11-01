@@ -4,6 +4,7 @@ from qiniu import Auth, put_file, BucketManager
 from os import popen, path, mkdir
 from sys import argv
 import sys
+from commands import getstatusoutput
 reload(sys)
 sys.setdefaultencoding('utf8')
 __author__ = 'linux'
@@ -83,9 +84,17 @@ class Qiniu:
         return False
 
     def download(self, file_name):
-        from commands import getoutput
-        cmd = 'wget http://{}.qiniudn.com/{}'.format(self.space_name, file_name)
-        print getoutput(cmd)
+        base_link = "http://{}.qiniudn.com/{}".format(self.space_name, file_name)
+        cmd = "curl '{}' -o {}".format(base_link, file_name)
+        print("Downloading {} . . .".format(file_name))
+        result = getstatusoutput(cmd)
+        if not result[0] == 0:
+            cmd = "wget '{}' -O {} -q".format(base_link, file_name)
+            result = getstatusoutput(cmd)
+            if result[0] == 0:
+                print("Download success !")
+            else:
+                print("由于未找到 curl 和 wget 以下是下载链接:\n{}\n".format(base_link))
 
     def terminal_print(self, data):
         terminal_width = int(popen('stty size').read().split(' ')[-1])
@@ -164,7 +173,15 @@ class Qiniu:
 
     def private_link(self, file_name):
         base_link = "http://{}.qiniudn.com/{}".format(self.space_name, file_name)
-        print self.handle.private_download_url(base_link, expires=3600)
+        target = self.handle.private_download_url(base_link, expires=3600)
+
+        target = "curl '{}' -o {}".format(target, file_name)
+        result = getstatusoutput(target)
+        if not result[0] == 0:
+            target = "wget '{}' -O {} -q ".format(target, file_name)
+            result = getstatusoutput(target)
+            if not result[0] == 0:
+                print("由于未找到 wget 和 curl，以下为目标链接:\n{}\n".format(target))
 
 
 def argSeeker(header):
