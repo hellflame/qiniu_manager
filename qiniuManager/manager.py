@@ -178,12 +178,16 @@ class Qiniu:
         target = self.handle.private_download_url(base_link, expires=3600)
 
         target = "curl '{}' -o {}".format(target, file_name)
+        print("Downloading {} . . .".format(file_name))
+
         result = getstatusoutput(target)
         if not result[0] == 0:
             target = "wget '{}' -O {} -q ".format(target, file_name)
             result = getstatusoutput(target)
             if not result[0] == 0:
                 print("由于未找到 wget 和 curl，以下为目标链接:\n{}\n".format(target))
+        else:
+            print("Download success !")
 
 
 def argSeeker(header):
