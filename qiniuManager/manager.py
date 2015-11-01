@@ -95,6 +95,8 @@ class Qiniu:
                 print("Download success !")
             else:
                 print("由于未找到 curl 和 wget 以下是下载链接:\n{}\n".format(base_link))
+        else:
+            print("Download success !")
 
     def terminal_print(self, data):
         terminal_width = int(popen('stty size').read().split(' ')[-1])
