@@ -3,6 +3,7 @@
 from qiniu import Auth, put_file, BucketManager
 from os import popen, path, mkdir
 from sys import argv
+from json import loads, dumps
 import sys
 from commands import getstatusoutput
 from ConfigParser import ConfigParser, NoOptionError
@@ -28,7 +29,7 @@ if not path.exists(conf_path):
     if not path.exists(home + '/.qiniuManager'):
         mkdir(home + '/.qiniuManager')
     with open(conf_path, 'w') as handle:
-        handle.write("[base]\naccess_key = \nsecret_key = \nspace_name = \n")
+        handle.write("[base]\naccess_key = \nsecret_key = \nspace_name = \nspace_list = {}\n")
     exit(1)
 
 
@@ -65,6 +66,40 @@ class Qiniu:
             return config.get('base', key)
         except NoOptionError:
             return "未配置"
+
+    def set_private_space_name(self, private_name):
+        if not self.space_name:
+            return "请先配置当前空间名"
+        config = ConfigParser()
+        config.read(self.config_pos)
+
+        try:
+            space_dict = config.get('base', 'space_dict')
+        except NoOptionError:
+            with open(self.config_pos, 'a') as handle:
+                handle.write("space_dict = \n")
+            config.read(self.config_pos)
+            space_dict = config.get('base', 'space_dict')
+
+        if not space_dict:
+            space_dict = '{}'
+        space_dict = loads(space_dict)
+        space_dict[self.space_name] = private_name
+        config.set('base', 'space_dict', dumps(space_dict))
+        with open(self.config_pos, 'w') as handle:
+            config.write(handle)
+        print("默认域名设置成功 \n{}.qiniudn.com == {}".format(self.space_name, private_name))
+
+    def get_private_space_name(self):
+        if not self.space_name:
+            return "请先配置当前空间名"
+        config = ConfigParser()
+        config.read(self.config_pos)
+        try:
+            result = config.get('base', 'space_dict')
+            return loads(result).get(self.space_name, '当前空间 {} 未配置默认域名'.format(self.space_name))
+        except NoOptionError:
+            return "请先设置默认域名"
 
     def get_mime_type(self, abs_location):
         from commands import getoutput
@@ -209,7 +244,7 @@ def argSeeker(header):
 
 def main():
     map_desc = {
-        '': '输入文件名即开始上传文件',
+        '': "输入文件名即开始上传文件, 文件名请勿以 '--' 开头",
         '--upload': '选择要上传的文件',
         '--stat': '查看文件状态',
         '--list': '文件列表',
@@ -219,7 +254,8 @@ def main():
         '--help': '帮助',
         '--del': '删除云文件',
         '--download': '下载文件',
-        '--private': '获取私有文件链接'
+        '--private': '获取私有文件链接',
+        '--subdom': '设置或查看当前空间默认域名(7xiy1.com1.z0.glb.clouddn.com)'
     }
 
     if len(argv) <= 1 or '--help' in argv or '-h' in argv:
@@ -256,6 +292,14 @@ def main():
         else:
             print("当前空间名")
             print(qiniu.get_conf('space_name'))
+        exit(0)
+    if '--subdom' in argv:
+        subdom = argSeeker('--subdom')
+        if subdom:
+            qiniu.set_private_space_name(subdom)
+        else:
+            print("当前空间默认域名")
+            print(qiniu.get_private_space_name())
         exit(0)
     if len(argv) == 2 and not argv[1].startswith('--'):
         qiniu.upload(argv[1])
