@@ -39,6 +39,7 @@ class Qiniu:
         self.config_pos = conf_path
         self.config = self.qiniu_conf()
         self.space_name = self.config.get('base', 'space_name')
+        self.subdom = self.get_sub_domain()
 
     def qiniu_conf(self):
         config = ConfigParser()
@@ -49,10 +50,20 @@ class Qiniu:
             pass
         return config
 
+    def get_sub_domain(self):
+        try:
+            domain_list = self.config.get('base', 'space_dict')
+        except NoOptionError:
+            return ''
+
+        if self.space_name:
+            domain_list = loads(domain_list)
+            return domain_list.get(self.space_name, '')
+        return ""
+
     def set_conf(self, key, value):
 
-        config = ConfigParser()
-        config.read(self.config_pos)
+        config = self.config
         config.set('base', key, value)
         fp = open(self.config_pos, 'w')
         config.write(fp)
@@ -60,8 +71,7 @@ class Qiniu:
         self.qiniu_conf()
 
     def get_conf(self, key):
-        config = ConfigParser()
-        config.read(self.config_pos)
+        config = self.config
         try:
             return config.get('base', key)
         except NoOptionError:
@@ -70,8 +80,7 @@ class Qiniu:
     def set_private_space_name(self, private_name):
         if not self.space_name:
             return "请先配置当前空间名"
-        config = ConfigParser()
-        config.read(self.config_pos)
+        config = self.config
 
         try:
             space_dict = config.get('base', 'space_dict')
@@ -93,8 +102,7 @@ class Qiniu:
     def get_private_space_name(self):
         if not self.space_name:
             return "请先配置当前空间名"
-        config = ConfigParser()
-        config.read(self.config_pos)
+        config = self.config
         try:
             result = config.get('base', 'space_dict')
             return loads(result).get(self.space_name, '当前空间 {} 未配置默认域名'.format(self.space_name))
@@ -127,7 +135,10 @@ class Qiniu:
         return False
 
     def download(self, file_name):
-        base_link = "http://{}.qiniudn.com/{}".format(self.space_name, file_name)
+        if self.subdom:
+            base_link = "http://{}/{}".format(self.subdom, file_name)
+        else:
+            base_link = "http://{}.qiniudn.com/{}".format(self.space_name, file_name)
         cmd = "curl '{}' -o {}".format(base_link, file_name)
         print("Downloading {} . . .".format(file_name))
         result = getstatusoutput(cmd)
@@ -163,7 +174,7 @@ class Qiniu:
             return None
         self.terminal_print(ret['items'])
         while not eof:
-            inputs = raw_input('\nnext page? [y/n] ')
+            inputs = raw_input('\nNext? 否[n] ')
             if inputs.lower() == 'n' or inputs.lower() == 'no':
                 break
             else:
@@ -217,7 +228,11 @@ class Qiniu:
             print '空间中没有这个→_→ {} 额'.format(file_name)
 
     def private_link(self, file_name):
-        base_link = "http://{}.qiniudn.com/{}".format(self.space_name, file_name)
+        if not self.subdom:
+            print("私有链接请设置默认域名")
+            return None
+
+        base_link = "http://{}/{}".format(self.subdom, file_name)
         target = self.handle.private_download_url(base_link, expires=3600)
 
         target = "curl '{}' -o {}".format(target, file_name)
