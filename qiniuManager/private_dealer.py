@@ -1,4 +1,3 @@
-#!/usr/bin/python
 """
     this python file is specially designed to deal with some case that failed to get private space links
     some how .... the main function sometimes seemed to work fine with private links
@@ -20,11 +19,11 @@ class Private:
 
     def basic_info(self):
         from ConfigParser import ConfigParser
-        from os import path
-        current_dir = __file__.replace('private_dealer.py', '')
-        if path.exists(current_dir + "qiniu.conf"):
+        from os import path, popen
+        config_path = popen("echo $HOME").read().strip() + "/.qiniuManager/qiniu.conf"
+        if path.exists(config_path):
             config = ConfigParser()
-            config.read(current_dir + "qiniu.conf")
+            config.read(config_path)
             self.__username = config.get('ext', 'username')
             self.__password = config.get('ext', 'password')
             self.__login_url = config.get('ext', 'login_url')
