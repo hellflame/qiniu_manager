@@ -269,7 +269,7 @@ def main():
         '--help': '帮助',
         '--del': '删除云文件',
         '--download': '下载文件',
-        '--private': '获取私有文件链接',
+        '--private': '下载私有文件(若无法下载则返回下载链接)',
         '--subdom': '设置或查看当前空间默认域名(7xiy1.com1.z0.glb.clouddn.com)'
     }
 
@@ -281,7 +281,7 @@ def main():
                     "qiniu --secret 'your secret key'\n\tqiniu --space 'space name'\n"
         print(deploy_ex)
         for i in map_desc:
-            print '  ' + i + '     ' + map_desc[i]
+            print '  ' + i + '\t' + map_desc[i]
         exit(0)
     qiniu = Qiniu()
     if '--access' in argv:
