@@ -1,5 +1,5 @@
 #!/usr/bin/python
-#coding=utf8
+# coding=utf8
 from qiniu import Auth, put_file, BucketManager
 from os import popen, path, mkdir
 from sys import argv
@@ -175,7 +175,7 @@ class Qiniu:
         self.terminal_print(ret['items'])
         while not eof:
             inputs = raw_input('\nNext? 否[n] ')
-            if inputs.lower() == 'n' or inputs.lower() == 'no':
+            if 'n' in inputs.lower() or 'q' in inputs.lower():
                 break
             else:
                 ret, eof, info = handle.list(self.space_name,
@@ -184,7 +184,7 @@ class Qiniu:
                 if ret:
                     self.terminal_print(ret.get('items'))
                 else:
-                    print("\t暂时无法获取列表！！")
+                    print("\t暂时无法获取当前列表！！")
 
     def file_del(self, file_name):
         handle = BucketManager(self.handle)
