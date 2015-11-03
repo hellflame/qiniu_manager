@@ -6,7 +6,7 @@
 from urllib2 import urlopen, Request, HTTPCookieProcessor, install_opener, build_opener, HTTPHandler
 from urllib import urlencode
 from cookielib import LWPCookieJar
-__author__ = 'linux'
+__author__ = 'hellflame'
 
 
 class Private:
