@@ -10,6 +10,7 @@ from ConfigParser import ConfigParser, NoOptionError
 reload(sys)
 sys.setdefaultencoding('utf8')
 __author__ = 'linux'
+__version__ = "0.9.15"
 
 # change to your own directory
 home = popen("echo $HOME").read().strip()
@@ -134,11 +135,18 @@ class Qiniu:
         print '上传失败了诶～～～～发生异常\n{}'.format(result.message)
         return False
 
-    def download(self, file_name):
+    def download(self, file_name, link=False):
+        if not self.file_exist(file_name):
+            print('空间中没有这个→_→ {} 额'.format(file_name))
+            return False
         if self.subdom:
             base_link = "http://{}/{}".format(self.subdom, file_name)
         else:
             base_link = "http://{}.qiniudn.com/{}".format(self.space_name, file_name)
+        if link:
+            print("以下为下载链接:")
+            print(base_link)
+            return base_link
         cmd = "curl '{}' -o {}".format(base_link, file_name)
         print("Downloading {} . . .".format(file_name))
         result = getstatusoutput(cmd)
@@ -174,7 +182,7 @@ class Qiniu:
             return None
         self.terminal_print(ret['items'])
         while not eof:
-            inputs = raw_input('\nNext? 否[n] ')
+            inputs = raw_input('\nNext? 否[q or n] ')
             if 'n' in inputs.lower() or 'q' in inputs.lower():
                 break
             else:
@@ -197,6 +205,14 @@ class Qiniu:
             print "网络连接失败"
         else:
             print '发生未知错误23333'
+
+    def file_exist(self, file_name):
+        handle = BucketManager(self.handle)
+        ret, info = handle.stat(self.space_name, file_name)
+        if ret:
+            return True
+        else:
+            return False
 
     def file_state(self, file_name):
         handle = BucketManager(self.handle)
@@ -227,13 +243,21 @@ class Qiniu:
         else:
             print '空间中没有这个→_→ {} 额'.format(file_name)
 
-    def private_link(self, file_name):
+    def private_link(self, file_name, link=False):
+        if not self.file_exist(file_name):
+            print('空间中没有这个→_→ {} 额'.format(file_name))
+            return False
         if not self.subdom:
             print("私有链接请设置默认域名")
             return None
 
         base_link = "http://{}/{}".format(self.subdom, file_name)
         target = self.handle.private_download_url(base_link, expires=3600)
+
+        if link:
+            print("以下为文件私有链接:")
+            print(target)
+            return target
 
         target = "curl '{}' -o {}".format(target, file_name)
         print("Downloading {} . . .".format(file_name))
@@ -270,7 +294,10 @@ def main():
         '--del': '删除云文件',
         '--download': '下载文件',
         '--private': '下载私有文件(若无法下载则返回下载链接)',
-        '--subdom': '设置或查看当前空间默认域名(7xiy1.com1.z0.glb.clouddn.com)'
+        '--subdom': '设置或查看当前空间默认域名(7xiy1.com1.z0.glb.clouddn.com)',
+        '--link': '返回下载文件的下载链接',
+        '--plink': '返回私有空间文件下载链接',
+        '--version': '当前版本号'
     }
 
     if len(argv) <= 1 or '--help' in argv or '-h' in argv:
@@ -278,7 +305,8 @@ def main():
         deploy_ex = "  deploy like this\n\t" \
                     "qiniu your.file\n\t" \
                     "qiniu --access 'your access key'\n\t" \
-                    "qiniu --secret 'your secret key'\n\tqiniu --space 'space name'\n"
+                    "qiniu --secret 'your secret key'\n\t" \
+                    "qiniu --space 'space name'\n"
         print(deploy_ex)
         for i in map_desc:
             print '  ' + i + '\t' + map_desc[i]
@@ -336,6 +364,15 @@ def main():
         exit(0)
     if '--private' in argv:
         qiniu.private_link(argSeeker('--private'))
+        exit(0)
+    if '--link' in argv:
+        qiniu.download(argSeeker('--link'), True)
+        exit(0)
+    if '--plink' in argv:
+        qiniu.private_link(argSeeker('--plink'), True)
+        exit(0)
+    if '--version' in argv:
+        print("当前版本为: {}".format(__version__))
         exit(0)
 
     print '--help 可以帮助你'
