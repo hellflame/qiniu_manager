@@ -10,7 +10,7 @@ from ConfigParser import ConfigParser, NoOptionError
 reload(sys)
 sys.setdefaultencoding('utf8')
 __author__ = 'linux'
-__version__ = "0.9.15"
+__version__ = "0.9.16"
 
 # change to your own directory
 home = popen("echo $HOME").read().strip()
@@ -117,7 +117,7 @@ class Qiniu:
 
     def upload(self, abs_location):
         if not path.exists(abs_location):
-            print '→_→ {} 不存在'.format(abs_location)
+            print ('→_→ {} 不存在'.format(abs_location))
             return False
         key = abs_location.split('/')[-1]
         token = self.handle.upload_token(self.space_name, key)
@@ -348,29 +348,57 @@ def main():
         qiniu.upload(argv[1])
         exit(0)
     if '--upload' in argv:
-        qiniu.upload(argSeeker('--upload'))
-        exit(0)
+        args = argSeeker('--upload')
+        if args:
+            qiniu.upload(args)
+            exit(0)
+        else:
+            print("请输入文件位置")
     if '--stat' in argv:
-        qiniu.file_state(argSeeker('--stat'))
-        exit(0)
+        args = argSeeker('--stat')
+        if args:
+            qiniu.file_state(args)
+            exit(0)
+        else:
+            print("请输入文件名")
     if '--list' in argv:
         qiniu.file_list()
         exit(0)
     if '--del' in argv:
-        qiniu.file_del(argSeeker('--del'))
-        exit(0)
+        args = argSeeker('--del')
+        if args:
+            qiniu.file_del(args)
+            exit(0)
+        else:
+            print("请输入文件名")
     if '--download' in argv:
-        qiniu.download(argSeeker('--download'))
-        exit(0)
+        args = argSeeker('--download')
+        if args:
+            qiniu.download(args)
+            exit(0)
+        else:
+            print("请输入文件名")
     if '--private' in argv:
-        qiniu.private_link(argSeeker('--private'))
-        exit(0)
+        args = argSeeker('--private')
+        if args:
+            qiniu.private_link(args)
+            exit(0)
+        else:
+            print("请输入文件名")
     if '--link' in argv:
-        qiniu.download(argSeeker('--link'), True)
-        exit(0)
+        args = argSeeker('--link')
+        if args:
+            qiniu.download(args, True)
+            exit(0)
+        else:
+            print("请输入文件名")
     if '--plink' in argv:
-        qiniu.private_link(argSeeker('--plink'), True)
-        exit(0)
+        args = argSeeker('--plink')
+        if args:
+            qiniu.private_link(args, True)
+            exit(0)
+        else:
+            print("请输入文件名")
     if '--version' in argv:
         print("当前版本为: {}".format(__version__))
         exit(0)
