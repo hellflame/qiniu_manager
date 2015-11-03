@@ -171,7 +171,16 @@ class Qiniu:
                 mark += 1
             size = "{} {}".format(size, refs[mark])
             left = terminal_width - len(i['key']) - len(size)
-            print ' ' * 20 + i['key'] + ' ' * 5 + '-' * (left - 50) + ' ' * 5 + size + ' ' * 20
+            sider = int(terminal_width * 0.15)
+            internal = int(sider / 4)
+            # print(sider)
+            print ' ' * sider + \
+                  i['key'] +\
+                  ' ' * internal +\
+                  '-' * (left - int(terminal_width * 0.4)) + \
+                  ' ' * internal + \
+                  size + \
+                  ' ' * sider
 
     def file_list(self):
         handle = BucketManager(self.handle)
