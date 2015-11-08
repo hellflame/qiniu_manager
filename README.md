@@ -35,6 +35,8 @@
 
     配置文件每个用户保存在家目录一个隐藏文件中
     `$HOME/.qiniuManager/qiniu.conf`
+    文件列表模式默认回车继续
+
     私有空间请设置`sub domain`
 
 ```bash
