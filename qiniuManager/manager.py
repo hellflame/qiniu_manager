@@ -309,6 +309,23 @@ def main():
         '--version': '当前版本号'
     }
 
+    short = {
+        '--upload': '-u',
+        '--stat': '-s',
+        '--list': '-l',
+        '--access': '-A',
+        '--secret': '-S',
+        '--space': '-P',
+        '--help': '-h',
+        '--del': '-e',
+        '--download': '-d',
+        '--private': '-p',
+        '--subdom': '-b',
+        '--link': '-k',
+        '--plink': '-pk',
+        '--version': '-v'
+    }
+
     if len(argv) <= 1 or '--help' in argv or '-h' in argv:
         print '\n*********帮助模式*********\n'
         deploy_ex = "  deploy like this\n\t" \
