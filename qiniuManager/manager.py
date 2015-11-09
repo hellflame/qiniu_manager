@@ -10,7 +10,7 @@ from ConfigParser import ConfigParser, NoOptionError
 reload(sys)
 sys.setdefaultencoding('utf8')
 __author__ = 'linux'
-__version__ = "0.9.16"
+__version__ = "0.9.17"
 
 # change to your own directory
 home = popen("echo $HOME").read().strip()
