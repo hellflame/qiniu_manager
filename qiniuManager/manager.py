@@ -280,6 +280,8 @@ class Qiniu:
             result = getstatusoutput(wget_target)
             if not result[0] == 0:
                 print("由于未找到 wget 和 curl，以下为目标链接:\n{}\n".format(target))
+                if path.exists(file_name):
+                    remove("{}".format(file_name))
         else:
             print("Download success !")
 
