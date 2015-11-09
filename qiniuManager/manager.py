@@ -1,7 +1,7 @@
 #!/usr/bin/python
 # coding=utf8
 from qiniu import Auth, put_file, BucketManager
-from os import popen, path, mkdir
+from os import popen, path, mkdir, remove
 from sys import argv
 from json import loads, dumps
 import sys
@@ -153,10 +153,13 @@ class Qiniu:
         if not result[0] == 0:
             cmd = "wget '{}' -O {} -q".format(base_link, file_name)
             result = getstatusoutput(cmd)
+            # print(cmd)
             if result[0] == 0:
                 print("Download success !")
             else:
-                print("由于未找到 curl 和 wget 以下是下载链接:\n{}\n".format(base_link))
+                print("下载失败\n检查是否为私有空间文件以及网络连接 以下是下载链接:\n\n{}\n".format(base_link))
+                if path.exists(file_name):
+                    remove("{}".format(file_name))
         else:
             print("Download success !")
 
@@ -268,13 +271,13 @@ class Qiniu:
             print(target)
             return target
 
-        target = "curl '{}' -o {}".format(target, file_name)
+        curl_target = "curl '{}' -o {}".format(target, file_name)
         print("Downloading {} . . .".format(file_name))
 
-        result = getstatusoutput(target)
+        result = getstatusoutput(curl_target)
         if not result[0] == 0:
-            target = "wget '{}' -O {} -q ".format(target, file_name)
-            result = getstatusoutput(target)
+            wget_target = "wget '{}' -O {} -q ".format(target, file_name)
+            result = getstatusoutput(wget_target)
             if not result[0] == 0:
                 print("由于未找到 wget 和 curl，以下为目标链接:\n{}\n".format(target))
         else:
