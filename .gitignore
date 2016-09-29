@@ -3,7 +3,6 @@
 qiniuManager/conf/qiniu.conf
 #packages
 
-*.egg
 *.egg-info
 dist
 README

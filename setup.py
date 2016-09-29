@@ -4,10 +4,11 @@ from setuptools import setup
 reload(sys)
 sys.setdefaultencoding('utf8')
 __author__ = 'hellflame'
+__version__ = '1.1'
 
 setup(
     name='qiniuManager',
-    version='0.9.17',
+    version=__version__,
     keywords=('qiniu', 'qiniu console manager', 'qiniu upload'),
     description="终端管理七牛云空间",
     license="MIT",
@@ -20,7 +21,7 @@ setup(
     install_requires=[
         'qiniu'
     ],
-    platforms="linux, mac os",
+    platforms="UNIX like",
     classifiers=[
         'Development Status :: 4 - Beta',
         'Intended Audience :: Developers',
@@ -30,11 +31,10 @@ setup(
         "Operating System :: MacOS :: MacOS X",
         "Operating System :: POSIX :: Linux",
         'Programming Language :: Python :: 2.7'
-
     ],
     entry_points={
         'console_scripts': [
-            'qiniu=qiniuManager.manager:main'
+            'qiniu=qiniuManager.run:main'
         ]
     }
 )
