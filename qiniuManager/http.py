@@ -11,7 +11,7 @@ import os
 
 
 class SockFeed:
-    def __init__(self, url, method='GET', headers=None, data=None, chuck=1024, customize=False):
+    def __init__(self, url='', method='GET', headers=None, data=None, chuck=1024, customize=False):
         self.con = HTTPCons()
         if not customize:
             self.con.request(url, method, headers, data, customize)
@@ -106,7 +106,7 @@ class HTTPCons:
         self.progressed = 0
         self.total = 0
         self.disable_progress = False
-        self.chuck = 4 * 1024
+        self.chuck = 64 * 1024
         self.file_handle = None
         self.str_cache = None
         self.customized = False
@@ -165,8 +165,7 @@ class HTTPCons:
                 self.http_init(host, port)
         if customize:
             self.customized = True
-            self.send_piece(url, method, headers, data)
-            return
+            return self.send_piece(url, method, headers, data)
         self.__send(url, method, headers, data)
 
     @progress.bar()
@@ -212,10 +211,12 @@ class HTTPCons:
             for i in headers:
                 head += "{}: {}\r\n".format(i, headers[i])
         if method == 'POST':
-            if post_data and type(post_data) == str:
+            if post_data and type(post_data) == str and len(post_data) <= self.chuck:
                 head += "Content-Length: {}\r\n".format(len(post_data))
                 head += "{}".format(post_data)
-            elif post_data and isinstance(post_data, file) or len(post_data) > self.chuck:
+            elif post_data and type(post_data) == str and len(post_data) > self.chuck:
+                head += "Content-Length: {}\r\n".format(len(post_data))
+            elif post_data and isinstance(post_data, file):
                 head += "Content-Length: {}\r\n".format(os.stat(post_data.name).st_size)
             else:
                 raise URLNotComplete(href, 'POST data')
@@ -248,14 +249,39 @@ class URLNotComplete(Exception):
         return "URL: {} missing {}"
 
 
+class RequestFail(Exception):
+    def __init__(self, code):
+        self.status_code = code
+
+    def __str__(self):
+        return "Request Failed with status code {}".format(self.status_code)
+
+
 if __name__ == '__main__':
     """feed = SockFeed('http://whatever.qiniudn.com/VPSBackup.tar.bz2', chuck=4096)"""
-    with open("/home/hellflame/WallPaper/118985478748ce940do.jpg", 'rb') as file_handle:
-        feed = SockFeed("http://localhost:5000",
-                        method='POST',
-                        data=file_handle,
+    with open("/home/hellflame/WallPaper/gamersky_08origin_15.jpg", 'rb') as file_handle:
+
+        # Seemed quit boring
+        feed = SockFeed(customize=True)
+        data = file_handle.read()
+        sends = feed.con.request("http://localhost:5000",
+                                 method='POST',
+                                 headers={'Content-Type': 'application/x-www-form-urlencoded'},
+                                 data=data,
+                                 customize=True)
+        feed.socket = feed.con.connect
+        while feed.con.progressed < feed.con.total:
+            sends += feed.con.request("http://localhost:5000",
+                                      method='POST',
+                                      data=data,
+                                      headers={'Content-Type': 'application/x-www-form-urlencoded'},
+                                      customize=True)
+        print sends, feed.con.progressed
+        """
+        feed = SockFeed('http://localhost:5000', method="POST",
                         headers={'Content-Type': 'application/x-www-form-urlencoded'},
-                        chuck=1024)
+                        data=file_handle)
+        """
         feed.http_response(file_path="well.jpg")
         # print feed.data
         print feed.http_code, unit_change(feed.avg_speed) + '/s'

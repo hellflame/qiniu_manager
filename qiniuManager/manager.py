@@ -2,11 +2,13 @@
 import os
 import sys
 import time
+import json
 import Queue
 import random
 import sqlite3
 import hashlib
 import progress
+import threading
 
 from qiniu import Auth, BucketManager, config as q_config
 from qiniu.http import USER_AGENT
@@ -248,7 +250,9 @@ class Qiniu:
         self.data_queue = Queue.Queue(7)
         self.msg_queue = Queue.Queue()
         self.progress_queue = Queue.Queue()
+        self.finished_queue = Queue.Queue()
         self.upload_labors = 8
+        self.block_status = []
 
         # API restrict
         self.R_BLOCK_SIZE = 4 * 1024 * 1024
@@ -306,9 +310,9 @@ class Qiniu:
         md5 = get_md5(path)
         offset = self.config.get_cache(md5)
         offset = offset[1] if offset else 0
-        self.total = os.stat(path).st_size
         self.file_handle = open(path, 'rb')
         self.file_handle.seek(offset)
+        self.total = os.stat(path).st_size - offset + 2
         self.pre_upload_info = (file_name, md5, space if space else alias, token, mime_type, offset)
 
         self.prepared = True
@@ -324,7 +328,8 @@ class Qiniu:
 
             if self.file_handle.tell() == os.stat(self.file_handle.name).st_size:
                 for i in range(self.upload_labors):
-                    self.msg_queue.put(0)
+                    # signal 1 means original file read completed
+                    self.msg_queue.put(1)
                 break
             if not self.data_queue.full():
                 self.data_queue.put(self.file_handle.read(self.R_BLOCK_SIZE))
@@ -344,12 +349,89 @@ class Qiniu:
                 host = q_config.get_default("default_up_host")
                 size = len(data)
                 url = 'http://{0}/mkblk/{1}'.format(host, size)
-                http.SockFeed(url, 'POST', {'Authorization': 'UpToken {}'.format(self.pre_upload_info[3]),
-                                            'User-Agent': USER_AGENT})
-                pass
+                labor = http.SockFeed(customize=True)
+                sends = labor.con.request(url, 'POST',
+                                          {'Authorization': 'UpToken {}'.format(self.pre_upload_info[3]),
+                                           'User-Agent': USER_AGENT},
+                                          data=data,
+                                          customize=True)
+                labor.socket = labor.con.connect
+                self.progress_queue.put(sends)
+                while labor.con.progressed < labor.con.total:
+                    self.progress_queue.put(labor.con.request(url, 'POST',
+                                            {'Authorization': 'UpToken {}'.format(self.pre_upload_info[3]),
+                                             'User-Agent': USER_AGENT},
+                                          data=data,
+                                          customize=True))
+                labor.http_response()
+                print labor.data
+                return
+                if labor.http_code // 100 == 5 and labor.http_code != 579 or labor.http_code == 996:
+                    # trying to retry
+                    self.data_queue.put(data)
+                else:
+                    self.finished_queue.put(json.loads(labor.data))
+            else:
+                if not self.msg_queue.empty():
+                    msg = self.msg_queue.get()
+                    if msg == 1:
+                        self.msg_queue.put(0)
+                        break
+                    else:
+                        self.msg_queue.put(msg)
+                else:
+                    time.sleep(0.1)
+
+    def __finish_clean(self):
+        tick = 0
+        while True:
+            if not self.finished_queue.empty():
+                self.block_status.append(self.finished_queue.get())
+            else:
+                if not self.msg_queue.empty():
+                    msg = self.msg_queue.get()
+                    if msg == 0:
+                        tick += 1
+                        if tick == self.upload_labors:
+                            print "All Finished Waiting Reduce"
+                            self.progress_queue.put(2)
+                            break
+                    else:
+                        self.msg_queue.put(msg)
+                else:
+                    time.sleep(0.1)
+
+    @progress.bar()
+    def __progress_recoder(self):
+        """progress recoder"""
+        if not self.progress_queue.empty():
+            self.progressed += self.progress_queue.get()
+        else:
+            time.sleep(0.1)
 
     @auth
-    @progress.bar()
+    def upload_loop(self):
+        data_msg = threading.Thread(target=self.__data_msg)
+        progress_recorder = threading.Thread(target=self.__progress_recoder)
+        finish = threading.Thread(target=self.__finish_clean)
+        labors = []
+        for i in range(self.upload_labors):
+            labors.append(threading.Thread(target=self.__labor_uploader))
+
+        data_msg.start()
+        for i in labors:
+            i.start()
+        progress_recorder.start()
+        finish.start()
+
+        for i in labors:
+            i.join()
+        finish.join()
+        progress_recorder.join()
+        data_msg.join()
+
+
+    @auth
     def upload(self, abs_location):
         if not self.prepared:
             self.__pre_upload(abs_location)

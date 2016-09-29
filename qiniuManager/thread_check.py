@@ -42,7 +42,7 @@ class Check:
         if not self.recorder.empty():
             self.progressed += self.recorder.get()
         else:
-            time.sleep(1)
+            time.sleep(0.1)
 
     def run_loop(self):
         msg_loop = threading.Thread(target=self.msg_loop)
