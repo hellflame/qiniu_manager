@@ -54,7 +54,7 @@ i.密钥设置
 ![space & alias](https://static.hellflame.net/resource/e506e9787b0a693da3a4d5be381b28ad)
 
 >好吧，一直用的测试域名，对于对外开放的空间访问的话，并不需要设置这个`alias`，只需要`qiniu -s share`即可（换成自己的空间名），对于私有空间，对于我而言，这个测试域名的使用是必要的
-
+>在每次设置过空间名之后，当前默认空间名都会指向该空间(bucket),可以通过`qiniu -s`最后一行信息验证默认空间(bucket)
 #### 基本操作
 i.文件列表
 ```bash
@@ -145,7 +145,7 @@ vii.重命名
 ![hostname unknown](https://static.hellflame.net/resource/e086339b219f691db1a1052f349deadb)
 可能就会报如下错误，因为这个域名无效('7ktpup.com1.z0.glb.clouddn.com')
 ![hostname not valid](https://static.hellflame.net/resource/748ee73149aa605434221204397b39df)
-可能的原因是七牛云没有解析所有的测试域名，处理方法就是在配置域名时，需要将测试域名配置为那个可用的域名,如`qiniu -s whatever whatever.qiniudn.com`，但是实际上并不知道七牛云的域名如何管理的，所以要知道哪个域名是可用的话，在`内容管理`界面查看外链，就知道至少哪一个域名是可用的了
+可能的原因是七牛云没有解析所有的测试域名，处理方法就是在配置域名时，需要将测试域名配置为那个可用的域名,如`qiniu -s whatever whatever.qiniudn.com`(或者在一开始并不用设置测试域名，或者在本机的hosts文件中指定ip)，但是实际上并不知道七牛云的域名如何管理的，所以要知道哪个域名是可用的话，在`内容管理`界面查看外链，就知道至少哪一个域名是可用的了
 
 
 
