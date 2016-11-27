@@ -139,6 +139,16 @@ vii.重命名
 
 我是不是应该也把这个叫做不规范讷
 
+#### Issue
+1. nodename nor servname provided, or not known
+如果测试域名配置如下
+![hostname unknown](https://static.hellflame.net/resource/e086339b219f691db1a1052f349deadb)
+可能就会报如下错误，因为这个域名无效('7ktpup.com1.z0.glb.clouddn.com')
+![hostname not valid](https://static.hellflame.net/resource/748ee73149aa605434221204397b39df)
+可能的原因是七牛云没有解析所有的测试域名，处理方法就是在配置域名时，需要将测试域名配置为那个可用的域名,如`qiniu -s whatever whatever.qiniudn.com`，但是实际上并不知道七牛云的域名如何管理的，所以要知道哪个域名是可用的话，在`内容管理`界面查看外链，就知道至少哪一个域名是可用的了
+
+
+
 ### 历史版本
 
 +   v0.9.12 修复无法上传中文文件名文件的错误
@@ -148,3 +158,4 @@ vii.重命名
 +   v0.9.16 消除参数获取失败后的报错方式
 +   v0.9.17 未安装curl下载失败
 +   v1.1.0  基本从底层重写了一遍，尽量直接调用了API链接
++   v1.1.1  urllib.quote

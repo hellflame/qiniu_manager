@@ -4,6 +4,7 @@ import sys
 import time
 import json
 import random
+import urllib
 import sqlite3
 import hashlib
 import progress
@@ -253,7 +254,7 @@ class Qiniu:
             host = "http://{}".format(alias)
         else:
             host = "http://{}.qiniudn.com".format(space)
-        link = "{}/{}".format(host, target)
+        link = "{}/{}".format(host, urllib.quote(target))
         return link
 
     @auth
