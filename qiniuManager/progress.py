@@ -27,9 +27,14 @@ def bar(width=0, fill='#'):
                     # marks count
                     percent_show = "{}%".format(int(percent * 100))
                     # marks width
-                    mark_width = w - len(percent_show) - 5
+                    if hasattr(self, 'title'):
+                        title = self.title
+                    else:
+                        title = ''
+                    mark_width = w - len(percent_show) - 5 - len(title) - 2
                     mark_count = int(math.floor(mark_width * percent))
                     sys.stdout.write(
+                        ' ' + title + ' ' +
                         '[' + fill * mark_count + ' ' * (mark_width - mark_count) + ']  ' + percent_show + '\r')
                     sys.stdout.flush()
                     if self.progressed == self.total:

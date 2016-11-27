@@ -2,6 +2,7 @@
 .idea
 qiniuManager/conf/qiniu.conf
 #packages
+.DS_Store
 
 *.egg-info
 dist

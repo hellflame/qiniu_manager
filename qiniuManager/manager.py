@@ -3,18 +3,15 @@ import os
 import sys
 import time
 import json
-import Queue
 import random
 import sqlite3
 import hashlib
 import progress
-import threading
 
-from qiniu import Auth, BucketManager, config as q_config
-from qiniu.http import USER_AGENT
+from qiniu import Auth, __version__ as sdk_version
 from qiniu.utils import urlsafe_base64_encode
 
-from qiniuManager import http
+import http
 
 reload(sys)
 sys.setdefaultencoding('utf8')
@@ -33,7 +30,7 @@ def db_ok(function):
 def access_ok(function):
     def access_wrap(self, *args, **kwargs):
         if self.access and self.secret:
-            return function(*args, **kwargs)
+            return function(self, *args, **kwargs)
         else:
             print "Please Set At Lease one pair of usable access and secret".title()
             return ''
@@ -43,7 +40,7 @@ def access_ok(function):
 def auth(function):
     def auth_ok(self, *args, **kwargs):
         if self.auth:
-            return function(*args, **kwargs)
+            return function(self, *args, **kwargs)
         else:
             self.get_auth()
             if not self.auth:
@@ -61,15 +58,8 @@ def get_md5(path):
             for chuck in iter(lambda: handle.read(4096), b""):
                 hash_md5.update(chuck)
         return hash_md5.hexdigest()
-    raise IOError
-
-
-class TimeOut(Exception):
-    def __init__(self, when):
-        self.when = when
-
-    def __str__(self):
-        return "{} TOO SLOW".format(self.when)
+    else:
+        raise IOError
 
 
 class Config:
@@ -79,7 +69,7 @@ class Config:
         self.cursor = None
         self.API_keys = 'API_keys'
         self.SPACE_ALIAS = 'spaceAlias'
-        self.CACHE = 'up_down_cache'
+        self.CACHE = 'upload_cache'
         self.init_db()
 
     def init_db(self):
@@ -91,7 +81,6 @@ class Config:
                                 "access VARCHAR(64) NOT NULL UNIQUE,"
                                 "secret VARCHAR(64) NOT NULL,"
                                 "discard INTEGER NOT NULL DEFAULT 0)".format(self.API_keys))
-
             self.cursor.execute("CREATE TABLE IF NOT EXISTS {} ("
                                 "id INTEGER PRIMARY KEY AUTOINCREMENT,"
                                 "name VARCHAR(50) NOT NULL DEFAULT '',"
@@ -101,9 +90,7 @@ class Config:
             self.cursor.execute("CREATE TABLE IF NOT EXISTS {} ("
                                 "md5 VARCHAR(32) NOT NULL UNIQUE,"
                                 "uploading INTEGER NOT NULL DEFAULT 0,"
-                                "downloading INTEGER NOT NULL DEFAULT 0,"
                                 "up_to INTEGER NOT NULL DEFAULT 0,"
-                                "down_to INTEGER NOT NULL DEFAULT 0,"
                                 "stamp INTEGER NOT NULL DEFAULT 0)".format(self.CACHE))
             self.clean_expired_cache()
         except Exception as e:
@@ -114,30 +101,25 @@ class Config:
         self.cursor.execute("delete from {} WHERE md5 = '{}'".format(self.CACHE, md5))
 
     @db_ok
-    def upset_cache(self, md5, status='uploading', clip=0):
+    def clean_all_cache(self):
+        self.cursor.execute("delete from {}".format(self.CACHE))
+
+    @db_ok
+    def upset_cache(self, md5, clip=0):
         self.cursor.execute("select md5 from {} WHERE md5 = '{}'".format(self.CACHE, md5))
         result = self.cursor.fetchone()
         if not result:
             sql = "insert into {} ".format(self.CACHE)
-            if status == 'uploading':
-                sql += "(uploading, up_to, stamp) values (1, {}, {})".format(clip, int(time.time()))
-            else:
-                sql += "(downloading, down_to, stamp) values (1, {}, {})".format(clip, int(time.time()))
+            sql += "(md5, uploading, up_to, stamp) values ('{}',1, {}, {})".format(md5, clip, int(time.time()))
         else:
             sql = "update {} ".format(self.CACHE)
-            if status == 'uploading':
-                sql += "set uploading = 1, up_to = {}, downloading = 0".format(clip)
-            else:
-                sql += "set downloading = 1, down_to = {}, uploading = 0".format(clip)
+            sql += "set uploading = 1, up_to = {}".format(clip)
             sql += " where md5 = '{}'".format(result[0])
         self.cursor.execute(sql)
 
     @db_ok
-    def get_cache(self, md5, status='uploading'):
-        if status == 'uploading':
-            sql = "select uploading, up_to from {} WHERE md5 = '{}'".format(self.CACHE, md5)
-        else:
-            sql = "select downloading, down_to from {} WHERE md5 = '{}'".format(self.CACHE, md5)
+    def get_cache(self, md5):
+        sql = "select uploading, up_to from {} WHERE md5 = '{}'".format(self.CACHE, md5)
         self.cursor.execute(sql)
         result = self.cursor.fetchone()
         if not result:
@@ -171,16 +153,11 @@ class Config:
 
     @db_ok
     def add_access(self, access, secret):
-        self.cursor.execute("select id from {} WHERE access = '{}'".format(self.API_keys, access))
-        result = self.cursor.fetchone()
-        if not result:
-            self.cursor.execute("insert into {} (access, secret) "
-                                "VALUES ('{}', '{}')".format(self.API_keys, access, secret))
-        else:
-            # TODO: sometimes it's better to update the database, now it is not quite gentle
-            self.cursor.execute("delete from {} WHERE id = {}".format(self.API_keys, result[0]))
-            self.add_access(access, secret)
-
+        """Though two pair of key pair is allowed, but I hate to operate on this"""
+        self.cursor.execute("delete from {}".format(self.API_keys))
+        self.cursor.execute("insert into {} (access, secret) "
+                            "VALUES ('{}', '{}')".format(self.API_keys, access, secret))
+    """
     @db_ok
     def remove_access(self, _id=0, access=''):
         sql = "delete from {} ".format(self.API_keys)
@@ -189,37 +166,37 @@ class Config:
         elif access:
             sql += "WHERE access = '{}'".format(access)
         self.cursor.execute(sql)
+    """
 
     @db_ok
-    def upset_alias(self, space, alias, as_default=True):
+    def set_space(self, space, alias=''):
+        self.cursor.execute("update {} set as_default = 0".format(self.SPACE_ALIAS))
         self.cursor.execute("select id from {} WHERE name = '{}'".format(self.SPACE_ALIAS, space))
         result = self.cursor.fetchone()
         if result:
-            self.cursor.execute("update {} set alias = '{}', as_default={}"
-                                " WHERE id = {}".format(self.SPACE_ALIAS, alias, 1 if as_default else 0, result[0]))
+            if alias:
+                self.cursor.execute("update {} set alias = '{}', as_default=1"
+                                    " WHERE id = {}".format(self.SPACE_ALIAS, alias, result[0]))
+            else:
+                self.cursor.execute("update {} set as_default=1 WHERE id = {}".format(self.SPACE_ALIAS,
+                                                                                      result[0]))
         else:
             self.cursor.execute("insert into {} (name, alias, as_default)"
-                                " VALUES ('{}', '{}', {})".format(self.SPACE_ALIAS, space,
-                                                                  alias, 1 if as_default else 0))
-        self.cursor.execute("update {} set as_default = 0 "
-                            "WHERE as_default = 1 AND name != '{}'".format(self.SPACE_ALIAS, space))
+                                " VALUES ('{}', '{}', 1)".format(self.SPACE_ALIAS, space, alias))
+        return True
 
     @db_ok
-    def set_current_space(self, space):
-        if self.get_space_alias(space):
-            self.cursor.execute("UPDATE {} SET as_default = 1 WHERE name = '{}'".format(self.SPACE_ALIAS,
-                                                                                        space))
-            return True
-        else:
-            return False
-
-    @db_ok
-    def get_space_alias(self, space_name):
-        self.cursor.execute("select alias from {} WHERE name = '{}'".format(self.SPACE_ALIAS, space_name))
+    def get_space(self, space_name):
+        self.cursor.execute("select name, alias from {} WHERE name = '{}'".format(self.SPACE_ALIAS, space_name))
         result = self.cursor.fetchone()
         if result:
-            return result[0]
-        return ''
+            return result
+        return '', ''
+
+    @db_ok
+    def get_space_list(self):
+        self.cursor.execute("select name, alias from {}".format(self.SPACE_ALIAS))
+        return self.cursor.fetchall()
 
     @db_ok
     def get_default_space(self):
@@ -236,33 +213,149 @@ class Config:
 
 
 class Qiniu:
+    """Single Line"""
     def __init__(self):
         self.config = Config()
         self.access, self.secret = self.config.get_one_access()
         self.auth = None
-        self.get_auth()
+
         self.prepared = False
         self.pre_upload_info = None
         self.progressed = 0
         self.total = 0
+        self.title = ''
         self.file_handle = None
-
-        self.data_queue = Queue.Queue(7)
-        self.msg_queue = Queue.Queue()
-        self.progress_queue = Queue.Queue()
-        self.finished_queue = Queue.Queue()
-        self.upload_labors = 8
         self.block_status = []
+
+        self.start_stamp = 0
+
+        self.state = False
+        self.avg_speed = ''
 
         # API restrict
         self.R_BLOCK_SIZE = 4 * 1024 * 1024
-
-        # labors must finish their first 4M in 100s
-        self.UP_TIME_OUT = 100
+        self.list_host = "http://rsf.qbox.me"
+        self.manager_host = 'http://rs.qbox.me'
+        self.get_auth()
 
     def __del__(self):
         if self.file_handle:
             self.file_handle.close()
+
+    @auth
+    def regular_download_link(self, target, space=None):
+        if not space:
+            space, alias = self.config.get_default_space()
+        else:
+            space, alias = self.config.get_space(space)
+
+        if alias:
+            host = "http://{}".format(alias)
+        else:
+            host = "http://{}.qiniudn.com".format(space)
+        link = "{}/{}".format(host, target)
+        return link
+
+    @auth
+    def private_download_link(self, target, space=None):
+        link = self.regular_download_link(target, space)
+        private_link = self.auth.private_download_url(link, expires=3600)
+        return private_link
+
+    @auth
+    def download(self, target, space=None):
+        link = self.private_download_link(target, space)
+        downloader = http.HTTPCons()
+        downloader.request(link)
+        feed = http.SockFeed(downloader)
+        start = time.time()
+        feed.http_response(target)
+        end = time.time()
+        size = int(feed.header.get('Content-Length', 1))
+        print("\033[01;31m{}\033[00m downloaded @speed \033[01;32m{}/s\033[00m"
+              .format(target,
+                      http.unit_change(size / (end - start))))
+
+    @auth
+    def rename(self, target, to_target, space=None):
+        """I don't want to move files between buckets,
+        so you can not move file to different bucket by default"""
+        if not space:
+            space = self.config.get_default_space()[0]
+        manager_rename = http.HTTPCons()
+        url = self.manager_host + '/move/{}/{}/force/false'.format(
+            urlsafe_base64_encode("{}:{}".format(space, target)),
+            urlsafe_base64_encode("{}:{}".format(space, to_target))
+        )
+        manager_rename.request(url,
+                               headers={'Authorization': 'QBox {}'.format(self.auth.token_of_request(url))})
+        feed = http.SockFeed(manager_rename)
+        feed.disable_progress = True
+        feed.http_response()
+        data = feed.data
+        if 'error' in data:
+            data = json.loads(data)
+            print("Error Occur: \033[01;31m{}\033[00m".format(data['error']))
+        else:
+            print("\033[01;31m{}\033[00m now RENAME as \033[01;32m{}\033[00m".format(target, to_target))
+
+    @auth
+    def remove(self, target, space=None):
+        if not space:
+            space = self.config.get_default_space()[0]
+        manager_remove = http.HTTPCons()
+        url = self.manager_host + '/delete/{}'.format(urlsafe_base64_encode("{}:{}".format(space, target)))
+        manager_remove.request(url,
+                               headers={'Authorization': 'QBox {}'.format(self.auth.token_of_request(url))})
+        feed = http.SockFeed(manager_remove)
+        feed.disable_progress = True
+        feed.http_response()
+        data = feed.data
+        if 'error' in data:
+            data = json.loads(data)
+            print("Error Occur: \033[01;31m{}\033[00m".format(data['error']))
+        else:
+            print("\033[01;31m{}\033[00m DELETED from \033[01;32m{}\033[00m".format(target, space))
+
+    @auth
+    def check(self, target, space=None):
+        if not space:
+            space = self.config.get_default_space()[0]
+        manager_check = http.HTTPCons()
+        url = self.manager_host + '/stat/{}'.format(urlsafe_base64_encode("{}:{}".format(space, target)))
+        manager_check.request(url,
+                              headers={'Authorization': 'QBox {}'.format(self.auth.token_of_request(url))})
+        feed = http.SockFeed(manager_check)
+        feed.disable_progress = True
+        feed.http_response()
+        data = json.loads(feed.data)
+        if 'error' in data:
+            print("Error Occur: \033[01;31m{}\033[00m".format(data['error']))
+        else:
+            print("  {}  {}  {}".format('Filename', '·' * (30 - len('filename')), target))
+            print("  {}  {}  {}".format('Size', '·' * (30 - len('size')), http.unit_change(data['fsize'])))
+            print("  {}  {}  {}".format('MimeType',  '·' * (30 - len('MimeType')), data['mimeType']))
+            print("  {}  {}  {}".format('Date', '·' * (30 - len('date')),
+                                        time.strftime('%Y-%m-%d %H:%M:%S',
+                                                      time.localtime(data['putTime']/10000000))))
+
+    @auth
+    def list(self, space=None):
+        if not space:
+            space = self.config.get_default_space()[0]
+        manager_list = http.HTTPCons()
+        url = self.list_host + '/list?bucket={}'.format(space)
+        manager_list.request(url,
+                             headers={'Authorization': 'QBox {}'.format(self.auth.token_of_request(url))})
+        feed = http.SockFeed(manager_list)
+        feed.http_response()
+        data = json.loads(feed.data)
+        if 'error' in data:
+            print("Error Occur: \033[01;31m{}\033[00m".format(data['error']))
+        else:
+            if 'items' in data:
+                for i in data['items']:
+                    print("  {}  {}  {}".format(i['key'], '·' * (30 - len(i['key'])), http.unit_change(i['fsize'])))
 
     @access_ok
     def get_auth(self):
@@ -278,21 +371,14 @@ class Qiniu:
         except Exception:
             return 'application/octet-stream'
 
-    def __make_url(self, path, file_name='', **kwargs):
-        if not os.path.exists(path):
-            raise IOError
-        host = q_config.get_default('default_up_host')
-        url = list(['http://{0}/mkfile/{1}'.format(host, os.stat(path).st_size)])
+    def __make_url(self, path, **kwargs):
+        url = list(['{0}/mkfile/{1}'.format(self.pre_upload_info[-1], os.stat(path).st_size)])
         # add key
         key = os.path.basename(path)
         url.append('key/{0}'.format(urlsafe_base64_encode(key)))
         # get_mime_type method makes sure the mime-type is not None
-        url.append('mimeType/{0}'.format(urlsafe_base64_encode(self.get_mime_type(path))))
-
-        if file_name:
-            url.append('fname/{0}'.format(urlsafe_base64_encode(file_name)))
-        else:
-            url.append('fname/{0}'.format(urlsafe_base64_encode(key)))
+        # url.append('mimeType/{0}'.format(urlsafe_base64_encode(self.get_mime_type(path))))
+        url.append('fname/{0}'.format(urlsafe_base64_encode(key)))
 
         if kwargs:
             for k, v in kwargs.items():
@@ -302,146 +388,72 @@ class Qiniu:
         return url
 
     @auth
-    def __pre_upload(self, path):
+    def __pre_upload(self, path, space=None):
         file_name = os.path.basename(path)
-        space, alias = self.config.get_default_space()
-        token = self.auth.upload_token(space if space else alias, file_name, 7200)
+        if space:
+            token = self.auth.upload_token(space, file_name, 7200)
+        else:
+            space, alias = self.config.get_default_space()
+            token = self.auth.upload_token(space, file_name, 7200)
         mime_type = self.get_mime_type(path)
         md5 = get_md5(path)
-        offset = self.config.get_cache(md5)
-        offset = offset[1] if offset else 0
         self.file_handle = open(path, 'rb')
-        self.file_handle.seek(offset)
-        self.total = os.stat(path).st_size - offset + 2
-        self.pre_upload_info = (file_name, md5, space if space else alias, token, mime_type, offset)
-
+        self.title = file_name
+        self.total = os.stat(path).st_size + 2
+        self.progressed = 0
+        self.pre_upload_info = (file_name, md5, space,
+                                token, mime_type, 0, 'http://up.qiniu.com')
         self.prepared = True
 
-    @auth
-    def __data_msg(self):
-        """must deploy after __pre_upload keep generating str data for uploading
-        used in multi processing
-        """
-        timeout = 0
-        while True:
-            self.config.upset_cache(self.pre_upload_info[1], clip=self.file_handle.tell())
-
-            if self.file_handle.tell() == os.stat(self.file_handle.name).st_size:
-                for i in range(self.upload_labors):
-                    # signal 1 means original file read completed
-                    self.msg_queue.put(1)
-                break
-            if not self.data_queue.full():
-                self.data_queue.put(self.file_handle.read(self.R_BLOCK_SIZE))
-                timeout = 0
-            else:
-                # sleep some time to waiting for some upload labors to finish his uploading
-                time.sleep(1)
-                timeout += 1
-                if timeout > self.UP_TIME_OUT:
-                    raise TimeOut("UPLOADING")
-
-    def __labor_uploader(self):
+    @progress.bar(100)
+    def upload(self, abs_path, space=None):
         """upload data"""
-        while True:
-            if not self.data_queue.empty():
-                data = self.data_queue.get()
-                host = q_config.get_default("default_up_host")
-                size = len(data)
-                url = 'http://{0}/mkblk/{1}'.format(host, size)
-                labor = http.SockFeed(customize=True)
-                sends = labor.con.request(url, 'POST',
-                                          {'Authorization': 'UpToken {}'.format(self.pre_upload_info[3]),
-                                           'User-Agent': USER_AGENT},
-                                          data=data,
-                                          customize=True)
-                labor.socket = labor.con.connect
-                self.progress_queue.put(sends)
-                while labor.con.progressed < labor.con.total:
-                    self.progress_queue.put(labor.con.request(url, 'POST',
-                                            {'Authorization': 'UpToken {}'.format(self.pre_upload_info[3]),
-                                             'User-Agent': USER_AGENT},
-                                          data=data,
-                                          customize=True))
-                labor.http_response()
-                print labor.data
-                return
-                if labor.http_code // 100 == 5 and labor.http_code != 579 or labor.http_code == 996:
-                    # trying to retry
-                    self.data_queue.put(data)
-                else:
-                    self.finished_queue.put(json.loads(labor.data))
-            else:
-                if not self.msg_queue.empty():
-                    msg = self.msg_queue.get()
-                    if msg == 1:
-                        self.msg_queue.put(0)
-                        break
-                    else:
-                        self.msg_queue.put(msg)
-                else:
-                    time.sleep(0.1)
-
-    def __finish_clean(self):
-        tick = 0
-        while True:
-            if not self.finished_queue.empty():
-                self.block_status.append(self.finished_queue.get())
-            else:
-                if not self.msg_queue.empty():
-                    msg = self.msg_queue.get()
-                    if msg == 0:
-                        tick += 1
-                        if tick == self.upload_labors:
-                            print "All Finished Waiting Reduce"
-                            self.progress_queue.put(2)
-                            break
-                    else:
-                        self.msg_queue.put(msg)
-                else:
-                    time.sleep(0.1)
-
-    @progress.bar()
-    def __progress_recoder(self):
-        """progress recoder"""
-        if not self.progress_queue.empty():
-            self.progressed += self.progress_queue.get()
-        else:
-            time.sleep(0.1)
-
-    @auth
-    def upload_loop(self):
-        data_msg = threading.Thread(target=self.__data_msg)
-        progress_recorder = threading.Thread(target=self.__progress_recoder)
-        finish = threading.Thread(target=self.__finish_clean)
-        labors = []
-        for i in range(self.upload_labors):
-            labors.append(threading.Thread(target=self.__labor_uploader))
-
-        data_msg.start()
-        for i in labors:
-            i.start()
-        progress_recorder.start()
-        finish.start()
-
-        for i in labors:
-            i.join()
-        finish.join()
-        progress_recorder.join()
-        data_msg.join()
-
-
-    @auth
-    def upload(self, abs_location):
         if not self.prepared:
-            self.__pre_upload(abs_location)
-        else:
-            key, file_md5, space, token, mime_type, offset = self.pre_upload_info
+            self.__pre_upload(abs_path, space)
+            self.start_stamp = time.time()
+        data = self.file_handle.read(self.R_BLOCK_SIZE)
+        if not data:
+            file_url = self.__make_url(abs_path)
+            mkfile = http.HTTPCons()
+            mkfile.request(file_url, 'POST',
+                           {'Authorization': 'UpToken {}'.format(self.pre_upload_info[3])},
+                           data=','.join(self.block_status))
+            feed = http.SockFeed(mkfile)
+            feed.http_response()
+            data = json.loads(feed.data)
+            # print data
+            avg_speed = http.unit_change(self.progressed / (time.time() - self.start_stamp))
+            self.progressed = self.total = 1
+            if data.get('key', '') == self.pre_upload_info[0]:
+                self.config.clean_cache(self.pre_upload_info[1])
+                self.state = True
+                self.avg_speed = '{}/s'.format(avg_speed)
+                return True
+            return False
+
+        size = len(data)
+        url = '{0}/mkblk/{1}'.format(self.pre_upload_info[-1], size)
+        labor = http.HTTPCons()
+        labor.request(url, 'POST',
+                      {'Authorization': 'UpToken {}'.format(self.pre_upload_info[3])},
+                      data=data)
+        feed = http.SockFeed(labor)
+        feed.http_response()
+        # print feed.data
+        self.block_status.append(json.loads(feed.data).get('ctx'))
+        self.progressed += size
 
 
 if __name__ == '__main__':
     # main()
     # q = Auth('hellflame', 'windows')
     # print q.upload_token("asdasd", 'ljklj')
+    # config = Config()
+    # print config.set_space('whatever')
     qiniu = Qiniu()
+    # qiniu.upload("target.pdf", 'whatever')
+    # print qiniu.state, qiniu.avg_speed
+    # qiniu.list()
+    # qiniu.remove('target.pdf', 'whatever')
+    qiniu.rename('rename.pdf', "target.pdf")
 
