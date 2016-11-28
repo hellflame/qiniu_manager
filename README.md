@@ -56,16 +56,24 @@ i.密钥设置
 >在每次设置过空间名之后，当前默认空间名都会指向该空间(bucket),可以通过`qiniu -s`最后一行信息验证默认空间(bucket)
 #### 基本操作
 i.文件列表
+
+> 默认按照上传时间先后逆排序
+
 ```bash
 	qiniu -l # 显示当前空间(bucket)文件列表
 	qiniu -l backup # 显示`backup`中的文件列表
 ```
 ii.文件详情
+
+> 对于文件名中存在空格或者其他特殊符号的情况，用引号将目标文件名包裹起来就好了，在以下其他地方也适用
+
 ```bash
 	qiniu -c <filename> # 显示当前空间(bucket)中<filename>的信息(讲真这个信息炒鸡简略)
 	qiniu -c <filename> <space name> # 显示<space name>这个空间(bucket)中<filename>的信息
 ```
+
 iii.获取下载链接
+
 ```bash
 	# 获取开放空间的有效链接
 	qiniu -i <filename> # 获取当前空间(bucket)中<filename>的下载链接
@@ -79,6 +87,7 @@ iii.获取下载链接
 ![private and public](https://static.hellflame.net/resource/b74f36b5f05569fa005952e5a90561da)
 
 iv.下载
+
 ```bash
 	qiniu -d <filename> # 下载当前空间(bucket)中的<filename>
 	qiniu -d <filename> <space name> # 下载<space name>空间(bucket)中的<filename>
@@ -142,8 +151,10 @@ vii.重命名
 1. nodename nor servname provided, or not known
 如果测试域名配置如下
 ![hostname unknown](https://static.hellflame.net/resource/e086339b219f691db1a1052f349deadb)
+
 可能就会报如下错误，因为这个域名无效('7ktpup.com1.z0.glb.clouddn.com')
 ![hostname not valid](https://static.hellflame.net/resource/748ee73149aa605434221204397b39df)
+
 可能的原因是七牛云没有解析所有的测试域名，处理方法就是在配置域名时，需要将测试域名配置为那个可用的域名,如`qiniu -s whatever whatever.qiniudn.com`(或者在一开始并不用设置测试域名，或者在本机的hosts文件中指定ip)，但是实际上并不知道七牛云的域名如何管理的，所以要知道哪个域名是可用的话，在`内容管理`界面查看外链，就知道至少哪一个域名是可用的了
 
 关注了一段时间，发现这个域名只是偶尔无效(最近无效大概发生在凌晨，这次大概在5点左右？)，难道是服务器夜间维护？还是遭到攻击？还是日志统计需要？好吧，无论如何，这是一个问题，我也只能选择合适的时机使用
@@ -165,3 +176,5 @@ qiniuManager现在同时只能运行一个实例，因为manager从用户家目�
 +   v1.1.1  urllib.quote
 +   v1.1.2  取消本地判断mimetype(因为会莫名卡在这里，并且上传这个mimetype的时候会告诉我这是未知的mimetype，所以实际上并没有用),取消上传缓存
 +   v1.1.3  文件列表统计总量
++   v1.1.4  文件列表排序支持，默认按照上传时间逆序排序，修复单位转换中的小数丢失
+

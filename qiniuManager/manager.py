@@ -356,7 +356,7 @@ class Qiniu:
         else:
             if 'items' in data:
                 total_size = 0
-                for i in data['items']:
+                for i in sorted(data['items'], key=lambda x: x['putTime'], reverse=True):
                     print("  {}  {}  {}".format(i['key'], '·' * (30 - len(i['key'])), http.unit_change(i['fsize'])))
                     total_size += i['fsize']
                 print("\n  \033[01;31m{}\033[00m  \033[01;32m{}\033[00m  \033[01;31m{}\033[00m".format('Total', '·' * (30 - len('total')), http.unit_change(total_size)))
@@ -447,17 +447,4 @@ class Qiniu:
         self.block_status.append(json.loads(feed.data).get('ctx'))
         self.progressed += size
 
-
-if __name__ == '__main__':
-    # main()
-    # q = Auth('hellflame', 'windows')
-    # print q.upload_token("asdasd", 'ljklj')
-    # config = Config()
-    # print config.set_space('whatever')
-    qiniu = Qiniu()
-    # qiniu.upload("target.pdf", 'whatever')
-    # print qiniu.state, qiniu.avg_speed
-    # qiniu.list()
-    # qiniu.remove('target.pdf', 'whatever')
-    qiniu.rename('rename.pdf', "target.pdf")
 

@@ -222,6 +222,7 @@ class HTTPCons:
 def unit_change(target):
     unit_list = ('B', 'KB', 'MB', 'GB', 'TB')
     index = 0
+    target = float(target)
     while target > 1024:
         index += 1
         target /= 1024
@@ -234,21 +235,6 @@ class URLNotComplete(Exception):
         self.lack = lack
 
     def __str__(self):
-        return "URL: {} missing {}"
-
-
-if __name__ == '__main__':
-    sock = HTTPCons()
-    link = "https://treedu.hellflame.net/static/login.js"
-    print link
-    sock.request(link)
-    # chuck size must be bigger than http header size and less than the second chuck part
-    feed = SockFeed(sock, 1024)
-    feed.http_response()
-    # feed.http_response()
-    print feed.data
-    print feed.header
-    print feed.head
-    # print feed.http_code, unit_change(feed.top_speed) + '/s'
+        return "URL: {} missing {}".format(self.url, self.lack)
 
 
