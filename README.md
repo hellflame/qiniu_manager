@@ -149,6 +149,7 @@ vii.重命名
 
 #### Issue
 1. nodename nor servname provided, or not known
+
 如果测试域名配置如下
 ![hostname unknown](https://static.hellflame.net/resource/e086339b219f691db1a1052f349deadb)
 
@@ -160,6 +161,7 @@ vii.重命名
 关注了一段时间，发现这个域名只是偶尔无效(最近无效大概发生在凌晨，这次大概在5点左右？)，难道是服务器夜间维护？还是遭到攻击？还是日志统计需要？好吧，无论如何，这是一个问题，我也只能选择合适的时机使用
 
 2. database is locked
+
 ![database lock](https://static.hellflame.net/resource/9869b5ac1d20097cb2e8a78cba81cc5f)
 
 qiniuManager现在同时只能运行一个实例，因为manager从用户家目录下的一个SQLite数据库文件获取密钥，并且在程序开始运行时获取这个数据库，在程序结束时释放，如果某一个时刻正在下载一个大文件，一直占用数据库的话，再运行程序便会报这个错误。不过貌似并没有出现致命错误(对于SQLite我还不是很了解)。要修复这个问题的话，只要及时释放SQLite就好了，不过我并没有这么做，因为和整个程序一开始设计时候的构思并不一样(其实是因为懒)
