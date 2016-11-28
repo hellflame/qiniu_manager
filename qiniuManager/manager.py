@@ -355,8 +355,11 @@ class Qiniu:
             print("Error Occur: \033[01;31m{}\033[00m".format(data['error']))
         else:
             if 'items' in data:
+                total_size = 0
                 for i in data['items']:
                     print("  {}  {}  {}".format(i['key'], '·' * (30 - len(i['key'])), http.unit_change(i['fsize'])))
+                    total_size += i['fsize']
+                print("\n  \033[01;31m{}\033[00m  \033[01;32m{}\033[00m  \033[01;31m{}\033[00m".format('Total', '·' * (30 - len('total')), http.unit_change(total_size)))
 
     @access_ok
     def get_auth(self):
