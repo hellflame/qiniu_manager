@@ -161,6 +161,7 @@ vii.重命名
 1. nodename nor servname provided, or not known
 
 如果测试域名配置如下
+
 ![hostname unknown](https://static.hellflame.net/resource/e086339b219f691db1a1052f349deadb)
 
 可能就会报如下错误，因为这个域名无效('7ktpup.com1.z0.glb.clouddn.com')
