@@ -4,7 +4,7 @@ import os
 import sys
 import manager
 
-__version__ = '1.1.1'
+__version__ = '1.1.2'
 
 short = {
     '--check': '-c',
@@ -17,7 +17,6 @@ short = {
     '--private': '-p',
     '--link': '-i',
     '--version': '-v',
-    '--clean': '-e',
     '--rename': '-n'
     }
 
@@ -32,7 +31,6 @@ map_target = {
     '--private': '返回私有文件下载链接',
     '--link': '返回开放云空间文件下载链接',
     '--version': '当前版本号',
-    '--clean': '清除缓存',
     '--rename': "重命名"
     }
 
@@ -82,10 +80,6 @@ def main():
                         print ("{} {} {}".format(data.index(i) + 1, i[1], i[2]))
                 else:
                     print("no access secret key pair found")
-
-            elif arg[0] in ('-e', '--clean'):
-                qiniu.config.clean_all_cache()
-                print("upload cache is cleaned now!")
 
             else:
                 target = arg[0]

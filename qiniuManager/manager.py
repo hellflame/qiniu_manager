@@ -396,14 +396,14 @@ class Qiniu:
         else:
             space, alias = self.config.get_default_space()
             token = self.auth.upload_token(space, file_name, 7200)
-        mime_type = self.get_mime_type(path)
+        # mime_type = self.get_mime_type(path)
         md5 = get_md5(path)
         self.file_handle = open(path, 'rb')
         self.title = file_name
         self.total = os.stat(path).st_size + 2
         self.progressed = 0
         self.pre_upload_info = (file_name, md5, space,
-                                token, mime_type, 0, 'http://up.qiniu.com')
+                                token, 0, 'http://up.qiniu.com')
         self.prepared = True
 
     @progress.bar(100)
