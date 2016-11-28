@@ -1,7 +1,9 @@
-# qiniu
+# QiniuManager
+
 七牛云本地调用
 
 ### 安装
+
 ```bash
     $ sudo pip install qiniumanager --upgrade
 ```
@@ -33,16 +35,19 @@ Usage:
 ### 具体操作
 
 ####显示帮助信息方式
+
 ```bash
 	qiniu
 	qiniu -v # QiniuManager 版本以及SDK版本
 ```
 ####基本设置
+
 i.密钥设置
 ```bash
 	qiniu -k <access key> <secret key>	
 	qiniu -k # 显示密钥对
 ```
+
 ![这里的AK及SK](https://static.hellflame.net/resource/5ccf929aae10fc0fb5a26a63c28e6d45)
 	ii.空间设置(bucket)
 ```bash
@@ -50,6 +55,7 @@ i.密钥设置
 	qiniu -s share 7xqh1q.dl1.z0.glb.clouddn.com
 	qiniu -s # 显示空间信息(bucket)
 ```
+
 ![space & alias](https://static.hellflame.net/resource/e506e9787b0a693da3a4d5be381b28ad)
 
 >好吧，一直用的测试域名，对于对外开放的空间访问的话，并不需要设置这个`alias`，只需要`qiniu -s share`即可（换成自己的空间名），对于私有空间，对于我而言，这个测试域名的使用是必要的
@@ -84,6 +90,7 @@ iii.获取下载链接
 ```
 > 如果不知道该空间是否为私有空间，直接用`qiniu -p `获取的链接将保证对于开放空间以及私有空间都有效，前提是能够正确设置空间的测试域名(对于作者这样的免费用户而言)
 > 当然，还是知道空间的开放和私有属性比较好
+
 ![private and public](https://static.hellflame.net/resource/b74f36b5f05569fa005952e5a90561da)
 
 iv.下载
@@ -115,7 +122,9 @@ v.删除
 其实个人的做法更倾向于在成功时也返回一个json字符串，给出一个status表示操作成功，然而这里并没有。在查看服务器的返回值时，这个就更清楚了，服务器的response中，body部分的确是空的，`Content-Length: 0`，这也让我需要对这部分请求作特别的处理，比如禁用下载进度条(这是自己写的HTTP报文发送以及接受的方法中需要的)
 
 以及SDK中在使用POST方法的大环境下，调用了少量GET方法接口，于是在生成Token的时候需要对GET的data也进行操作
+
 ![](https://static.hellflame.net/resource/053660e4f3d6751c827c2bfe62aaa38c)
+
 于是重写添加了一个和验证POST Token差不多的Token的方式(因为token的生成是与传递的数据实体有关的)
 
 这里也出现了`Content-Type: application/x-www-form-urlencoded`这个一般只在网页上的form表单才出现的content-type。虽然我还不是很清楚这个content-type在这里出现的意义，但是应该是在某个地方处理到了模仿form表单上传数据吧，也说明这部分也许是直接调用了网页端的接口，也许这也是接口规范不一致的表现之一吧
@@ -137,6 +146,7 @@ vii.重命名
 ```
 
 ![sdk move](https://static.hellflame.net/resource/45dfd760b9d4dcf54ecd6ea81f32b8a1)
+
 实际上重命名接口在SDK中和移动资源方法是同一个，并且支持在不同的空间之间进行移动，但是作者认为在命令行中输入这么多参数已经很烦了，也并没有需求在不同空间之间进行资源操作，于是`QiniuManager`限制了重命名只能在当前空间
 
 ![](https://static.hellflame.net/resource/aef205f6251e8e50e42f034193fe8b26)
@@ -154,6 +164,7 @@ vii.重命名
 ![hostname unknown](https://static.hellflame.net/resource/e086339b219f691db1a1052f349deadb)
 
 可能就会报如下错误，因为这个域名无效('7ktpup.com1.z0.glb.clouddn.com')
+
 ![hostname not valid](https://static.hellflame.net/resource/748ee73149aa605434221204397b39df)
 
 可能的原因是七牛云没有解析所有的测试域名，处理方法就是在配置域名时，需要将测试域名配置为那个可用的域名,如`qiniu -s whatever whatever.qiniudn.com`(或者在一开始并不用设置测试域名，或者在本机的hosts文件中指定ip)，但是实际上并不知道七牛云的域名如何管理的，所以要知道哪个域名是可用的话，在`内容管理`界面查看外链，就知道至少哪一个域名是可用的了
