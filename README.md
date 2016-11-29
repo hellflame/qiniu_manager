@@ -158,7 +158,7 @@ vii.重命名
 我是不是应该也把这个叫做不规范讷
 
 #### Issue
-1. nodename nor servname provided, or not known
+##### nodename nor servname provided, or not known
 
 如果测试域名配置如下
 
@@ -172,7 +172,7 @@ vii.重命名
 
 关注了一段时间，发现这个域名只是偶尔无效(最近无效大概发生在凌晨，这次大概在5点左右？)，难道是服务器夜间维护？还是遭到攻击？还是日志统计需要？好吧，无论如何，这是一个问题，我也只能选择合适的时机使用
 
-2. database is locked
+##### database is locked
 
 ![database lock](https://static.hellflame.net/resource/9869b5ac1d20097cb2e8a78cba81cc5f)
 
@@ -191,4 +191,5 @@ qiniuManager现在同时只能运行一个实例，因为manager从用户家目�
 +   v1.1.2  取消本地判断mimetype(因为会莫名卡在这里，并且上传这个mimetype的时候会告诉我这是未知的mimetype，所以实际上并没有用),取消上传缓存
 +   v1.1.3  文件列表统计总量
 +   v1.1.4  文件列表排序支持，默认按照上传时间逆序排序，修复单位转换中的小数丢失
++   v1.2.0  底层http报文处理，适当调整响应缓存大小，提高下载速度等，'chucked'编码暂时不可用
 

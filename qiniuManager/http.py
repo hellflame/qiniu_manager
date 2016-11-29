@@ -22,8 +22,8 @@ class SockFeed:
         self.last_stamp = time.time()
         self.top_speed = 0
         self.chucked = False
-        self.random_progress = False
         self.title = ''
+        self.chuck_left_size = 0
 
         self.file_handle = None
 
@@ -43,7 +43,6 @@ class SockFeed:
             self.progressed = self.total = 100
             return self.data
 
-        left = ''
         if not self.head or not self.header:
             self.head = temp.readline()
             self.http_code = int(self.head.split(" ")[1])
@@ -54,9 +53,7 @@ class SockFeed:
                         self.total = int(self.header.get("Content-Length"))
                     elif self.header.get("Transfer-Encoding") == 'chunked':
                         self.chucked = True
-                    else:
-                        # random progress
-                        self.random_progress = True
+                        self.total = 100
                     break
                 index = partial.index(":")
                 key = partial[0: index].strip()
@@ -64,65 +61,96 @@ class SockFeed:
                 self.header[key] = val
             if skip_body:
                 self.total = self.progressed = 1
-                return self.data
-
+                return self.header
             left = temp.read()
             if self.chucked and left:
                 left_io = cStringIO.StringIO(left)
                 size = int(left_io.readline().strip(), 16)
-                left = left_io.read()
-                self.chuck_size = size - len(left) + 2
-                if self.chuck_size <= 0:
-                    self.total = self.progressed = 100
-
-        if self.chucked or self.random_progress:
-            self.total = 100
-            if not self.progressed == 100:
-                self.progressed = random.randint(self.progressed, 99)
-
-            if self.file_handle:
+                left = left_io.read(size)
+                read_still = True
+                while left and read_still:
+                    if self.file_handle:
+                        self.file_handle.write(left)
+                    else:
+                        self.data += left
+                    next_line = left_io.readline()
+                    if next_line and not next_line == '\r\n':
+                        size = int(next_line.strip(), 16)
+                        if size == 0:
+                            self.total = self.progressed = 100
+                            return
+                        left = left_io.read(size)
+                        if len(left) < size:
+                            read_still = False
+                    else:
+                        if len(left) < size:
+                            read_still = False
                 if left:
-                    self.file_handle.write(left)
-                else:
-                    self.file_handle.write(data)
-            else:
-                if left:
-                    self.data += left
-                else:
-                    self.data += data
-            more = ''
-            if not left:
-                extra = self.socket.recv(32)
-                temp = cStringIO.StringIO(extra)
-                size = int(temp.readline().strip(), 16)
-                more = temp.read()
-                self.chuck_size = size - len(more) + 2
-                if size == 0 or self.chuck_size < 0:
-                    self.chuck_size = 0
-                    self.progressed = self.total = 100
-                    return self.data
+                    self.chuck_left_size = len(left)
+                    if self.file_handle:
+                        self.file_handle.write(left)
+                    else:
+                        self.data += left
 
-            if more:
+            elif left:
                 if self.file_handle:
-                    self.file_handle.write(more)
-                else:
-                    self.data += more
-        else:
-            if self.last_stamp:
-                temp = self.progressed / (time.time() - self.last_stamp)
-                if temp > self.top_speed:
-                    self.top_speed = temp
-            if self.file_handle:
-                if left:
                     self.file_handle.write(left)
-                    self.progressed += len(left)
                 else:
+                    self.data += left
+
+                self.progressed += len(left)
+
+        else:
+            if self.chucked:
+                if not self.progressed == 100:
+                    self.progressed = random.randint(self.progressed, 98)
+                data = cStringIO.StringIO(data)
+                if self.chuck_left_size:
+                    last_left = data.read(self.chuck_left_size)
+                    if self.file_handle:
+                        self.file_handle.write(last_left)
+                    else:
+                        self.data += last_left
+
+                chuck_size = int(data.readline().strip(), 16)
+                if chuck_size == 0:
+                    self.progressed = self.total
+                    return
+                left = data.read(chuck_size)
+                read_still = True
+                while left and read_still:
+                    if self.file_handle:
+                        self.file_handle.write(left)
+                    else:
+                        self.data += left
+                    next_line = data.readline()
+                    if next_line and not next_line == '\r\n':
+                        size = int(next_line.strip(), 16)
+                        if size == 0:
+                            self.total = self.progressed = 100
+                            return
+                        left = data.read(size)
+                        if len(left) < size:
+                            read_still = False
+                    else:
+                        if len(left) < chuck_size:
+                            read_still = False
+
+                self.chuck_left_size = len(left) + 2
+                if left:
+                    if self.file_handle:
+                        self.file_handle.write(left)
+                    else:
+                        self.data += left
+
+            else:
+                if self.last_stamp:
+                    temp = self.progressed / (time.time() - self.last_stamp)
+                    if temp > self.top_speed:
+                        self.top_speed = temp
+                if self.file_handle:
                     self.file_handle.write(data)
                     self.progressed += len(data)
-            else:
-                if left:
-                    self.data += left
-                    self.progressed += len(left)
                 else:
                     self.data += data
                     self.progressed += len(data)

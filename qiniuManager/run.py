@@ -4,7 +4,7 @@ import os
 import sys
 import manager
 
-__version__ = '1.1.4'
+__version__ = '1.2.0'
 
 short = {
     '--check': '-c',

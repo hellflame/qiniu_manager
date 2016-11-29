@@ -268,7 +268,7 @@ class Qiniu:
         link = self.private_download_link(target, space)
         downloader = http.HTTPCons()
         downloader.request(link)
-        feed = http.SockFeed(downloader)
+        feed = http.SockFeed(downloader, 5 * 1024 * 1024)
         start = time.time()
         feed.http_response(target)
         end = time.time()
@@ -348,7 +348,7 @@ class Qiniu:
         url = self.list_host + '/list?bucket={}'.format(space)
         manager_list.request(url,
                              headers={'Authorization': 'QBox {}'.format(self.auth.token_of_request(url))})
-        feed = http.SockFeed(manager_list)
+        feed = http.SockFeed(manager_list, 10 * 1024)
         feed.http_response()
         data = json.loads(feed.data)
         if 'error' in data:
@@ -359,7 +359,10 @@ class Qiniu:
                 for i in sorted(data['items'], key=lambda x: x['putTime'], reverse=True):
                     print("  {}  {}  {}".format(i['key'], '·' * (30 - len(i['key'])), http.unit_change(i['fsize'])))
                     total_size += i['fsize']
-                print("\n  \033[01;31m{}\033[00m  \033[01;32m{}\033[00m  \033[01;31m{}\033[00m".format('Total', '·' * (30 - len('total')), http.unit_change(total_size)))
+                print("\n  \033[01;31m{}\033[00m  \033[01;32m{}\033[00m  \033[01;31m{}\033[00m".format(
+                    'Total',
+                    '·' * (30 - len('total')),
+                    http.unit_change(total_size)))
 
     @access_ok
     def get_auth(self):
