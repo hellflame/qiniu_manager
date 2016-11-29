@@ -342,6 +342,9 @@ class Qiniu:
                            headers={'Authorization': 'QBox {}'.format(self.auth.token_of_request(url))})
         feed = http.SockFeed(space_list, 10 * 1024)
         feed.http_response()
+        if not feed.data:
+            print("No such space")
+            return False, []
         data = json.loads(feed.data)
         if 'error' in data:
             print("Error Occur: \033[01;31m{}\033[00m @\033[01;35m{}\033[00m".format(data['error'], space))
