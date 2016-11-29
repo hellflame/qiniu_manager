@@ -11,6 +11,8 @@
 ### 七牛云存储 Qiniu Manager
 
 ```
+七牛云存储 Qiniu Manager
+
 Usage:
   qiniu <your file> [space]		选择文件位置上传，指定空间名或使用默认空间名
   qiniu [option] <file name> [space]	对云空间中文件进行操作
@@ -21,11 +23,13 @@ Usage:
   --remove,-r	删除云文件
   --private,-p	返回私有文件下载链接
   --download,-d	下载文件
+  --list-a,-la	显示本地已知所有空间文件列表
   --check,-c	查看文件状态
   --rename,-n	重命名
   --key,-k	修改或查看access key，secret key
   --link,-i	返回开放云空间文件下载链接
   --list,-l	文件列表
+  --r-space,-rs	删除本地保存的空间名
   --help,-h	帮助
 
 首次使用请设置密钥对 qiniu [--key|-k] <access key> <secret key>
@@ -40,6 +44,7 @@ Usage:
 	qiniu
 	qiniu -v # QiniuManager 版本以及SDK版本
 ```
+
 ####基本设置
 
 i.密钥设置
@@ -49,7 +54,9 @@ i.密钥设置
 ```
 
 ![这里的AK及SK](https://static.hellflame.net/resource/5ccf929aae10fc0fb5a26a63c28e6d45)
-	ii.空间设置(bucket)
+
+ii.空间设置(bucket)
+
 ```bash
 	qiniu -s share # 可以省略测试域名
 	qiniu -s share 7xqh1q.dl1.z0.glb.clouddn.com
@@ -59,8 +66,13 @@ i.密钥设置
 ![space & alias](https://static.hellflame.net/resource/e506e9787b0a693da3a4d5be381b28ad)
 
 >好吧，一直用的测试域名，对于对外开放的空间访问的话，并不需要设置这个`alias`，只需要`qiniu -s share`即可（换成自己的空间名），对于私有空间，对于我而言，这个测试域名的使用是必要的
+>
 >在每次设置过空间名之后，当前默认空间名都会指向该空间(bucket),可以通过`qiniu -s`最后一行信息验证默认空间(bucket)
+>
+>如果不设置空间名的话，对于开放空间可能没有什么影响，但是对于如我一般的免费用户的话，没有开启自定义域名，只能使用测试域名，这样的话，只在下载的时候指定空间名将会导致生成一个无效的链接
+
 #### 基本操作
+
 i.文件列表
 
 > 默认按照上传时间先后逆排序
@@ -69,6 +81,19 @@ i.文件列表
 	qiniu -l # 显示当前空间(bucket)文件列表
 	qiniu -l backup # 显示`backup`中的文件列表
 ```
+
+> 可以显示已经保存下来的所有空间的文件列表总表，这里的已知空间可以通过`qiniu -s`查看空间列表信息
+
+```bash
+	qiniu -la # 显示已知所有空间的文件列表
+```
+
+在显示的时候其实有一个问题，就是非英文字符在终端打印时所占的宽度与英文字符宽度不同(应该是等宽字体并不包含其他语言文字的缘故)，导致排版略错乱
+
+![list issue - terminal font type](https://static.hellflame.net/resource/9cd1d0ab79aa311a65dda6923c5ef1b0)
+
+中文字符很显然打印出来的宽度并不与英文字符打印出来的宽度一致，并且这里的文件名称也转换为utf8字符计算长度(一个中文字符有三个字节的长度)
+
 ii.文件详情
 
 > 对于文件名中存在空格或者其他特殊符号的情况，用引号将目标文件名包裹起来就好了，在以下其他地方也适用
@@ -88,7 +113,9 @@ iii.获取下载链接
 	qiniu -p <filename> # 获取当前空间(bucket)中<filename>的私有下载链接,开放空间返回的链接可下载，但不会被expire限制可下载时间
 	qiniu -p <filename> <space name># 获取<space name>中<filename>的私有下载链接，开放空间返回的链接可下载，但不会被expire限制可下载时间
 ```
+
 > 如果不知道该空间是否为私有空间，直接用`qiniu -p `获取的链接将保证对于开放空间以及私有空间都有效，前提是能够正确设置空间的测试域名(对于作者这样的免费用户而言)
+> 
 > 当然，还是知道空间的开放和私有属性比较好
 
 ![private and public](https://static.hellflame.net/resource/b74f36b5f05569fa005952e5a90561da)
@@ -101,13 +128,23 @@ iv.下载
 ```
 
 > 下载的文件存储在当前目录，与空间中文件名相同
+> 
 > 正常的话，应该会显示下载进度条
 
 ![progress](https://static.hellflame.net/resource/7dc3b5f8d42a49d2233d152c6779b829)
 ![finished](https://static.hellflame.net/resource/a51952d5e39ab3c3308fced9ed79db1a)
 
 >不正常的话，进度条可能会不能正常显示，不过如果还好的话，最终文件还是会正常下载完毕
+>
 >如果崩溃的话，还是老老实实`wget url -O <filename>`好了
+>
+>这部分在调整了下载缓存大小并且优化了保存时候的状态判断之后，基本上能够独立使用了，不过这部分的http报文处理部分舍弃了对于chucked编码的支持
+
+关于这部分，主要想吐槽一下chucked编码。其实http报文本身即便不使用chucked编码，也是炒鸡难受的，甚至通过TCP来传递数据也是挺难受的，因为客户端在一开始并不知道要接收多长的数据。。。在一开始，客户端并不知道将要接收多少数据，作为header部分，如果运气不好的话，也许header部分还没有接收完，第一次recv就结束了，然后header就被截断了，也许第一次recv接收太长了，header接收完之后继续接收了报文实体部分，甚至整个报文都接收完了，如果是chucked编码的话，更不巧的是把每一个chucked编码块的那个十六进制长度字符串给截断了，那么接下来到底有多少是真正的实体内容呢？即便第一次获取报文长度运气还好，但是对于chucked编码，每次获取的时候都要对接收到的内容判断一下这次接收的内容里面有多少个chucked块，以及下一次读取应该需要多少长度等等麻烦的问题
+
+不过，上述问题应该还是只会出现在该项目中包含的http报文处理中，因为想要实现流水式的获取报文，而不是把报文所有内容都接收完之后再处理，这样在面对大文件传输的时候可能对内存会有较大的压力(当然，可以用缓存来解决这个问题)，并且能够真实的记录下载报文的进度
+
+由于七牛的服务器并没有使用chucked编码，所以这里就取消了chucked编码支持
 
 v.删除
 ```bash
@@ -130,6 +167,7 @@ v.删除
 这里也出现了`Content-Type: application/x-www-form-urlencoded`这个一般只在网页上的form表单才出现的content-type。虽然我还不是很清楚这个content-type在这里出现的意义，但是应该是在某个地方处理到了模仿form表单上传数据吧，也说明这部分也许是直接调用了网页端的接口，也许这也是接口规范不一致的表现之一吧
 
 vi.查看单个文件
+
 ```bash
 	qiniu -c <filename> # 查看当前空间(bucket)中<filename>的一般属性，实际上并没有太详细的信息的样子
 	qiniu -c <filename> <space name> # 查看<space name>空间(bucket)中的<filename>的一般信息
@@ -192,4 +230,6 @@ qiniuManager现在同时只能运行一个实例，因为manager从用户家目�
 +   v1.1.3  文件列表统计总量
 +   v1.1.4  文件列表排序支持，默认按照上传时间逆序排序，修复单位转换中的小数丢失
 +   v1.2.0  底层http报文处理，适当调整响应缓存大小，提高下载速度等，'chucked'编码暂时不可用
++   v1.2.1  删除本地保存的空间名支持，显示所有已知空间文件列表并统计大小支持，http报文处理去除chucked编码支持(chucked编码真是恶心)，下载文件预判，防止本地文件被覆盖，判断文件是否存在后再下载；部分显示格式调整
+
 

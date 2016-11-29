@@ -70,7 +70,6 @@ class Config:
         self.cursor = None
         self.API_keys = 'API_keys'
         self.SPACE_ALIAS = 'spaceAlias'
-        self.CACHE = 'upload_cache'
         self.init_db()
 
     def init_db(self):
@@ -87,51 +86,8 @@ class Config:
                                 "name VARCHAR(50) NOT NULL DEFAULT '',"
                                 "alias VARCHAR(50) NOT NULL DEFAULT '',"
                                 "as_default INTEGER NOT NULL DEFAULT 0)".format(self.SPACE_ALIAS))
-            # upload or download cache
-            self.cursor.execute("CREATE TABLE IF NOT EXISTS {} ("
-                                "md5 VARCHAR(32) NOT NULL UNIQUE,"
-                                "uploading INTEGER NOT NULL DEFAULT 0,"
-                                "up_to INTEGER NOT NULL DEFAULT 0,"
-                                "stamp INTEGER NOT NULL DEFAULT 0)".format(self.CACHE))
-            self.clean_expired_cache()
         except Exception as e:
             print e
-
-    @db_ok
-    def clean_cache(self, md5):
-        self.cursor.execute("delete from {} WHERE md5 = '{}'".format(self.CACHE, md5))
-
-    @db_ok
-    def clean_all_cache(self):
-        self.cursor.execute("delete from {}".format(self.CACHE))
-
-    @db_ok
-    def upset_cache(self, md5, clip=0):
-        self.cursor.execute("select md5 from {} WHERE md5 = '{}'".format(self.CACHE, md5))
-        result = self.cursor.fetchone()
-        if not result:
-            sql = "insert into {} ".format(self.CACHE)
-            sql += "(md5, uploading, up_to, stamp) values ('{}',1, {}, {})".format(md5, clip, int(time.time()))
-        else:
-            sql = "update {} ".format(self.CACHE)
-            sql += "set uploading = 1, up_to = {}".format(clip)
-            sql += " where md5 = '{}'".format(result[0])
-        self.cursor.execute(sql)
-
-    @db_ok
-    def get_cache(self, md5):
-        sql = "select uploading, up_to from {} WHERE md5 = '{}'".format(self.CACHE, md5)
-        self.cursor.execute(sql)
-        result = self.cursor.fetchone()
-        if not result:
-            return None
-        return result
-
-    @db_ok
-    def clean_expired_cache(self, expire=86400):
-        """clean unsettled files, uploading or downloading.
-        files left from yesterday will be regard as waste as default"""
-        self.cursor.execute("delete from {} WHERE stamp < {}".format(self.CACHE, int(time.time()) - expire))
 
     @db_ok
     def get_one_access(self):
@@ -158,16 +114,6 @@ class Config:
         self.cursor.execute("delete from {}".format(self.API_keys))
         self.cursor.execute("insert into {} (access, secret) "
                             "VALUES ('{}', '{}')".format(self.API_keys, access, secret))
-    """
-    @db_ok
-    def remove_access(self, _id=0, access=''):
-        sql = "delete from {} ".format(self.API_keys)
-        if _id:
-            sql += "WHERE id = {}".format(_id)
-        elif access:
-            sql += "WHERE access = '{}'".format(access)
-        self.cursor.execute(sql)
-    """
 
     @db_ok
     def set_space(self, space, alias=''):
@@ -193,6 +139,11 @@ class Config:
         if result:
             return result
         return '', ''
+
+    @db_ok
+    def remove_space(self, space_name):
+        """default space may be deleted, so you must set the default manually"""
+        self.cursor.execute("delete from {} WHERE name = '{}'".format(self.SPACE_ALIAS, space_name))
 
     @db_ok
     def get_space_list(self):
@@ -271,6 +222,9 @@ class Qiniu:
         feed = http.SockFeed(downloader, 5 * 1024 * 1024)
         start = time.time()
         feed.http_response(target)
+        if not feed.http_code == 200:
+            print("\033[01;31m{}\033[00m not exist !".format(target))
+            return False
         end = time.time()
         size = int(feed.header.get('Content-Length', 1))
         print("\033[01;31m{}\033[00m downloaded @speed \033[01;32m{}/s\033[00m"
@@ -344,25 +298,56 @@ class Qiniu:
     def list(self, space=None):
         if not space:
             space = self.config.get_default_space()[0]
-        manager_list = http.HTTPCons()
+        state, data = self.__get_list_in_space(space)
+
+        if state and data:
+            total_size = 0
+            print("\033[01;32m{}\033[00m".format(space))
+            for i in sorted(data, key=lambda x: x['putTime'], reverse=True):
+                print("  {}  {}  {}".format(i['key'], '·' * (30 - len(b'{}'.format(i['key']))), http.unit_change(i['fsize'])))
+                total_size += i['fsize']
+            print("\n  \033[01;31m{}\033[00m  \033[01;32m{}\033[00m  \033[01;31m{}\033[00m".format(
+                'Total',
+                '·' * (30 - len('total')),
+                http.unit_change(total_size)))
+        elif state and not data:
+            print("There is no file in \033[01;31m{}\033[00m".format(space))
+
+    @auth
+    def list_all(self):
+        spaces = self.config.get_space_list()
+        if not spaces:
+            print("I don't Know any of them")
+            return False
+
+        total_size = 0
+        for i in spaces:
+            state, data = self.__get_list_in_space(i[0])
+            if state:
+                if data:
+                    print("\033[01;32m{}\033[00m".format(i[0]))
+                    for target in data:
+                        print("  {}  {}  {}".format(target['key'], '·' * (30 - len(b'{}'.format(target['key']))),
+                                                    http.unit_change(target['fsize'])))
+                        total_size += target['fsize']
+        print("\n  \033[01;31m{}\033[00m  \033[01;32m{}\033[00m  \033[01;31m{}\033[00m".format(
+            'Total',
+            '·' * (30 - len('total')),
+            http.unit_change(total_size)))
+
+    def __get_list_in_space(self, space):
+        space_list = http.HTTPCons()
         url = self.list_host + '/list?bucket={}'.format(space)
-        manager_list.request(url,
-                             headers={'Authorization': 'QBox {}'.format(self.auth.token_of_request(url))})
-        feed = http.SockFeed(manager_list, 10 * 1024)
+        space_list.request(url,
+                           headers={'Authorization': 'QBox {}'.format(self.auth.token_of_request(url))})
+        feed = http.SockFeed(space_list, 10 * 1024)
         feed.http_response()
         data = json.loads(feed.data)
         if 'error' in data:
-            print("Error Occur: \033[01;31m{}\033[00m".format(data['error']))
+            print("Error Occur: \033[01;31m{}\033[00m @\033[01;35m{}\033[00m".format(data['error'], space))
+            return False, []
         else:
-            if 'items' in data:
-                total_size = 0
-                for i in sorted(data['items'], key=lambda x: x['putTime'], reverse=True):
-                    print("  {}  {}  {}".format(i['key'], '·' * (30 - len(i['key'])), http.unit_change(i['fsize'])))
-                    total_size += i['fsize']
-                print("\n  \033[01;31m{}\033[00m  \033[01;32m{}\033[00m  \033[01;31m{}\033[00m".format(
-                    'Total',
-                    '·' * (30 - len('total')),
-                    http.unit_change(total_size)))
+            return True, data['items']
 
     @access_ok
     def get_auth(self):
@@ -432,7 +417,6 @@ class Qiniu:
             avg_speed = http.unit_change(self.progressed / (time.time() - self.start_stamp))
             self.progressed = self.total = 1
             if data.get('key', '') == self.pre_upload_info[0]:
-                self.config.clean_cache(self.pre_upload_info[1])
                 self.state = True
                 self.avg_speed = '{}/s'.format(avg_speed)
                 return True

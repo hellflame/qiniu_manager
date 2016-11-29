@@ -4,20 +4,22 @@ import os
 import sys
 import manager
 
-__version__ = '1.2.0'
+__version__ = '1.2.1'
 
 short = {
     '--check': '-c',
     '--list': '-l',
     '--key': '-k',
     '--space': '-s',
+    '--r-space': '-rs',
     '--help': '-h',
     '--remove': '-r',
     '--download': '-d',
     '--private': '-p',
     '--link': '-i',
     '--version': '-v',
-    '--rename': '-n'
+    '--rename': '-n',
+    '--list-a': '-la'
     }
 
 map_target = {
@@ -31,7 +33,9 @@ map_target = {
     '--private': '返回私有文件下载链接',
     '--link': '返回开放云空间文件下载链接',
     '--version': '当前版本号',
-    '--rename': "重命名"
+    '--rename': "重命名",
+    '--r-space': "删除本地保存的空间名",
+    '--list-a': "显示本地已知所有空间文件列表"
     }
 
 
@@ -61,6 +65,13 @@ def main():
                 print("Qiniu SDK {}".format(manager.sdk_version))
             elif arg[0] in ('-h', '--help'):
                 help_menu()
+
+            elif arg[0] in ('-rs', '--r-space'):
+                print("请手动指定将要从本地删除的空间名")
+
+            elif arg[0] in ('-la', '--list-a'):
+                qiniu.list_all()
+
             elif arg[0] in ('-l', '--list'):
                 qiniu.list()
 
@@ -69,9 +80,9 @@ def main():
                 space_list = qiniu.config.get_space_list()
                 print("Known Space Names Below\n")
                 for i in space_list:
-                    print("{} {} {}".format(space_list.index(i) + 1, i[0], i[1]))
+                    print("{} {}\t{}".format(space_list.index(i) + 1, i[0], i[1]))
                 if data:
-                    print ('\ndefault space name:\t{}'.format(data[0]))
+                    print ('\ndefault space name:\t\033[01;31m{}\033[00m'.format(data[0]))
 
             elif arg[0] in ('-k', '--key'):
                 data = qiniu.config.access_list(include_discard=False)
@@ -107,6 +118,10 @@ def main():
             elif arg[0] in ('-s', '--space'):
                 qiniu.config.set_space(arg[1])
                 print("space \033[01;31m{}\033[00m is added and as the default space now".format(arg[1]))
+
+            elif arg[0] in ('-rs', '--r-space'):
+                qiniu.config.remove_space(arg[1])
+                print("space \033[01;31m{}\033[00m is removed from local database".format(arg[1]))
 
             elif arg[0] in ('-r', '--remove'):
                 qiniu.remove(arg[1])

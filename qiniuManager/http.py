@@ -4,7 +4,7 @@ import cStringIO
 import progress
 import ssl
 import time
-import random
+import os
 
 
 class SockFeed:
@@ -34,7 +34,13 @@ class SockFeed:
     @progress.bar()
     def http_response(self, file_path='', skip_body=False):
         if file_path and not self.file_handle:
-            self.file_handle = open(file_path, 'wb')
+            file_index = 1
+            path_choice = file_path
+            while os.path.exists(path_choice):
+                path_choice = '{}.{}'.format(file_path, file_index)
+                file_index += 1
+
+            self.file_handle = open(path_choice, 'wb')
             self.title = file_path
         # while True:
         data = self.socket.recv(self.chuck_size)
@@ -46,6 +52,13 @@ class SockFeed:
         if not self.head or not self.header:
             self.head = temp.readline()
             self.http_code = int(self.head.split(" ")[1])
+            if not self.http_code == 200:
+                self.total = self.progressed = 1
+                if self.file_handle:
+                    current_file_name = self.file_handle.name
+                    self.file_handle.close()
+                    os.remove(current_file_name)
+                return False
             while True:
                 partial = temp.readline()
                 if not partial or partial == '\r\n':
@@ -53,7 +66,8 @@ class SockFeed:
                         self.total = int(self.header.get("Content-Length"))
                     elif self.header.get("Transfer-Encoding") == 'chunked':
                         self.chucked = True
-                        self.total = 100
+                        print("\033[01;31mchucked encoding is not supported here for now\033[00m")
+                        assert not self.chucked
                     break
                 index = partial.index(":")
                 key = partial[0: index].strip()
@@ -63,36 +77,8 @@ class SockFeed:
                 self.total = self.progressed = 1
                 return self.header
             left = temp.read()
-            if self.chucked and left:
-                left_io = cStringIO.StringIO(left)
-                size = int(left_io.readline().strip(), 16)
-                left = left_io.read(size)
-                read_still = True
-                while left and read_still:
-                    if self.file_handle:
-                        self.file_handle.write(left)
-                    else:
-                        self.data += left
-                    next_line = left_io.readline()
-                    if next_line and not next_line == '\r\n':
-                        size = int(next_line.strip(), 16)
-                        if size == 0:
-                            self.total = self.progressed = 100
-                            return
-                        left = left_io.read(size)
-                        if len(left) < size:
-                            read_still = False
-                    else:
-                        if len(left) < size:
-                            read_still = False
-                if left:
-                    self.chuck_left_size = len(left)
-                    if self.file_handle:
-                        self.file_handle.write(left)
-                    else:
-                        self.data += left
 
-            elif left:
+            if left:
                 if self.file_handle:
                     self.file_handle.write(left)
                 else:
@@ -101,59 +87,12 @@ class SockFeed:
                 self.progressed += len(left)
 
         else:
-            if self.chucked:
-                if not self.progressed == 100:
-                    self.progressed = random.randint(self.progressed, 98)
-                data = cStringIO.StringIO(data)
-                if self.chuck_left_size:
-                    last_left = data.read(self.chuck_left_size)
-                    if self.file_handle:
-                        self.file_handle.write(last_left)
-                    else:
-                        self.data += last_left
-
-                chuck_size = int(data.readline().strip(), 16)
-                if chuck_size == 0:
-                    self.progressed = self.total
-                    return
-                left = data.read(chuck_size)
-                read_still = True
-                while left and read_still:
-                    if self.file_handle:
-                        self.file_handle.write(left)
-                    else:
-                        self.data += left
-                    next_line = data.readline()
-                    if next_line and not next_line == '\r\n':
-                        size = int(next_line.strip(), 16)
-                        if size == 0:
-                            self.total = self.progressed = 100
-                            return
-                        left = data.read(size)
-                        if len(left) < size:
-                            read_still = False
-                    else:
-                        if len(left) < chuck_size:
-                            read_still = False
-
-                self.chuck_left_size = len(left) + 2
-                if left:
-                    if self.file_handle:
-                        self.file_handle.write(left)
-                    else:
-                        self.data += left
-
+            if self.file_handle:
+                self.file_handle.write(data)
+                self.progressed += len(data)
             else:
-                if self.last_stamp:
-                    temp = self.progressed / (time.time() - self.last_stamp)
-                    if temp > self.top_speed:
-                        self.top_speed = temp
-                if self.file_handle:
-                    self.file_handle.write(data)
-                    self.progressed += len(data)
-                else:
-                    self.data += data
-                    self.progressed += len(data)
+                self.data += data
+                self.progressed += len(data)
 
 
 class HTTPCons:
@@ -264,5 +203,3 @@ class URLNotComplete(Exception):
 
     def __str__(self):
         return "URL: {} missing {}".format(self.url, self.lack)
-
-
