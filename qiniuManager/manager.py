@@ -283,6 +283,9 @@ class Qiniu:
         feed = http.SockFeed(manager_check)
         feed.disable_progress = True
         feed.http_response()
+        if not feed.data:
+            print("no such file \033[01;31m{}\033[00m in \033[01;32m{}\033[00m".format(target, space))
+            return False
         data = json.loads(feed.data)
         if 'error' in data:
             print("Error Occur: \033[01;31m{}\033[00m".format(data['error']))
@@ -343,7 +346,7 @@ class Qiniu:
         feed = http.SockFeed(space_list, 10 * 1024)
         feed.http_response()
         if not feed.data:
-            print("No such space")
+            print("No such space as \033[01;31m{}\033[00m".format(space))
             return False, []
         data = json.loads(feed.data)
         if 'error' in data:
@@ -414,11 +417,12 @@ class Qiniu:
                            {'Authorization': 'UpToken {}'.format(self.pre_upload_info[3])},
                            data=','.join(self.block_status))
             feed = http.SockFeed(mkfile)
+            feed.disable_progress = True
             feed.http_response()
             data = json.loads(feed.data)
             # print data
             avg_speed = http.unit_change(self.progressed / (time.time() - self.start_stamp))
-            self.progressed = self.total = 1
+            self.progressed = self.total
             if data.get('key', '') == self.pre_upload_info[0]:
                 self.state = True
                 self.avg_speed = '{}/s'.format(avg_speed)
@@ -432,9 +436,11 @@ class Qiniu:
                       {'Authorization': 'UpToken {}'.format(self.pre_upload_info[3])},
                       data=data)
         feed = http.SockFeed(labor)
+        feed.disable_progress = True
         feed.http_response()
         # print feed.data
         self.block_status.append(json.loads(feed.data).get('ctx'))
         self.progressed += size
+        # print self.progressed, self.total
 
 
