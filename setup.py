@@ -4,7 +4,7 @@ from setuptools import setup
 reload(sys)
 sys.setdefaultencoding('utf8')
 __author__ = 'hellflame'
-__version__ = '1.2.4'
+__version__ = '1.2.5'
 
 setup(
     name='qiniuManager',

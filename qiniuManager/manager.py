@@ -191,18 +191,28 @@ class Qiniu:
             self.file_handle.close()
 
     @auth
+    def export_download_links(self, space=None):
+        if not space:
+            space, alias = self.config.get_default_space()
+
+        state, data = self.__get_list_in_space(space, mute=True)
+        if state:
+            for i in data:
+                print self.private_download_link(i['key'].encode('utf8'), space)
+
+    @auth
     def regular_download_link(self, target, space=None):
         if not space:
             space, alias = self.config.get_default_space()
         else:
-            space, alias = self.config.get_space(space)
+            temp_space, alias = self.config.get_space(space)
 
         if alias:
             host = "http://{}".format(alias)
         else:
             host = "http://{}.qiniudn.com".format(space)
-        link = "{}/{}".format(host, urllib.quote(target))
-        return link
+        # link = os.path.join(host, urllib.quote(target))
+        return os.path.join(host, urllib.quote(target))
 
     @auth
     def private_download_link(self, target, space=None):
@@ -334,12 +344,13 @@ class Qiniu:
             '·' * (30 - len('total')),
             http.unit_change(total_size)))
 
-    def __get_list_in_space(self, space):
+    def __get_list_in_space(self, space, mute=False):
         space_list = http.HTTPCons()
         url = self.list_host + '/list?bucket={}'.format(space)
         space_list.request(url,
                            headers={'Authorization': 'QBox {}'.format(self.auth.token_of_request(url))})
         feed = http.SockFeed(space_list, 10 * 1024)
+        feed.disable_progress = mute
         feed.http_response()
         if not feed.data:
             print("No such space as \033[01;31m{}\033[00m".format(space))

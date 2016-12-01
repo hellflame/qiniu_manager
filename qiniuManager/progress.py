@@ -18,7 +18,7 @@ def bar(width=0, fill='#'):
                         raise InvalidBar("Total Length Invalid !")
                     if not width:
                         try:
-                            w = int(os.popen("stty size").read().split(" ")[1])
+                            w = int(os.popen("stty size 2>/dev/null").read().split(" ")[1])
                         except Exception as e:
                             w = 50
                     else:

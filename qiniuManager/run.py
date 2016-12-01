@@ -4,7 +4,7 @@ import os
 import sys
 import manager
 
-__version__ = '1.2.4'
+__version__ = '1.2.5'
 
 short = {
     '--check': '-c',
@@ -19,7 +19,8 @@ short = {
     '--link': '-i',
     '--version': '-v',
     '--rename': '-n',
-    '--list-a': '-la'
+    '--list-a': '-la',
+    '--export': '-x'
     }
 
 map_target = {
@@ -35,7 +36,8 @@ map_target = {
     '--version': '当前版本号',
     '--rename': "重命名",
     '--r-space': "删除本地保存的空间名",
-    '--list-a': "显示本地已知所有空间文件列表"
+    '--list-a': "显示本地已知所有空间文件列表",
+    '--export': "导出默认或指定空间文件下载链接"
     }
 
 
@@ -49,6 +51,7 @@ def help_menu():
         print("  {},{}\t{}".format(i, short[i], map_target[i]))
     print("\n\033[01;31m首次使用\033[00m请设置密钥对 qiniu [--key|-k] <access key> <secret key>")
     print("必要情况下请设置默认空间名")
+    print "\n更多帮助信息\nhttps://github.com/hellflame/qiniu_manager/blob/v{}/README.md\n".format(__version__)
 
 
 def main():
@@ -65,6 +68,9 @@ def main():
                 # print("Qiniu SDK {}".format(manager.sdk_version))
             elif arg[0] in ('-h', '--help'):
                 help_menu()
+
+            elif arg[0] in ('-x', '--export'):
+                qiniu.export_download_links()
 
             elif arg[0] in ('-rs', '--r-space'):
                 print("请手动指定将要从本地删除的空间名")
@@ -111,6 +117,9 @@ def main():
         elif argv_len == 3:
             if arg[0] in ('-c', '--check'):
                 qiniu.check(arg[1])
+
+            elif arg[0] in ('-x', '--export'):
+                qiniu.export_download_links(arg[1])
 
             elif arg[0] in ('-l', '--list'):
                 qiniu.list(arg[1])
