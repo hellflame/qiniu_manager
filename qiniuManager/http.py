@@ -1,9 +1,9 @@
 # coding=utf8
-import socket
 import cStringIO
 import progress
-import ssl
+import socket
 import time
+import ssl
 import os
 
 
@@ -23,7 +23,6 @@ class SockFeed:
         self.top_speed = 0
         self.chucked = False
         self.title = ''
-        self.chuck_left_size = 0
 
         self.file_handle = None
 
@@ -41,7 +40,8 @@ class SockFeed:
                 file_index += 1
 
             self.file_handle = open(path_choice, 'wb')
-            self.title = file_path
+            self.title = path_choice
+            # print("\033[01;31m{}\033[00m Downloading".format(path_choice))
         # while True:
         data = self.socket.recv(self.chuck_size)
         temp = cStringIO.StringIO(data)
@@ -153,7 +153,7 @@ class HTTPCons:
 """
         if not headers:
             head = """Host: {}\r\n""".format(self.host)
-            head += "User-Agent: Chrome/52.0.2743.116 Safari/537.36"
+            head += "User-Agent: HELLFLAME"
         else:
             head = ""
             for i in headers:
@@ -161,7 +161,7 @@ class HTTPCons:
             if 'Host' not in headers:
                 head += """Host: {}\r\n""".format(self.host)
             if 'User-Agent' not in headers:
-                head += "User-Agent: Chrome/52.0.2743.116 Safari/537.36\r\n"
+                head += "User-Agent: HELLFLAME\r\n"
         if method == 'POST':
             if data and type(data) == str:
                 # upload for one time

@@ -1,6 +1,5 @@
 # coding=utf8
 import os
-import sys
 import time
 import json
 import random
@@ -9,13 +8,10 @@ import sqlite3
 import hashlib
 import progress
 
-from qiniu import Auth, __version__ as sdk_version
-from qiniu.utils import urlsafe_base64_encode
+# from qiniu import Auth, __version__ as sdk_version
+from utils import urlsafe_base64_encode, Auth
 
 import http
-
-reload(sys)
-sys.setdefaultencoding('utf8')
 
 
 def db_ok(function):
@@ -23,7 +19,7 @@ def db_ok(function):
         if self.db and self.cursor:
             return function(self, *args, **kwargs)
         else:
-            print "Failed To Access {}, please check you authority".format(self.config_path).title()
+            print ("Failed To Access {}, please check you authority".format(self.config_path).title())
             return ''
     return func_wrapper
 
@@ -33,7 +29,7 @@ def access_ok(function):
         if self.access and self.secret:
             return function(self, *args, **kwargs)
         else:
-            print "Please Set At Lease one pair of usable access and secret".title()
+            print ("Please Set At Lease one pair of usable access and secret".title())
             return ''
     return access_wrap
 
@@ -45,7 +41,7 @@ def auth(function):
         else:
             self.get_auth()
             if not self.auth:
-                print "failed to initialize the authorization".title()
+                print ("failed to initialize the authorization".title())
                 return ''
             else:
                 return function(*args, **kwargs)
@@ -87,7 +83,7 @@ class Config:
                                 "alias VARCHAR(50) NOT NULL DEFAULT '',"
                                 "as_default INTEGER NOT NULL DEFAULT 0)".format(self.SPACE_ALIAS))
         except Exception as e:
-            print e
+            print(e)
 
     @db_ok
     def get_one_access(self):
@@ -221,7 +217,7 @@ class Qiniu:
         downloader.request(link)
         feed = http.SockFeed(downloader, 5 * 1024 * 1024)
         start = time.time()
-        feed.http_response(target)
+        feed.http_response(os.path.basename(target))
         if not feed.http_code == 200:
             print("\033[01;31m{}\033[00m not exist !".format(target))
             return False
@@ -329,7 +325,7 @@ class Qiniu:
             if state:
                 if data:
                     print("\033[01;32m{}\033[00m".format(i[0]))
-                    for target in data:
+                    for target in sorted(data, key=lambda x: x['putTime'], reverse=True):
                         print("  {}  {}  {}".format(target['key'], '·' * (30 - len(b'{}'.format(target['key']))),
                                                     http.unit_change(target['fsize'])))
                         total_size += target['fsize']
@@ -396,7 +392,8 @@ class Qiniu:
         # mime_type = self.get_mime_type(path)
         md5 = get_md5(path)
         self.file_handle = open(path, 'rb')
-        self.title = file_name
+        # self.title = file_name
+        print file_name
         self.total = os.stat(path).st_size + 2
         self.progressed = 0
         self.pre_upload_info = (file_name, md5, space,

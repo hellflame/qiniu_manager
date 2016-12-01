@@ -4,7 +4,7 @@ import os
 import sys
 import manager
 
-__version__ = '1.2.3'
+__version__ = '1.2.4'
 
 short = {
     '--check': '-c',
@@ -62,7 +62,7 @@ def main():
         if argv_len == 2:
             if arg[0] in ('-v', '--version'):
                 print("Qiniu Manager {}".format(__version__))
-                print("Qiniu SDK {}".format(manager.sdk_version))
+                # print("Qiniu SDK {}".format(manager.sdk_version))
             elif arg[0] in ('-h', '--help'):
                 help_menu()
 
@@ -100,8 +100,8 @@ def main():
                         print("\033[01;31m{}\033[00m upload in \033[01;32m{}\033[00m @\033[01;32m{}\033[00m"
                               .format(
                                os.path.basename(target),
-                               qiniu.avg_speed,
-                               qiniu.config.get_default_space()[0]
+                               qiniu.config.get_default_space()[0],
+                               qiniu.avg_speed
                               ))
                     else:
                         print("\033[01;31m{}\033[00m uploaded \033[01;31mFailed\033[00m !!".
@@ -144,7 +144,8 @@ def main():
                             print("\033[01;31m{}\033[00m upload in \033[01;32m{}\033[00m @\033[01;32m{}\033[00m".
                                   format(os.path.basename(target), arg[1], qiniu.avg_speed))
                         else:
-                            print("\033[01;31m{}\033[00m upload FAILED, check the space name or network".format(os.path.basename(target)))
+                            print("\033[01;31m{}\033[00m upload FAILED, check the space name or network".format(
+                                os.path.basename(target)))
                     else:
                         print("space {} not exist, use qiniu -s {} to add it".format(arg[1], arg[1]))
                 else:
@@ -173,7 +174,8 @@ def main():
 
             elif arg[0] in ('-s', '--space'):
                 qiniu.config.set_space(arg[1], arg[2])
-                print("space \033[01;31m{}\033[00m now has the alias domain \033[01;31m{}\033[00m".format(arg[1], arg[2]))
+                print("space \033[01;31m{}\033[00m now has the alias domain \033[01;31m{}\033[00m".format(arg[1],
+                                                                                                          arg[2]))
 
             elif arg[0] in ('-n', '--rename'):
                 qiniu.rename(arg[1], arg[2])
