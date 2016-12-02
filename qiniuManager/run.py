@@ -4,7 +4,7 @@ import os
 import sys
 import manager
 
-__version__ = '1.2.5'
+__version__ = '1.2.6'
 
 short = {
     '--check': '-c',
@@ -48,7 +48,7 @@ def help_menu():
     print("  qiniu [option] <file name> [space]\t对云空间中文件进行操作")
     print("  qiniu [--key|-k] <access key> <secret key>\t设置密钥\n")
     for i in map_target:
-        print("  {},{}\t{}".format(i, short[i], map_target[i]))
+        print("  {},{}\t\t{}".format(i, short[i], map_target[i]))
     print("\n\033[01;31m首次使用\033[00m请设置密钥对 qiniu [--key|-k] <access key> <secret key>")
     print("必要情况下请设置默认空间名")
     print "\n更多帮助信息\nhttps://github.com/hellflame/qiniu_manager/blob/v{}/README.md\n".format(__version__)
@@ -195,8 +195,26 @@ def main():
             if arg[0] in ('-n', '--rename'):
                 qiniu.rename(arg[1], arg[2], arg[3])
 
+            elif arg[0] in ('-d', '--download'):
+                if arg[2] in ('-t', '--directory'):
+                    if not os.path.exists(arg[3]):
+                        print "target path \033[01;31m{}\033[00m not exist".format(arg[3])
+                    else:
+                        qiniu.download(arg[1], None, directory=arg[3])
+                else:
+                    help_menu()
             else:
                 help_menu()
+        elif argv_len == 6:
+            if arg[0] in ('-d', '--download'):
+                if arg[-2] in ('-t', '--directory'):
+                    if not os.path.exists(arg[-1]):
+                        print "target path \033[01;31m{}\033[00m not exist".format(arg[-1])
+                    else:
+                        qiniu.download(arg[1], arg[2], arg[-1])
+                else:
+                    help_menu()
+
         else:
             help_menu()
 

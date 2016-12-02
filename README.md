@@ -19,26 +19,26 @@ Usage:
   qiniu [option] <file name> [space]	对云空间中文件进行操作
   qiniu [--key|-k] <access key> <secret key>	设置密钥
 
-  --version,-v	当前版本号
-  --space,-s	修改或查看当前空间名
-  --remove,-r	删除云文件
-  --private,-p	返回私有文件下载链接
-  --export,-x	导出默认或指定空间文件下载链接
-  --download,-d	下载文件
-  --list-a,-la	显示本地已知所有空间文件列表
-  --check,-c	查看文件状态
-  --rename,-n	重命名
-  --key,-k	修改或查看access key，secret key
-  --link,-i	返回开放云空间文件下载链接
-  --list,-l	文件列表
-  --r-space,-rs	删除本地保存的空间名
-  --help,-h	帮助
+  --version,-v		当前版本号
+  --space,-s		修改或查看当前空间名
+  --remove,-r		删除云文件
+  --private,-p		返回私有文件下载链接
+  --export,-x		导出默认或指定空间文件下载链接
+  --download,-d		下载文件
+  --list-a,-la		显示本地已知所有空间文件列表
+  --check,-c		查看文件状态
+  --rename,-n		重命名
+  --key,-k		修改或查看access key，secret key
+  --link,-i		返回开放云空间文件下载链接
+  --list,-l		文件列表
+  --r-space,-rs		删除本地保存的空间名
+  --help,-h		帮助
 
 首次使用请设置密钥对 qiniu [--key|-k] <access key> <secret key>
 必要情况下请设置默认空间名
 
 更多帮助信息
-https://github.com/hellflame/qiniu_manager/blob/v1.2.5/README.md
+https://github.com/hellflame/qiniu_manager/blob/v1.2.6/README.md
 
 ```
 
@@ -165,7 +165,7 @@ https://github.com/hellflame/qiniu_manager/blob/v1.2.5/README.md
 
 ![finished](https://static.hellflame.net/resource/a51952d5e39ab3c3308fced9ed79db1a)
 
-如果崩溃的话，还是老老实实`wget url -O <filename>`好了
+如果崩溃的话，还是老老实实`wget url -O <filename>`或者`wget --content-disposition url`好了
 
 这部分在调整了下载缓存大小并且优化了保存时候的状态判断之后，基本上能够独立使用了，不过这部分的http报文处理部分舍弃了对于chucked编码的支持
 
@@ -178,6 +178,15 @@ https://github.com/hellflame/qiniu_manager/blob/v1.2.5/README.md
 关于chuncked编码的处理，也许在另一个项目中会继续处理，这里的话，就暂时跳过好了
 
 对于chucked编码，总有一种这是某个人心血来潮想出来的方案，服务器倒是很方便了，每次想要生产多少数据就生产多少数据，为什么就不能在上一次生产数据之后把下一次将要生产的数据的大小的字符串的长度也一起记录进去呢？这样至少我知道下一次需要接收多少字节作为下一个块，甚至知道更下一个块的长度信息，这么做起来真的很难么
+
++ `v1.2.6`中添加指定下载目录的支持
+
+```bash
+	qiniu -d <target file> -t <dir> # 在当前默认空间(bucket)中下载<dir>/<target file>
+	qiniu -d <target file> <space name> -t <dir> # 下载<space name>中的文件到<dir>/<target file>
+```
+
+新的支持基本上就是在原来的下载指令后面接上指定目录的操作；在执行操作之前，程序会预先判断指定的目录<dir>是否存在，如果不存在的话，将放弃进一步操作。同样，如果下载的文件名中包含`/`等特殊字符的，文件最终会保存为实际文件名
 
 ##### vi.删除
 
@@ -356,6 +365,14 @@ qiniuManager现在同时只能运行一个实例，因为manager从用户家目�
 +	v1.2.5
 
 	增加导出默认空间或指定空间内所有文件链接的支持；帮助菜单中引入本`README`文件所在链接；获取文件列表方法支持无进度条配置(暂无终端支持)；progress bar获取终端宽度时的异常重定向
+
++	v1.2.6
+
+	允许下载时指定下载目录，不过会跟很长的指令就是了，虽然一开始并不想添加这个支持的，但是想了想如果放进`cron`里定时执行的话，除非导出下载链接，然后用其他命令下载文件外，直接download的话，系统的默认目录一定不会是操作者想要的，这样的需求作者在某些时候也是需要的，并且这样也会方便一些；帮助菜单显示调整；修复上传文件时七牛的不规范的锅导致的返回报文实体为空的异常
+
+
+
+
 
 
 

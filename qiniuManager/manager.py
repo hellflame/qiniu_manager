@@ -221,13 +221,17 @@ class Qiniu:
         return private_link
 
     @auth
-    def download(self, target, space=None):
+    def download(self, target, space=None, directory=None):
+        if directory:
+            save_path = os.path.join(directory, os.path.basename(target))
+        else:
+            save_path = os.path.basename(target)
         link = self.private_download_link(target, space)
         downloader = http.HTTPCons()
         downloader.request(link)
         feed = http.SockFeed(downloader, 5 * 1024 * 1024)
         start = time.time()
-        feed.http_response(os.path.basename(target))
+        feed.http_response(save_path)
         if not feed.http_code == 200:
             print("\033[01;31m{}\033[00m not exist !".format(target))
             return False
@@ -369,20 +373,10 @@ class Qiniu:
         except:
             self.auth = None
 
-    @staticmethod
-    def get_mime_type(abs_path):
-        try:
-            return os.popen("file -b --mime-type {}".format(abs_path)).read()
-        except Exception:
-            return 'application/octet-stream'
-
     def __make_url(self, path, **kwargs):
         url = list(['{0}/mkfile/{1}'.format(self.pre_upload_info[-1], os.stat(path).st_size)])
-        # add key
         key = os.path.basename(path)
         url.append('key/{0}'.format(urlsafe_base64_encode(key)))
-        # get_mime_type method makes sure the mime-type is not None
-        # url.append('mimeType/{0}'.format(urlsafe_base64_encode(self.get_mime_type(path))))
         url.append('fname/{0}'.format(urlsafe_base64_encode(key)))
 
         if kwargs:
@@ -427,6 +421,9 @@ class Qiniu:
             feed = http.SockFeed(mkfile)
             feed.disable_progress = True
             feed.http_response()
+            if not feed.data:
+                self.progressed = self.total
+                return False
             data = json.loads(feed.data)
             # print data
             avg_speed = http.unit_change(self.progressed / (time.time() - self.start_stamp))
