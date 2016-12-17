@@ -370,10 +370,39 @@ qiniuManager现在同时只能运行一个实例，因为manager从用户家目�
 
 	允许下载时指定下载目录，不过会跟很长的指令就是了，虽然一开始并不想添加这个支持的，但是想了想如果放进`cron`里定时执行的话，除非导出下载链接，然后用其他命令下载文件外，直接download的话，系统的默认目录一定不会是操作者想要的，这样的需求作者在某些时候也是需要的，并且这样也会方便一些；帮助菜单显示调整；修复上传文件时七牛的不规范的锅导致的返回报文实体为空的异常
 
++   v1.2.7
 
-
-
-
+    API切换为https接口
+    
+    本来以为只是把http换成https辣么简单的事情，后来发现七牛服务器的https证书貌似只有一份，也就是只对应了`qbox.me`，对于文件列表以及操作来说，接口链接直接换成https就好了，但是对于上传接口`up.qiniu.com`，直接换成https会报一个莫名其妙的错误(这是我在一开始写https测试的时候会遇到的错误)
+    
+    ![ssl.CertificateError](https://static.hellflame.net/resource/cd85b0deda8a4a4ef6f7a16b7533aa5e)
+    
+    然后如果在https连接初始化在server_check的时候将hostname换成`qbox.me`，便也能够正常使用
+    很明显`up.qiniu.com`和`up.qbox.me`对应着同一个后台
+    
+    后来发现，貌似这个上传接口链接是有另一个接口来获取的，通过这个接口获取到了如下内容
+    
+    ```
+    {
+    	"ttl":86400,
+    	"http":{
+    		"io":["http://iovip.qbox.me"],
+    		"up":["http://up.qiniu.com","http://upload.qiniu.com","-H up.qiniu.com http://183.136.139.16"]},
+    	"https":{
+    		"io":["https://iovip.qbox.me"],
+    		"up":["https://up.qbox.me"]
+    		}
+    }
+    ```
+    
+    所以原来https和http的接口的确有一点不一样的样子
+    
+    ![](https://static.hellflame.net/resource/4c5aa93ea010e6a721322e01339b1ba4)
+    
+    SDK中将这个json文件默认存在了临时目录，不知道有没有人报了类似的错误，但是直接这样存储的话，可能存在两个文件权限互不开放导致无法读取或者写入的情况，就比如，如果是root用户先创建了`/tmp/.qiniu_pythonsdk_hostscache.json`，普通用户就不能覆盖这个文件了捏，要是root用户不允许其他用户read，那么基本上整个程序又会从这里崩溃了吧，曾经在做终端字符打印的图片缓存的时候就遇到这样的问题(我是怎么想的要用root用户打印字符玩，，，，)。这里更妥善一点的做法是在这个文件名上面跟上用户名或者用户id，这些都是能在py里面获取的吧
+    
+    不过在这个项目中我并没有类似的烦恼，因为接口什么的，应该很少变动的，更何况这是接口的域名诶，要是这个都变了，那一定是发生了什么大事了，嗯，一定是酱紫的
 
 
 

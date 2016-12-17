@@ -182,8 +182,8 @@ class Qiniu:
 
         # API restrict
         self.R_BLOCK_SIZE = 4 * 1024 * 1024
-        self.list_host = "http://rsf.qbox.me"
-        self.manager_host = 'http://rs.qbox.me'
+        self.list_host = "https://rsf.qbox.me"
+        self.manager_host = 'https://rs.qbox.me'
         self.get_auth()
 
     def __del__(self):
@@ -402,7 +402,7 @@ class Qiniu:
         self.total = os.stat(path).st_size + 2
         self.progressed = 0
         self.pre_upload_info = (file_name, md5, space,
-                                token, 0, 'http://up.qiniu.com')
+                                token, 0, 'https://up.qbox.me')
         self.prepared = True
 
     @progress.bar(100)
