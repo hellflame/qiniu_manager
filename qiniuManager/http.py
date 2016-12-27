@@ -50,7 +50,7 @@ class SockFeed:
             return self.data
 
         if not self.head or not self.header:
-            self.head = temp.readline()
+            self.head = temp.readline().strip()
             self.http_code = int(self.head.split(" ")[1])
             if not self.http_code == 200:
                 self.total = self.progressed = 1
@@ -96,9 +96,10 @@ class SockFeed:
 
 
 class HTTPCons:
-    def __init__(self):
+    def __init__(self, debug=False):
         self.host = ''
         self.port = 0
+        self.is_debug = debug
         self.connect = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 
     def https_init(self, host, port):
@@ -177,9 +178,10 @@ class HTTPCons:
 
                 for i in post_data:
                     href += '{}={}&'.format(i, post_data[i])
-        head += "\r\n"
+        # head += "\r\n"
         data = data.format(method=method, href=href, headers=head)
-        # print data, 'EOL'
+        if self.is_debug:
+            print data
         self.connect.sendall(data)
 
     def __del__(self):

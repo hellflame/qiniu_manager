@@ -19,26 +19,28 @@ Usage:
   qiniu [option] <file name> [space]	对云空间中文件进行操作
   qiniu [--key|-k] <access key> <secret key>	设置密钥
 
-  --version,-v		当前版本号
-  --space,-s		修改或查看当前空间名
-  --remove,-r		删除云文件
   --private,-p		返回私有文件下载链接
+  --remove,-r		删除云文件
   --export,-x		导出默认或指定空间文件下载链接
   --download,-d		下载文件
   --list-a,-la		显示本地已知所有空间文件列表
   --check,-c		查看文件状态
+  --space,-s		修改或查看当前空间名
   --rename,-n		重命名
+  --list-ex,-le		显示请求空间文件列表http报文
   --key,-k		修改或查看access key，secret key
   --link,-i		返回开放云空间文件下载链接
+  --check-e,-ce		显示请求文件状态的http报文
   --list,-l		文件列表
   --r-space,-rs		删除本地保存的空间名
+  --version,-v		当前版本号
   --help,-h		帮助
 
 首次使用请设置密钥对 qiniu [--key|-k] <access key> <secret key>
 必要情况下请设置默认空间名
 
 更多帮助信息
-https://github.com/hellflame/qiniu_manager/blob/v1.2.6/README.md
+https://github.com/hellflame/qiniu_manager/blob/v1.2.8/README.md
 
 ```
 
@@ -403,6 +405,23 @@ qiniuManager现在同时只能运行一个实例，因为manager从用户家目�
     SDK中将这个json文件默认存在了临时目录，不知道有没有人报了类似的错误，但是直接这样存储的话，可能存在两个文件权限互不开放导致无法读取或者写入的情况，就比如，如果是root用户先创建了`/tmp/.qiniu_pythonsdk_hostscache.json`，普通用户就不能覆盖这个文件了捏，要是root用户不允许其他用户read，那么基本上整个程序又会从这里崩溃了吧，曾经在做终端字符打印的图片缓存的时候就遇到这样的问题(我是怎么想的要用root用户打印字符玩，，，，)。这里更妥善一点的做法是在这个文件名上面跟上用户名或者用户id，这些都是能在py里面获取的吧
     
     不过在这个项目中我并没有类似的烦恼，因为接口什么的，应该很少变动的，更何况这是接口的域名诶，要是这个都变了，那一定是发生了什么大事了，嗯，一定是酱紫的
+
++	v1.2.8
+
+	提供部分接口的调试信息选项，包括list和check两个方法
+	
+	提供这个方法的主要原因还是API接口响应的不够明确，或者是qiniumanager在开发时偷的懒，没有去一一对应http返回码的错误(我也的确没有找到类似的文档信息)
+	
+	如果七牛的API接口能在返回的数据中包含错误原因什么的话，我也应该不需要这个显示整个http请求到响应的报文方法，因为很多报错的返回仅仅是http返回码的不同，我也并没有找到相关的说明，于是为了方便跟官方反馈，我把整个http请求到响应都给你看看，总没有话说是我代码写错了吧
+	
+	最近发现的问题便是海外请求https的list接口时，会报502错误(bad gateway)，这样的错误的话，一般是nginx后端代理的服务器无法正常响应的结果
+	
+	![bad gateway](https://static.hellflame.net/resource/011d81b67aa49bb7afb139ed41965205)
+
+	同样的接口，如果换成http请求的话，就不会有问题了，这个问题虽然已经跟官方提交过反馈了，但是目前为止，这个问题依然还是存在的样子，虽然并不影响上传功能的样子，不过，都给我报502错误了，怎么能保证不出现其他更严重的问题额
+	
+	传统意义上来看的话，500以上的错误都算是严重错误了，虽然七牛的api中还有600+的错误，，好吧，，毕竟不是我的API接口，开发者开心就好
+
 
 
 

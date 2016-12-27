@@ -4,7 +4,7 @@ import os
 import sys
 import manager
 
-__version__ = '1.2.7'
+__version__ = '1.2.8'
 
 short = {
     '--check': '-c',
@@ -20,7 +20,9 @@ short = {
     '--version': '-v',
     '--rename': '-n',
     '--list-a': '-la',
-    '--export': '-x'
+    '--export': '-x',
+    '--list-ex': '-le',
+    '--check-e': "-ce"
     }
 
 map_target = {
@@ -37,7 +39,9 @@ map_target = {
     '--rename': "重命名",
     '--r-space': "删除本地保存的空间名",
     '--list-a': "显示本地已知所有空间文件列表",
-    '--export': "导出默认或指定空间文件下载链接"
+    '--export': "导出默认或指定空间文件下载链接",
+    '--list-ex': "显示请求空间文件列表http报文",
+    '--check-e': "显示请求文件状态的http报文"
     }
 
 
@@ -65,7 +69,6 @@ def main():
         if argv_len == 2:
             if arg[0] in ('-v', '--version'):
                 print("Qiniu Manager {}".format(__version__))
-                # print("Qiniu SDK {}".format(manager.sdk_version))
             elif arg[0] in ('-h', '--help'):
                 help_menu()
 
@@ -80,6 +83,9 @@ def main():
 
             elif arg[0] in ('-l', '--list'):
                 qiniu.list()
+
+            elif arg[0] in ('-le', '--list-ex'):
+                qiniu.list(is_debug=True)
 
             elif arg[0] in ('-s', '--space'):
                 data = qiniu.config.get_default_space()
@@ -118,11 +124,17 @@ def main():
             if arg[0] in ('-c', '--check'):
                 qiniu.check(arg[1])
 
+            elif arg[0] in ('-ce', '--check-e'):
+                qiniu.check(arg[1], is_debug=True)
+
             elif arg[0] in ('-x', '--export'):
                 qiniu.export_download_links(arg[1])
 
             elif arg[0] in ('-l', '--list'):
                 qiniu.list(arg[1])
+
+            elif arg[0] in ('-le', '--list-ex'):
+                qiniu.list(arg[1], is_debug=True)
 
             elif arg[0] in ('-s', '--space'):
                 qiniu.config.set_space(arg[1])
@@ -168,6 +180,9 @@ def main():
 
             elif arg[0] in ('-c', '--check'):
                 qiniu.check(arg[1], arg[2])
+
+            elif arg[0] in ('-ce', '--check-e'):
+                qiniu.check(arg[1], arg[2], is_debug=True)
 
             elif arg[0] in ('-r', '--remove'):
                 qiniu.remove(arg[1], arg[2])

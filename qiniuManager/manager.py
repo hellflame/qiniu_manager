@@ -221,17 +221,19 @@ class Qiniu:
         return private_link
 
     @auth
-    def download(self, target, space=None, directory=None):
+    def download(self, target, space=None, directory=None, is_debug=False):
         if directory:
             save_path = os.path.join(directory, os.path.basename(target))
         else:
             save_path = os.path.basename(target)
         link = self.private_download_link(target, space)
-        downloader = http.HTTPCons()
+        downloader = http.HTTPCons(is_debug)
         downloader.request(link)
         feed = http.SockFeed(downloader, 5 * 1024 * 1024)
         start = time.time()
         feed.http_response(save_path)
+        if is_debug:
+            print feed.header
         if not feed.http_code == 200:
             print("\033[01;31m{}\033[00m not exist !".format(target))
             return False
@@ -242,7 +244,7 @@ class Qiniu:
                       http.unit_change(size / (end - start))))
 
     @auth
-    def rename(self, target, to_target, space=None):
+    def rename(self, target, to_target, space=None, is_debug=False):
         """I don't want to move files between buckets,
         so you can not move file to different bucket by default"""
         if not space:
@@ -283,16 +285,22 @@ class Qiniu:
             print("\033[01;31m{}\033[00m DELETED from \033[01;32m{}\033[00m".format(target, space))
 
     @auth
-    def check(self, target, space=None):
+    def check(self, target, space=None, is_debug=False):
         if not space:
             space = self.config.get_default_space()[0]
-        manager_check = http.HTTPCons()
+        manager_check = http.HTTPCons(is_debug)
         url = self.manager_host + '/stat/{}'.format(urlsafe_base64_encode("{}:{}".format(space, target)))
         manager_check.request(url,
                               headers={'Authorization': 'QBox {}'.format(self.auth.token_of_request(url))})
         feed = http.SockFeed(manager_check)
         feed.disable_progress = True
         feed.http_response()
+        if is_debug:
+            print '{}\n'.format(feed.head)
+            for i in feed.header:
+                print "{} : {}".format(i, feed.header[i])
+
+            print '\n{}'.format(feed.data), "\n"
         if not feed.data:
             print("no such file \033[01;31m{}\033[00m in \033[01;32m{}\033[00m".format(target, space))
             return False
@@ -308,10 +316,10 @@ class Qiniu:
                                                       time.localtime(data['putTime']/10000000))))
 
     @auth
-    def list(self, space=None):
+    def list(self, space=None, is_debug=False):
         if not space:
             space = self.config.get_default_space()[0]
-        state, data = self.__get_list_in_space(space)
+        state, data = self.__get_list_in_space(space, is_debug=is_debug)
 
         if state and data:
             total_size = 0
@@ -348,14 +356,20 @@ class Qiniu:
             '·' * (30 - len('total')),
             http.unit_change(total_size)))
 
-    def __get_list_in_space(self, space, mute=False):
-        space_list = http.HTTPCons()
+    def __get_list_in_space(self, space, mute=False, is_debug=False):
+        space_list = http.HTTPCons(is_debug)
         url = self.list_host + '/list?bucket={}'.format(space)
         space_list.request(url,
                            headers={'Authorization': 'QBox {}'.format(self.auth.token_of_request(url))})
         feed = http.SockFeed(space_list, 10 * 1024)
         feed.disable_progress = mute
         feed.http_response()
+        if is_debug:
+            print '{}\n'.format(feed.head)
+            for i in feed.header:
+                print "{} : {}".format(i, feed.header[i])
+
+            print '\n', feed.data
         if not feed.data:
             print("No such space as \033[01;31m{}\033[00m".format(space))
             return False, []
