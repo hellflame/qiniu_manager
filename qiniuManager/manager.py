@@ -249,7 +249,7 @@ class Qiniu:
         so you can not move file to different bucket by default"""
         if not space:
             space = self.config.get_default_space()[0]
-        manager_rename = http.HTTPCons()
+        manager_rename = http.HTTPCons(debug=is_debug)
         url = self.manager_host + '/move/{}/{}/force/false'.format(
             urlsafe_base64_encode("{}:{}".format(space, target)),
             urlsafe_base64_encode("{}:{}".format(space, to_target))

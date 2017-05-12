@@ -4,7 +4,7 @@ import os
 import sys
 import manager
 
-__version__ = '1.2.8'
+__version__ = '1.3.0'
 
 short = {
     '--check': '-c',
@@ -22,7 +22,9 @@ short = {
     '--list-a': '-la',
     '--export': '-x',
     '--list-ex': '-le',
-    '--check-e': "-ce"
+    '--check-e': "-ce",
+    '--ddebug': '-dd',
+    '--drename': '-dr'
     }
 
 map_target = {
@@ -30,13 +32,15 @@ map_target = {
     '--list': '文件列表',
     '--key': '修改或查看access key，secret key',
     '--space': '修改或查看当前空间名',
-    '--help': '帮助',
+    '--help': '显示当前帮助页面',
     '--remove': '删除云文件',
     '--download': '下载文件',
+    '--ddebug': "调试下载",
     '--private': '返回私有文件下载链接',
     '--link': '返回开放云空间文件下载链接',
     '--version': '当前版本号',
     '--rename': "重命名",
+    '--drename': "调试重命名",
     '--r-space': "删除本地保存的空间名",
     '--list-a': "显示本地已知所有空间文件列表",
     '--export': "导出默认或指定空间文件下载链接",
@@ -150,6 +154,9 @@ def main():
             elif arg[0] in ('-d', '--download'):
                 qiniu.download(arg[1])
 
+            elif arg[0] in ('-dd', '--ddebug'):
+                qiniu.download(arg[1], is_debug=True)
+
             elif arg[0] in ('-p', '--private'):
                 print(qiniu.private_download_link(arg[1]))
 
@@ -190,6 +197,9 @@ def main():
             elif arg[0] in ('-d', '--download'):
                 qiniu.download(arg[1], arg[2])
 
+            elif arg[0] in ('-dd', '--ddebug'):
+                qiniu.download(arg[1], arg[2], is_debug=True)
+
             elif arg[0] in ('-p', '--private'):
                 print(qiniu.private_download_link(arg[1], arg[2]))
 
@@ -204,11 +214,17 @@ def main():
             elif arg[0] in ('-n', '--rename'):
                 qiniu.rename(arg[1], arg[2])
 
+            elif arg[0] in ('-dr', '--drename'):
+                qiniu.rename(arg[1], arg[2], is_debug=True)
+
             else:
                 help_menu()
         elif argv_len == 5:
             if arg[0] in ('-n', '--rename'):
                 qiniu.rename(arg[1], arg[2], arg[3])
+
+            elif arg[0] in ('--drename', '-dr'):
+                qiniu.rename(arg[1], arg[2], arg[3], is_debug=True)
 
             elif arg[0] in ('-d', '--download'):
                 if arg[2] in ('-t', '--directory'):

@@ -178,7 +178,7 @@ class HTTPCons:
 
                 for i in post_data:
                     href += '{}={}&'.format(i, post_data[i])
-        # head += "\r\n"
+        head += "\r\n"
         data = data.format(method=method, href=href, headers=head)
         if self.is_debug:
             print data

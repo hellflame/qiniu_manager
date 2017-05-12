@@ -4,7 +4,7 @@ from setuptools import setup
 reload(sys)
 sys.setdefaultencoding('utf8')
 __author__ = 'hellflame'
-__version__ = '1.2.8'
+__version__ = '1.3.0'
 
 setup(
     name='qiniuManager',
@@ -20,12 +20,13 @@ setup(
     ],
     platforms="UNIX like",
     classifiers=[
-        'Development Status :: 4 - Beta',
+        'Development Status :: 5 - Production/Stable',
         'Intended Audience :: Developers',
         'License :: OSI Approved :: MIT License',
         "Environment :: Console",
         "Operating System :: MacOS",
         "Operating System :: MacOS :: MacOS X",
+        "Operating System :: POSIX",
         "Operating System :: POSIX :: Linux",
         'Programming Language :: Python :: 2.7'
     ],
