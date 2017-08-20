@@ -7,7 +7,7 @@ import ssl
 import os
 
 
-class SockFeed:
+class SockFeed(object):
     def __init__(self, httpConnection, chuck=1024):
         self.socket = httpConnection.connect
         self.buffer = None
@@ -95,7 +95,7 @@ class SockFeed:
                 self.progressed += len(data)
 
 
-class HTTPCons:
+class HTTPCons(object):
     def __init__(self, debug=False):
         self.host = ''
         self.port = 0

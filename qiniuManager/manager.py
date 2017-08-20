@@ -59,7 +59,7 @@ def get_md5(path):
         raise IOError
 
 
-class Config:
+class Config(object):
     def __init__(self):
         self.config_path = os.path.join(os.path.expanduser("~"), '.qiniu.sql')
         self.db = None
@@ -160,7 +160,7 @@ class Config:
             self.db.close()
 
 
-class Qiniu:
+class Qiniu(object):
     """Single Line"""
     def __init__(self):
         self.config = Config()

@@ -6,6 +6,7 @@
 
 ```bash
 $ sudo pip install qiniumanager --upgrade
+
 ```
 
 > Mac OS 如果出现权限问题，则可用以下方法安装，可执行脚本路径在
@@ -13,6 +14,7 @@ $ sudo pip install qiniumanager --upgrade
 
 ```bash
 $ pip install qiniumanager --upgrade --user
+
 ```
 
 ### 七牛云存储 Qiniu Manager
@@ -48,7 +50,8 @@ Usage:
 必要情况下请设置默认空间名
 
 更多帮助信息
-https://github.com/hellflame/qiniu_manager/blob/v1.3.2/README.md
+https://github.com/hellflame/qiniu_manager/blob/v1.3.3/README.md
+
 ```
 
 ### 具体操作
@@ -56,8 +59,9 @@ https://github.com/hellflame/qiniu_manager/blob/v1.3.2/README.md
 #### 显示帮助信息方式
 
 ```bash
-    qiniu
-    qiniu -v # QiniuManager 版本以及SDK版本
+$ qiniu
+$ qiniu -v # QiniuManager 版本以及SDK版本
+
 ```
 
 #### 基本设置
@@ -65,8 +69,9 @@ https://github.com/hellflame/qiniu_manager/blob/v1.3.2/README.md
 ##### i.密钥设置
 
 ```bash
-    qiniu -k <access key> <secret key>  
-    qiniu -k # 显示密钥对
+$ qiniu -k <access key> <secret key>  
+$ qiniu -k # 显示密钥对
+
 ```
 
 ![这里的AK及SK](https://static.hellflame.net/resource/5ccf929aae10fc0fb5a26a63c28e6d45)
@@ -74,9 +79,10 @@ https://github.com/hellflame/qiniu_manager/blob/v1.3.2/README.md
 ##### ii.空间设置(bucket)
 
 ```bash
-    qiniu -s share # 可以省略测试域名
-    qiniu -s share 7xqh1q.dl1.z0.glb.clouddn.com
-    qiniu -s # 显示空间信息(bucket)
+$ qiniu -s share # 可以省略测试域名
+$ qiniu -s share 7xqh1q.dl1.z0.glb.clouddn.com
+$ qiniu -s # 显示空间信息(bucket)
+
 ```
 
 ![space & alias](https://static.hellflame.net/resource/e506e9787b0a693da3a4d5be381b28ad)
@@ -90,7 +96,8 @@ https://github.com/hellflame/qiniu_manager/blob/v1.3.2/README.md
 ##### iii.删除本地保存的空间信息
 
 ```bash
-    qiniu -rs <space name> # 尝试删除空间名为<space name>的空间信息
+$ qiniu -rs <space name> # 尝试删除空间名为<space name>的空间信息
+
 ```
 
 该操作仅仅针对本地数据库，并不会影响实际空间的存在；如果删除一个并没有保存进本地数据库的空间名并不会报错，因为在执行SQL语句之前并没有判断该空间名是否存在于数据库(~/.qiniu.sql)中，如果被删除的空间是默认空间的话，需要再一次手动指定默认空间，否则默认空间为空
@@ -100,8 +107,9 @@ https://github.com/hellflame/qiniu_manager/blob/v1.3.2/README.md
 ##### i.上传
 
 ```bash
-    qiniu <file to upload> # 上传文件到默认空间(bucket)
-    qiniu <file to upload> <space name> # 上传文件到空间<space name>
+$ qiniu <file to upload> # 上传文件到默认空间(bucket)
+$ qiniu <file to upload> <space name> # 上传文件到空间<space name>
+
 ```
 
 这里如果没有设置默认空间名的话，上传结束之后会报错显示不存在这个bucket(空间)，因为如果获取不到默认空间名的话，空间名就是`''`(空字符串)，如果上传指定的空间不存在的话，也会报同样的错误
@@ -117,14 +125,16 @@ https://github.com/hellflame/qiniu_manager/blob/v1.3.2/README.md
 默认按照上传时间先后逆排序
 
 ```bash
-    qiniu -l # 显示当前空间(bucket)文件列表
-    qiniu -l backup # 显示`backup`中的文件列表
+$ qiniu -l # 显示当前空间(bucket)文件列表
+$ qiniu -l backup # 显示`backup`中的文件列表
+
 ```
 
 可以显示已经保存下来的所有空间的文件列表总表，这里的已知空间可以通过`qiniu -s`查看空间列表信息
 
 ```bash
-    qiniu -la # 显示已知所有空间的文件列表
+$ qiniu -la # 显示已知所有空间的文件列表
+
 ```
 
 在显示的时候其实有一个问题，就是非英文字符在终端打印时所占的宽度与英文字符宽度不同(应该是等宽字体并不包含其他语言文字的缘故)，导致排版略错乱
@@ -138,9 +148,11 @@ https://github.com/hellflame/qiniu_manager/blob/v1.3.2/README.md
 这个模式存在的意义在于让这个请求到响应过程都清晰明了
 
 ```bash 
-    # 显示列表操作的HTTP发起请求到获取的整个HTTP响应
-    qiniu -le 
-    qiniu -le <bucket name> # 空间名称
+# 显示列表操作的HTTP发起请求到获取的整个HTTP响应
+
+$ qiniu -le 
+$ qiniu -le <bucket name> # 空间名称
+
 ```
 
 调试结果的可能返回界面
@@ -152,8 +164,9 @@ https://github.com/hellflame/qiniu_manager/blob/v1.3.2/README.md
 对于文件名中存在空格或者其他特殊符号的情况，用引号将目标文件名包裹起来就好了，在以下其他地方也适用
 
 ```bash
-    qiniu -c <filename> # 显示当前空间(bucket)中<filename>的信息(讲真这个信息炒鸡简略)
-    qiniu -c <filename> <space name> # 显示<space name>这个空间(bucket)中<filename>的信息
+$ qiniu -c <filename> # 显示当前空间(bucket)中<filename>的信息(讲真这个信息炒鸡简略)
+$ qiniu -c <filename> <space name> # 显示<space name>这个空间(bucket)中<filename>的信息
+
 ```
 
 ![qiniu -c](https://static.hellflame.net/resource/ffcf828ae54effbb8bb3e669b43db2ec)
@@ -163,8 +176,9 @@ https://github.com/hellflame/qiniu_manager/blob/v1.3.2/README.md
 > 这里存在一个可调式的模式调用
 
 ```bash
-    qiniu -ce <filename>
-    qiniu -ce <filename> <space name>
+$ qiniu -ce <filename>
+$ qiniu -ce <filename> <space name>
+
 ```
 
 调试结果的可能返回界面
@@ -174,12 +188,13 @@ https://github.com/hellflame/qiniu_manager/blob/v1.3.2/README.md
 ##### iv.获取下载链接
 
 ```bash
-    # 获取开放空间的有效链接
-    qiniu -i <filename> # 获取当前空间(bucket)中<filename>的下载链接
-    qiniu -i <filename> <space name> # 获取<space name>中<filename>的下载链接
-    # 获取私有空间的有效链接(expire 3600)
-    qiniu -p <filename> # 获取当前空间(bucket)中<filename>的私有下载链接,开放空间返回的链接可下载，但不会被expire限制可下载时间
-    qiniu -p <filename> <space name># 获取<space name>中<filename>的私有下载链接，开放空间返回的链接可下载，但不会被expire限制可下载时间
+# 获取开放空间的有效链接
+$ qiniu -i <filename> # 获取当前空间(bucket)中<filename>的下载链接
+$ qiniu -i <filename> <space name> # 获取<space name>中<filename>的下载链接
+# 获取私有空间的有效链接(expire 3600)
+$ qiniu -p <filename> # 获取当前空间(bucket)中<filename>的私有下载链接,开放空间返回的链接可下载，但不会被expire限制可下载时间
+$ qiniu -p <filename> <space name># 获取<space name>中<filename>的私有下载链接，开放空间返回的链接可下载，但不会被expire限制可下载时间
+
 ```
 
 如果不知道该空间是否为私有空间，直接用`qiniu -p <target>`获取的链接将保证对于开放空间以及私有空间都有效，前提是能够正确设置空间的测试域名(对于作者这样的免费用户而言)。对于一个只有测试域名的空间来说，这个测试域名也是唯一有效的域名，必须将这个域名通过`-s`参数绑定给这个空间，否则下载链接将不可用
@@ -191,8 +206,9 @@ https://github.com/hellflame/qiniu_manager/blob/v1.3.2/README.md
 ##### v.下载
 
 ```bash
-    qiniu -d <filename> # 下载当前空间(bucket)中的<filename>
-    qiniu -d <filename> <space name> # 下载<space name>空间(bucket)中的<filename>
+$ qiniu -d <filename> # 下载当前空间(bucket)中的<filename>
+$ qiniu -d <filename> <space name> # 下载<space name>空间(bucket)中的<filename>
+
 ```
 
 下载的文件存储在当前目录，与空间中文件名相同，如果当前目录存在同名文件，将用后缀的形式区分新下载的文件和旧文件，当判断文档不存在时，并不会下载空间的默认处理方式，而是报告404错误
@@ -220,8 +236,9 @@ https://github.com/hellflame/qiniu_manager/blob/v1.3.2/README.md
 - `v1.2.6`中添加指定下载目录的支持
 
 ```bash
-    qiniu -d <target file> -t <dir> # 在当前默认空间(bucket)中下载<dir>/<target file>
-    qiniu -d <target file> <space name> -t <dir> # 下载<space name>中的文件到<dir>/<target file>
+$ qiniu -d <target file> -t <dir> # 在当前默认空间(bucket)中下载<dir>/<target file>
+$ qiniu -d <target file> <space name> -t <dir> # 下载<space name>中的文件到<dir>/<target file>
+
 ```
 
 新的支持基本上就是在原来的下载指令后面接上指定目录的操作；在执行操作之前，程序会预先判断指定的目录`<dir>`是否存在，如果不存在的话，将放弃进一步操作。同样，如果下载的文件名中包含`/`等特殊字符的，文件最终会保存为实际文件名
@@ -229,8 +246,9 @@ https://github.com/hellflame/qiniu_manager/blob/v1.3.2/README.md
 - `v1.3.0`中添加了调试命令的支持
 
 ```bash
-    qiniu -dd <filename>
-    qiniu -dd <filename> <space name>
+$ qiniu -dd <filename>
+$ qiniu -dd <filename> <space name>
+
 ```
 
 可能的响应结果如下
@@ -240,8 +258,9 @@ https://github.com/hellflame/qiniu_manager/blob/v1.3.2/README.md
 ##### vi.删除
 
 ```bash
-    qiniu -r <filename> # 删除当前空间(bucket)中的<filename>
-    qiniu -r <filename> <space name> # 删除<space name>空间(bucket)中的<filename>
+$ qiniu -r <filename> # 删除当前空间(bucket)中的<filename>
+$ qiniu -r <filename> <space name> # 删除<space name>空间(bucket)中的<filename>
+
 ```
 
 想要吐槽的是，无论是七牛SDK的返回值规范性还是七牛服务器的返回值的规范性都不是很一致（与自己所认为的规范性不是很一致）
@@ -261,8 +280,9 @@ https://github.com/hellflame/qiniu_manager/blob/v1.3.2/README.md
 ##### vii.重命名
 
 ```bash
-    qiniu -n <target file> <to file> # 将当前空间中的<target file>重命名为<to file>
-    qiniu -n <target file> <to file> <space name> # 将<space name>空间中的<target file>重命名为<space name>空间中的<to file>
+$ qiniu -n <target file> <to file> # 将当前空间中的<target file>重命名为<to file>
+$ qiniu -n <target file> <to file> <space name> # 将<space name>空间中的<target file>重命名为<space name>空间中的<to file>
+
 ```
 
 ![sdk move](https://static.hellflame.net/resource/45dfd760b9d4dcf54ecd6ea81f32b8a1)
@@ -280,8 +300,9 @@ https://github.com/hellflame/qiniu_manager/blob/v1.3.2/README.md
 - `v1.3.0` 新增调试支持
 
 ```bash
-    qiniu -dr <filename> <another name>
-    qiniu -dr <filename> <another name> <space name>
+$ qiniu -dr <filename> <another name>
+$ qiniu -dr <filename> <another name> <space name>
+
 ```
 
 调试结果的可能返回界面
@@ -291,8 +312,9 @@ https://github.com/hellflame/qiniu_manager/blob/v1.3.2/README.md
 ##### viii.批量导出下载链接及相关操作
 
 ```bash
-    qiniu -x # 导出当前空间(bucket)中的所有文件链接
-    qiniu -x <space name> # 导出<space name>空间中的所有文件链接
+$ qiniu -x # 导出当前空间(bucket)中的所有文件链接
+$ qiniu -x <space name> # 导出<space name>空间中的所有文件链接
+
 ```
 
 若空间中不存在任何文件的话，导出内容将为空，并且没有提示信息；若空间不存在，则会报错提示不存在该空间
@@ -300,8 +322,9 @@ https://github.com/hellflame/qiniu_manager/blob/v1.3.2/README.md
 导出链接默认为添加了`1h`时长安全凭证的链接，过期后不影响开放空间的正常访问，私有空间将受影响。输出以文本方式输出到终端，若想要导出到某一文件，请用重定向
 
 ```bash
-    qiniu -x > target.txt
-    qiniu -x <space name> > target.txt
+$ qiniu -x > target.txt
+$ qiniu -x <space name> > target.txt
+
 ```
 
 批量链接将存放在`target.txt`中
@@ -311,21 +334,22 @@ https://github.com/hellflame/qiniu_manager/blob/v1.3.2/README.md
 `wget`
 
 ```bash
-    # default list
-    qiniu -x | xargs -n1 wget --content-disposition
+# default list
+qiniu -x | xargs -n1 wget --content-disposition
     
-    # target list
-    qiniu -x <space name> | xargs -n1 wget --content-disposition
+# target list
+qiniu -x <space name> | xargs -n1 wget --content-disposition
+
 ```
 
 or `curl`
 
 ```bash
-    # default list
-    qiniu -x | xargs -n1 curl -J -O
+# default list
+$ qiniu -x | xargs -n1 curl -J -O
     
-    # target list
-    qiniu -x <space name> | xargs -n1 curl -J -O
+# target list
+$ qiniu -x <space name> | xargs -n1 curl -J -O
     
 ```
 
@@ -419,17 +443,17 @@ qiniuManager现在同时只能运行一个实例，因为manager从用户家目�
 
   进度条显示优化，并且应付七牛云接口不规范的锅出现的问题(。。。。。。这才过了多久，接口就变了，这还是一个对外接口应该有的作为么，，在我看来这并不是一个小事故。我开始猜测七牛云内部是不是还有手动拼接SQL语句这样的行为了，维护这些个接口的人真是不幸)
 
-  +v1.2.4
+- v1.2.4
 
   取消qiniu SDK依赖，从文件导入所需方法(这并不是卸磨杀驴，在引用代码中已经包含原项目LICENSE声明)，本来这部分独立出来是为了兼容py3(调用SDK之后`requests`内部会报错，为了省去麻烦，反正自己也只使用了SDK中生成安全凭证的部分)，但是后来发现py3中对于字符串的处理挺繁琐的，各种bytes, str不通用，底层socket的send参数也变成了`bytes`，越修改越觉得烦，本以为py3能够对于编码以及字符串问题友好一些，但是最终发现各种类型之间转换起来真是心累，于是最终也就没有做py3兼容了。总之，`只要七牛云服务器端的接口不发生变动，整个程序就能正常运行起来`；优化下载时文件名判断，防止由于文件名中包含特殊符号，下载到其他位置去了，如类似`_log/whatever/2016-11-29/whatever.qiniudn.com_part-00000.gz`这样的文件名，下载时将以有效文件名`whatever.qiniudn.com_part-00000.gz`(顺便吐槽一下貌似这个日志文件内容就是Nginx日志的样子......)存储在当前目录，暂不支持下载目录选择(没有合适的地方来选择这个参数)；总列表按照时间分别逆序排序；
 
   对于我这样懒得在print后面加括号的人来说，py3已经很烦了，如果在我加完括号之后依然各种编码问题的话，我还是直接放弃py3好了，毕竟py3里并没有太多让我期待的新特性，py2最大的编码问题也有解决方案
 
-  +v1.2.5
+- v1.2.5
 
   增加导出默认空间或指定空间内所有文件链接的支持；帮助菜单中引入本`README`文件所在链接；获取文件列表方法支持无进度条配置(暂无终端支持)；progress bar获取终端宽度时的异常重定向
 
-  +v1.2.6
+- v1.2.6
 
   允许下载时指定下载目录，不过会跟很长的指令就是了，虽然一开始并不想添加这个支持的，但是想了想如果放进`cron`里定时执行的话，除非导出下载链接，然后用其他命令下载文件外，直接download的话，系统的默认目录一定不会是操作者想要的，这样的需求作者在某些时候也是需要的，并且这样也会方便一些；帮助菜单显示调整；修复上传文件时七牛的不规范的锅导致的返回报文实体为空的异常
 
@@ -467,7 +491,7 @@ qiniuManager现在同时只能运行一个实例，因为manager从用户家目�
 
   不过在这个项目中我并没有类似的烦恼，因为接口什么的，应该很少变动的，更何况这是接口的域名诶，要是这个都变了，那一定是发生了什么大事了，嗯，一定是酱紫的
 
-  +v1.2.8
+- v1.2.8
 
   提供部分接口的调试信息选项，包括list和check两个方法
 
@@ -502,4 +526,12 @@ qiniuManager现在同时只能运行一个实例，因为manager从用户家目�
   在**等宽字体**环境中，将中文、日文和韩文字符以及全角英文、数字等字符的宽度假定为ASCII字符宽度的两倍(大多数情况下应该都是没问题的)
 
   ![等宽字体终端中的uft8和ascii](https://static.hellflame.net/resource/01d94c49c30ebb803f60f03b55ffea30)
+
+- v1.3.3
+
+  旧式类替换为新式类，以免谁多继承出什么问题(谁竟然还在多继承!)
+
+  版本更新放到下一次有什么问题了再累计发布好了=.=
+
+  (unreleased on pypi)
 
