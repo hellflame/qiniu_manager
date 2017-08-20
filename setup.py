@@ -4,12 +4,12 @@ from setuptools import setup
 reload(sys)
 sys.setdefaultencoding('utf8')
 __author__ = 'hellflame'
-__version__ = '1.3.1'
+__version__ = '1.3.2'
 
 setup(
     name='qiniuManager',
     version=__version__,
-    keywords=('qiniu', 'qiniu manager', 'terminal command'),
+    keywords=('qiniu', 'qiniu manager'),
     description="终端管理七牛云空间",
     license="MIT",
     author=__author__,

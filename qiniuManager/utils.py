@@ -44,6 +44,17 @@ from base64 import urlsafe_b64encode
 reload(sys)
 sys.setdefaultencoding('utf8')
 
+def str_len(s):
+    # string length adjust for monospaced fonts
+    l = 0
+    for i in s:
+        # Chinese,Japanese,Korean character utf8 range
+        if ord(i) >= 2048 and ord(i) <= 65535:
+            l += 2
+        else:
+            l += 1
+    return l
+
 
 def b(data):
     return bytes(data)

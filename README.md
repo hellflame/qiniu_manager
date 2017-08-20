@@ -48,7 +48,7 @@ Usage:
 必要情况下请设置默认空间名
 
 更多帮助信息
-https://github.com/hellflame/qiniu_manager/blob/v1.3.1/README.md
+https://github.com/hellflame/qiniu_manager/blob/v1.3.2/README.md
 ```
 
 ### 具体操作
@@ -495,4 +495,11 @@ qiniuManager现在同时只能运行一个实例，因为manager从用户家目�
 
 - v1.3.1
 
-  尝试修复python2.7.9以下导致的`AttributeError: 'module' object has no attribute 'SSLContext'` , [错误提示](https://github.com/hellflame/qiniu_manager/issues/1) , 方案来自于 [ssl 'module' object has no attribute 'SSLContext'](https://stackoverflow.com/questions/28228214/ssl-module-object-has-no-attribute-sslcontext)，由于个人没有该版本python，所以就试试看了
+  尝试修复python2.7.9以下导致的`AttributeError: 'module' object has no attribute 'SSLContext'` , [错误提示](https://github.com/hellflame/qiniu_manager/issues/1) , 方案来自于 [ssl 'module' object has no attribute 'SSLContext'](https://stackoverflow.com/questions/28228214/ssl-module-object-has-no-attribute-sslcontext)，由于个人没有该版本python，所以就试试看了。
+
+- v1.3.2
+
+  在**等宽字体**环境中，将中文、日文和韩文字符以及全角英文、数字等字符的宽度假定为ASCII字符宽度的两倍(大多数情况下应该都是没问题的)
+
+  ![等宽字体终端中的uft8和ascii](https://static.hellflame.net/resource/01d94c49c30ebb803f60f03b55ffea30)
+

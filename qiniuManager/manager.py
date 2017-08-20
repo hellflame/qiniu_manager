@@ -9,7 +9,7 @@ import hashlib
 import progress
 
 # from qiniu import Auth, __version__ as sdk_version
-from utils import urlsafe_base64_encode, Auth
+from utils import urlsafe_base64_encode, Auth, str_len
 
 import http
 
@@ -325,7 +325,7 @@ class Qiniu:
             total_size = 0
             print("\033[01;32m{}\033[00m".format(space))
             for i in sorted(data, key=lambda x: x['putTime'], reverse=True):
-                print("  {}  {}  {}".format(i['key'], '·' * (30 - len(b'{}'.format(i['key']))), http.unit_change(i['fsize'])))
+                print("  {}  {}  {}".format(i['key'], '·' * (30 - str_len(unicode(i['key']))), http.unit_change(i['fsize'])))
                 total_size += i['fsize']
             print("\n  \033[01;31m{}\033[00m  \033[01;32m{}\033[00m  \033[01;31m{}\033[00m".format(
                 'Total',
@@ -348,7 +348,7 @@ class Qiniu:
                 if data:
                     print("\033[01;32m{}\033[00m".format(i[0]))
                     for target in sorted(data, key=lambda x: x['putTime'], reverse=True):
-                        print("  {}  {}  {}".format(target['key'], '·' * (30 - len(b'{}'.format(target['key']))),
+                        print("  {}  {}  {}".format(target['key'], '·' * (30 - str_len(unicode(target['key']))),
                                                     http.unit_change(target['fsize'])))
                         total_size += target['fsize']
         print("\n  \033[01;31m{}\033[00m  \033[01;32m{}\033[00m  \033[01;31m{}\033[00m".format(
