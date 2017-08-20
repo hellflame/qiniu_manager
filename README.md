@@ -8,42 +8,47 @@
     $ sudo pip install qiniumanager --upgrade
 ```
 
+> Mac OS 如果出现权限问题，则可用以下方法安装，可执行脚本路径在
+> /Users/<username>/Library/Python/2.7/bin/
+
+```
+$ pip install qiniumanager --upgrade --user
+```
+
 ### 七牛云存储 Qiniu Manager
 
 ```
-
 七牛云存储 Qiniu Manager
 
 Usage:
-  qiniu <your file> [space]		选择文件位置上传，指定空间名或使用默认空间名
-  qiniu [option] <file name> [space]	对云空间中文件进行操作
-  qiniu [--key|-k] <access key> <secret key>	设置密钥
+  qiniu <your file> [space]     选择文件位置上传，指定空间名或使用默认空间名
+  qiniu [option] <file name> [space]    对云空间中文件进行操作
+  qiniu [--key|-k] <access key> <secret key>    设置密钥
 
-  --drename,-dr		调试重命名
-  --private,-p		返回私有文件下载链接
-  --remove,-r		删除云文件
-  --export,-x		导出默认或指定空间文件下载链接
-  --download,-d		下载文件
-  --ddebug,-dd		调试下载
-  --list-a,-la		显示本地已知所有空间文件列表
-  --check,-c		查看文件状态
-  --space,-s		修改或查看当前空间名
-  --rename,-n		重命名
-  --list-ex,-le		显示请求空间文件列表http报文
-  --key,-k		修改或查看access key，secret key
-  --link,-i		返回开放云空间文件下载链接
-  --check-e,-ce		显示请求文件状态的http报文
-  --list,-l		文件列表
-  --r-space,-rs		删除本地保存的空间名
-  --version,-v		当前版本号
-  --help,-h		显示当前帮助页面
+  --drename,-dr     调试重命名
+  --private,-p      返回私有文件下载链接
+  --remove,-r       删除云文件
+  --export,-x       导出默认或指定空间文件下载链接
+  --download,-d     下载文件
+  --ddebug,-dd      调试下载
+  --list-a,-la      显示本地已知所有空间文件列表
+  --check,-c        查看文件状态
+  --space,-s        修改或查看当前空间名
+  --rename,-n       重命名
+  --list-ex,-le     显示请求空间文件列表http报文
+  --key,-k      修改或查看access key，secret key
+  --link,-i     返回开放云空间文件下载链接
+  --check-e,-ce     显示请求文件状态的http报文
+  --list,-l     文件列表
+  --r-space,-rs     删除本地保存的空间名
+  --version,-v      当前版本号
+  --help,-h     显示当前帮助页面
 
 首次使用请设置密钥对 qiniu [--key|-k] <access key> <secret key>
 必要情况下请设置默认空间名
 
 更多帮助信息
-https://github.com/hellflame/qiniu_manager/blob/v1.3.0/README.md
-
+https://github.com/hellflame/qiniu_manager/blob/v1.3.1/README.md
 ```
 
 ### 具体操作
@@ -51,16 +56,17 @@ https://github.com/hellflame/qiniu_manager/blob/v1.3.0/README.md
 #### 显示帮助信息方式
 
 ```bash
-	qiniu
-	qiniu -v # QiniuManager 版本以及SDK版本
+    qiniu
+    qiniu -v # QiniuManager 版本以及SDK版本
 ```
 
 #### 基本设置
 
 ##### i.密钥设置
+
 ```bash
-	qiniu -k <access key> <secret key>	
-	qiniu -k # 显示密钥对
+    qiniu -k <access key> <secret key>  
+    qiniu -k # 显示密钥对
 ```
 
 ![这里的AK及SK](https://static.hellflame.net/resource/5ccf929aae10fc0fb5a26a63c28e6d45)
@@ -68,9 +74,9 @@ https://github.com/hellflame/qiniu_manager/blob/v1.3.0/README.md
 ##### ii.空间设置(bucket)
 
 ```bash
-	qiniu -s share # 可以省略测试域名
-	qiniu -s share 7xqh1q.dl1.z0.glb.clouddn.com
-	qiniu -s # 显示空间信息(bucket)
+    qiniu -s share # 可以省略测试域名
+    qiniu -s share 7xqh1q.dl1.z0.glb.clouddn.com
+    qiniu -s # 显示空间信息(bucket)
 ```
 
 ![space & alias](https://static.hellflame.net/resource/e506e9787b0a693da3a4d5be381b28ad)
@@ -84,19 +90,18 @@ https://github.com/hellflame/qiniu_manager/blob/v1.3.0/README.md
 ##### iii.删除本地保存的空间信息
 
 ```bash
-	qiniu -rs <space name> # 尝试删除空间名为<space name>的空间信息
+    qiniu -rs <space name> # 尝试删除空间名为<space name>的空间信息
 ```
 
 该操作仅仅针对本地数据库，并不会影响实际空间的存在；如果删除一个并没有保存进本地数据库的空间名并不会报错，因为在执行SQL语句之前并没有判断该空间名是否存在于数据库(~/.qiniu.sql)中，如果被删除的空间是默认空间的话，需要再一次手动指定默认空间，否则默认空间为空
-
 
 #### 基本操作
 
 ##### i.上传
 
 ```bash
-	qiniu <file to upload> # 上传文件到默认空间(bucket)
-	qiniu <file to upload> <space name> # 上传文件到空间<space name>
+    qiniu <file to upload> # 上传文件到默认空间(bucket)
+    qiniu <file to upload> <space name> # 上传文件到空间<space name>
 ```
 
 这里如果没有设置默认空间名的话，上传结束之后会报错显示不存在这个bucket(空间)，因为如果获取不到默认空间名的话，空间名就是`''`(空字符串)，如果上传指定的空间不存在的话，也会报同样的错误
@@ -112,14 +117,14 @@ https://github.com/hellflame/qiniu_manager/blob/v1.3.0/README.md
 默认按照上传时间先后逆排序
 
 ```bash
-	qiniu -l # 显示当前空间(bucket)文件列表
-	qiniu -l backup # 显示`backup`中的文件列表
+    qiniu -l # 显示当前空间(bucket)文件列表
+    qiniu -l backup # 显示`backup`中的文件列表
 ```
 
 可以显示已经保存下来的所有空间的文件列表总表，这里的已知空间可以通过`qiniu -s`查看空间列表信息
 
 ```bash
-	qiniu -la # 显示已知所有空间的文件列表
+    qiniu -la # 显示已知所有空间的文件列表
 ```
 
 在显示的时候其实有一个问题，就是非英文字符在终端打印时所占的宽度与英文字符宽度不同(应该是等宽字体并不包含其他语言文字的缘故)，导致排版略错乱
@@ -133,9 +138,9 @@ https://github.com/hellflame/qiniu_manager/blob/v1.3.0/README.md
 这个模式存在的意义在于让这个请求到响应过程都清晰明了
 
 ```bash 
-	# 显示列表操作的HTTP发起请求到获取的整个HTTP响应
-	qiniu -le 
-	qiniu -le <bucket name> # 空间名称
+    # 显示列表操作的HTTP发起请求到获取的整个HTTP响应
+    qiniu -le 
+    qiniu -le <bucket name> # 空间名称
 ```
 
 调试结果的可能返回界面
@@ -147,36 +152,34 @@ https://github.com/hellflame/qiniu_manager/blob/v1.3.0/README.md
 对于文件名中存在空格或者其他特殊符号的情况，用引号将目标文件名包裹起来就好了，在以下其他地方也适用
 
 ```bash
-	qiniu -c <filename> # 显示当前空间(bucket)中<filename>的信息(讲真这个信息炒鸡简略)
-	qiniu -c <filename> <space name> # 显示<space name>这个空间(bucket)中<filename>的信息
+    qiniu -c <filename> # 显示当前空间(bucket)中<filename>的信息(讲真这个信息炒鸡简略)
+    qiniu -c <filename> <space name> # 显示<space name>这个空间(bucket)中<filename>的信息
 ```
 
 ![qiniu -c](https://static.hellflame.net/resource/ffcf828ae54effbb8bb3e669b43db2ec)
 
 好吧，总觉得这些信息甚至都没有这个文件被下载或者引用的次数什么的，意义看上去不是太大的样子。顺便一说，这里服务器返回的文件上传时间被'精确'了10000000倍，好吧，这里应该说至少精确了1000倍(到达毫秒级)，剩下的应该是随机值吧(自己做的静态文件服务器也有类似的处理)，因为实际上我只觉得秒级别对于普通用户而言已经很精确了
 
-
 > 这里存在一个可调式的模式调用
 
 ```bash
-	qiniu -ce <filename>
-	qiniu -ce <filename> <space name>
+    qiniu -ce <filename>
+    qiniu -ce <filename> <space name>
 ```
 
 调试结果的可能返回界面
 
 ![响应结果](https://static.hellflame.net/resource/c29bde23662503d278ba215ca8f63fc8)
 
-
 ##### iv.获取下载链接
 
 ```bash
-	# 获取开放空间的有效链接
-	qiniu -i <filename> # 获取当前空间(bucket)中<filename>的下载链接
-	qiniu -i <filename> <space name> # 获取<space name>中<filename>的下载链接
-	# 获取私有空间的有效链接(expire 3600)
-	qiniu -p <filename> # 获取当前空间(bucket)中<filename>的私有下载链接,开放空间返回的链接可下载，但不会被expire限制可下载时间
-	qiniu -p <filename> <space name># 获取<space name>中<filename>的私有下载链接，开放空间返回的链接可下载，但不会被expire限制可下载时间
+    # 获取开放空间的有效链接
+    qiniu -i <filename> # 获取当前空间(bucket)中<filename>的下载链接
+    qiniu -i <filename> <space name> # 获取<space name>中<filename>的下载链接
+    # 获取私有空间的有效链接(expire 3600)
+    qiniu -p <filename> # 获取当前空间(bucket)中<filename>的私有下载链接,开放空间返回的链接可下载，但不会被expire限制可下载时间
+    qiniu -p <filename> <space name># 获取<space name>中<filename>的私有下载链接，开放空间返回的链接可下载，但不会被expire限制可下载时间
 ```
 
 如果不知道该空间是否为私有空间，直接用`qiniu -p <target>`获取的链接将保证对于开放空间以及私有空间都有效，前提是能够正确设置空间的测试域名(对于作者这样的免费用户而言)。对于一个只有测试域名的空间来说，这个测试域名也是唯一有效的域名，必须将这个域名通过`-s`参数绑定给这个空间，否则下载链接将不可用
@@ -188,8 +191,8 @@ https://github.com/hellflame/qiniu_manager/blob/v1.3.0/README.md
 ##### v.下载
 
 ```bash
-	qiniu -d <filename> # 下载当前空间(bucket)中的<filename>
-	qiniu -d <filename> <space name> # 下载<space name>空间(bucket)中的<filename>
+    qiniu -d <filename> # 下载当前空间(bucket)中的<filename>
+    qiniu -d <filename> <space name> # 下载<space name>空间(bucket)中的<filename>
 ```
 
 下载的文件存储在当前目录，与空间中文件名相同，如果当前目录存在同名文件，将用后缀的形式区分新下载的文件和旧文件，当判断文档不存在时，并不会下载空间的默认处理方式，而是报告404错误
@@ -214,20 +217,20 @@ https://github.com/hellflame/qiniu_manager/blob/v1.3.0/README.md
 
 对于chucked编码，总有一种这是某个人心血来潮想出来的方案，服务器倒是很方便了，每次想要生产多少数据就生产多少数据，为什么就不能在上一次生产数据之后把下一次将要生产的数据的大小的字符串的长度也一起记录进去呢？这样至少我知道下一次需要接收多少字节作为下一个块，甚至知道更下一个块的长度信息，这么做起来真的很难么
 
-+ `v1.2.6`中添加指定下载目录的支持
+- `v1.2.6`中添加指定下载目录的支持
 
 ```bash
-	qiniu -d <target file> -t <dir> # 在当前默认空间(bucket)中下载<dir>/<target file>
-	qiniu -d <target file> <space name> -t <dir> # 下载<space name>中的文件到<dir>/<target file>
+    qiniu -d <target file> -t <dir> # 在当前默认空间(bucket)中下载<dir>/<target file>
+    qiniu -d <target file> <space name> -t <dir> # 下载<space name>中的文件到<dir>/<target file>
 ```
 
 新的支持基本上就是在原来的下载指令后面接上指定目录的操作；在执行操作之前，程序会预先判断指定的目录`<dir>`是否存在，如果不存在的话，将放弃进一步操作。同样，如果下载的文件名中包含`/`等特殊字符的，文件最终会保存为实际文件名
 
-+ `v1.3.0`中添加了调试命令的支持
+- `v1.3.0`中添加了调试命令的支持
 
 ```bash
-	qiniu -dd <filename>
-	qiniu -dd <filename> <space name>
+    qiniu -dd <filename>
+    qiniu -dd <filename> <space name>
 ```
 
 可能的响应结果如下
@@ -237,8 +240,8 @@ https://github.com/hellflame/qiniu_manager/blob/v1.3.0/README.md
 ##### vi.删除
 
 ```bash
-	qiniu -r <filename> # 删除当前空间(bucket)中的<filename>
-	qiniu -r <filename> <space name> # 删除<space name>空间(bucket)中的<filename>
+    qiniu -r <filename> # 删除当前空间(bucket)中的<filename>
+    qiniu -r <filename> <space name> # 删除<space name>空间(bucket)中的<filename>
 ```
 
 想要吐槽的是，无论是七牛SDK的返回值规范性还是七牛服务器的返回值的规范性都不是很一致（与自己所认为的规范性不是很一致）
@@ -258,8 +261,8 @@ https://github.com/hellflame/qiniu_manager/blob/v1.3.0/README.md
 ##### vii.重命名
 
 ```bash
-	qiniu -n <target file> <to file> # 将当前空间中的<target file>重命名为<to file>
-	qiniu -n <target file> <to file> <space name> # 将<space name>空间中的<target file>重命名为<space name>空间中的<to file>
+    qiniu -n <target file> <to file> # 将当前空间中的<target file>重命名为<to file>
+    qiniu -n <target file> <to file> <space name> # 将<space name>空间中的<target file>重命名为<space name>空间中的<to file>
 ```
 
 ![sdk move](https://static.hellflame.net/resource/45dfd760b9d4dcf54ecd6ea81f32b8a1)
@@ -274,24 +277,22 @@ https://github.com/hellflame/qiniu_manager/blob/v1.3.0/README.md
 
 我是不是应该也把这个叫做不规范讷
 
-+ `v1.3.0` 新增调试支持
-
+- `v1.3.0` 新增调试支持
 
 ```bash
-	qiniu -dr <filename> <another name>
-	qiniu -dr <filename> <another name> <space name>
+    qiniu -dr <filename> <another name>
+    qiniu -dr <filename> <another name> <space name>
 ```
 
 调试结果的可能返回界面
 
 ![响应结果](https://static.hellflame.net/resource/19b48a9635f5ea0502938f6b9bd4cacb)
 
-
 ##### viii.批量导出下载链接及相关操作
 
 ```bash
-	qiniu -x # 导出当前空间(bucket)中的所有文件链接
-	qiniu -x <space name> # 导出<space name>空间中的所有文件链接
+    qiniu -x # 导出当前空间(bucket)中的所有文件链接
+    qiniu -x <space name> # 导出<space name>空间中的所有文件链接
 ```
 
 若空间中不存在任何文件的话，导出内容将为空，并且没有提示信息；若空间不存在，则会报错提示不存在该空间
@@ -299,8 +300,8 @@ https://github.com/hellflame/qiniu_manager/blob/v1.3.0/README.md
 导出链接默认为添加了`1h`时长安全凭证的链接，过期后不影响开放空间的正常访问，私有空间将受影响。输出以文本方式输出到终端，若想要导出到某一文件，请用重定向
 
 ```bash
-	qiniu -x > target.txt
-	qiniu -x <space name> > target.txt
+    qiniu -x > target.txt
+    qiniu -x <space name> > target.txt
 ```
 
 批量链接将存放在`target.txt`中
@@ -310,26 +311,26 @@ https://github.com/hellflame/qiniu_manager/blob/v1.3.0/README.md
 `wget`
 
 ```bash
-	# default list
-	qiniu -x | xargs -n1 wget --content-disposition
-	
-	# target list
-	qiniu -x <space name> | xargs -n1 wget --content-disposition
+    # default list
+    qiniu -x | xargs -n1 wget --content-disposition
+    
+    # target list
+    qiniu -x <space name> | xargs -n1 wget --content-disposition
 ```
 
 or `curl`
 
 ```bash
-	# default list
-	qiniu -x | xargs -n1 curl -J -O
-	
-	# target list
-	qiniu -x <space name> | xargs -n1 curl -J -O
-	
+    # default list
+    qiniu -x | xargs -n1 curl -J -O
+    
+    # target list
+    qiniu -x <space name> | xargs -n1 curl -J -O
+    
 ```
 
-
 ### Issue
+
 #### nodename nor servname provided, or not known
 
 如果测试域名配置如下
@@ -358,125 +359,140 @@ qiniuManager现在同时只能运行一个实例，因为manager从用户家目�
 
 ### 历史版本
 
-+   v0.9.12 
+- v0.9.12 
 
-	修复无法上传中文文件名文件的错误
-+   v0.9.13 
+  修复无法上传中文文件名文件的错误
 
-	下载输出优化
-+   v0.9.14 
+- v0.9.13 
 
-	私有空间文件下载
-+   v0.9.15 
+  下载输出优化
 
-	下载前预判以及输出微调
-+   v0.9.16 
+- v0.9.14 
 
-	消除参数获取失败后的报错方式
-+   v0.9.17 
+  私有空间文件下载
 
-	未安装curl下载失败
-+   v1.1.0  
+- v0.9.15 
 
-	基本从底层重写了一遍，尽量直接调用了API链接
-+   v1.1.1  
+  下载前预判以及输出微调
 
-	urllib.quote
-+   v1.1.2  
+- v0.9.16 
 
-	取消本地判断mimetype(因为会莫名卡在这里，并且上传这个mimetype的时候会告诉我这是未知的mimetype，所以实际上并没有用),取消上传缓存
-+   v1.1.3  
+  消除参数获取失败后的报错方式
 
-	文件列表统计总量
-+   v1.1.4  
+- v0.9.17 
 
-	文件列表排序支持，默认按照上传时间逆序排序，修复单位转换中的小数丢失
-+   v1.2.0  
+  未安装curl下载失败
 
-	底层http报文处理，适当调整响应缓存大小，提高下载速度等，'chucked'编码暂时不可用
-+   v1.2.1  
+- v1.1.0  
 
-	删除本地保存的空间名支持，显示所有已知空间文件列表并统计大小支持，http报文处理去除chucked编码支持(chucked编码真是恶心)，下载文件预判，防止本地文件被覆盖，判断文件是否存在后再下载；部分显示格式调整
-+   v1.2.2  
+  基本从底层重写了一遍，尽量直接调用了API链接
 
-	修复无效空间名时的无响应处理
-+   v1.2.3  
+- v1.1.1  
 
-	进度条显示优化，并且应付七牛云接口不规范的锅出现的问题(。。。。。。这才过了多久，接口就变了，这还是一个对外接口应该有的作为么，，在我看来这并不是一个小事故。我开始猜测七牛云内部是不是还有手动拼接SQL语句这样的行为了，维护这些个接口的人真是不幸)
+  urllib.quote
 
-+	v1.2.4
+- v1.1.2  
 
-	取消qiniu SDK依赖，从文件导入所需方法(这并不是卸磨杀驴，在引用代码中已经包含原项目LICENSE声明)，本来这部分独立出来是为了兼容py3(调用SDK之后`requests`内部会报错，为了省去麻烦，反正自己也只使用了SDK中生成安全凭证的部分)，但是后来发现py3中对于字符串的处理挺繁琐的，各种bytes, str不通用，底层socket的send参数也变成了`bytes`，越修改越觉得烦，本以为py3能够对于编码以及字符串问题友好一些，但是最终发现各种类型之间转换起来真是心累，于是最终也就没有做py3兼容了。总之，`只要七牛云服务器端的接口不发生变动，整个程序就能正常运行起来`；优化下载时文件名判断，防止由于文件名中包含特殊符号，下载到其他位置去了，如类似`_log/whatever/2016-11-29/whatever.qiniudn.com_part-00000.gz`这样的文件名，下载时将以有效文件名`whatever.qiniudn.com_part-00000.gz`(顺便吐槽一下貌似这个日志文件内容就是Nginx日志的样子......)存储在当前目录，暂不支持下载目录选择(没有合适的地方来选择这个参数)；总列表按照时间分别逆序排序；
-	
-	对于我这样懒得在print后面加括号的人来说，py3已经很烦了，如果在我加完括号之后依然各种编码问题的话，我还是直接放弃py3好了，毕竟py3里并没有太多让我期待的新特性，py2最大的编码问题也有解决方案
+  取消本地判断mimetype(因为会莫名卡在这里，并且上传这个mimetype的时候会告诉我这是未知的mimetype，所以实际上并没有用),取消上传缓存
 
-+	v1.2.5
+- v1.1.3  
 
-	增加导出默认空间或指定空间内所有文件链接的支持；帮助菜单中引入本`README`文件所在链接；获取文件列表方法支持无进度条配置(暂无终端支持)；progress bar获取终端宽度时的异常重定向
+  文件列表统计总量
 
-+	v1.2.6
+- v1.1.4  
 
-	允许下载时指定下载目录，不过会跟很长的指令就是了，虽然一开始并不想添加这个支持的，但是想了想如果放进`cron`里定时执行的话，除非导出下载链接，然后用其他命令下载文件外，直接download的话，系统的默认目录一定不会是操作者想要的，这样的需求作者在某些时候也是需要的，并且这样也会方便一些；帮助菜单显示调整；修复上传文件时七牛的不规范的锅导致的返回报文实体为空的异常
+  文件列表排序支持，默认按照上传时间逆序排序，修复单位转换中的小数丢失
 
-+   v1.2.7
+- v1.2.0  
 
-    API切换为https接口
-    
-    本来以为只是把http换成https辣么简单的事情，后来发现七牛服务器的https证书貌似只有一份，也就是只对应了`qbox.me`，对于文件列表以及操作来说，接口链接直接换成https就好了，但是对于上传接口`up.qiniu.com`，直接换成https会报一个莫名其妙的错误(这是我在一开始写https测试的时候会遇到的错误)
-    
-    ![ssl.CertificateError](https://static.hellflame.net/resource/cd85b0deda8a4a4ef6f7a16b7533aa5e)
-    
-    然后如果在https连接初始化在server_check的时候将hostname换成`qbox.me`，便也能够正常使用
-    很明显`up.qiniu.com`和`up.qbox.me`对应着同一个后台
-    
-    后来发现，貌似这个上传接口链接是有另一个接口来获取的，通过这个接口获取到了如下内容
-    
-    ```
-    {
-    	"ttl":86400,
-    	"http":{
-    		"io":["http://iovip.qbox.me"],
-    		"up":["http://up.qiniu.com","http://upload.qiniu.com","-H up.qiniu.com http://183.136.139.16"]},
-    	"https":{
-    		"io":["https://iovip.qbox.me"],
-    		"up":["https://up.qbox.me"]
-    		}
-    }
-    ```
-    
-    所以原来https和http的接口的确有一点不一样的样子
-    
-    ![](https://static.hellflame.net/resource/4c5aa93ea010e6a721322e01339b1ba4)
-    
-    SDK中将这个json文件默认存在了临时目录，不知道有没有人报了类似的错误，但是直接这样存储的话，可能存在两个文件权限互不开放导致无法读取或者写入的情况，就比如，如果是root用户先创建了`/tmp/.qiniu_pythonsdk_hostscache.json`，普通用户就不能覆盖这个文件了捏，要是root用户不允许其他用户read，那么基本上整个程序又会从这里崩溃了吧，曾经在做终端字符打印的图片缓存的时候就遇到这样的问题(我是怎么想的要用root用户打印字符玩，，，，)。这里更妥善一点的做法是在这个文件名上面跟上用户名或者用户id，这些都是能在py里面获取的吧
-    
-    不过在这个项目中我并没有类似的烦恼，因为接口什么的，应该很少变动的，更何况这是接口的域名诶，要是这个都变了，那一定是发生了什么大事了，嗯，一定是酱紫的
+  底层http报文处理，适当调整响应缓存大小，提高下载速度等，'chucked'编码暂时不可用
 
-+	v1.2.8
+- v1.2.1  
 
-	提供部分接口的调试信息选项，包括list和check两个方法
-	
-	提供这个方法的主要原因还是API接口响应的不够明确，或者是qiniumanager在开发时偷的懒，没有去一一对应http返回码的错误(我也的确没有找到类似的文档信息)
-	
-	如果七牛的API接口能在返回的数据中包含错误原因什么的话，我也应该不需要这个显示整个http请求到响应的报文方法，因为很多报错的返回仅仅是http返回码的不同，我也并没有找到相关的说明，于是为了方便跟官方反馈，我把整个http请求到响应都给你看看，总没有话说是我代码写错了吧
-	
-	最近发现的问题便是海外请求https的list接口时，会报502错误(bad gateway)，这样的错误的话，一般是nginx后端代理的服务器无法正常响应的结果
-	
-	![bad gateway](https://static.hellflame.net/resource/011d81b67aa49bb7afb139ed41965205)
+  删除本地保存的空间名支持，显示所有已知空间文件列表并统计大小支持，http报文处理去除chucked编码支持(chucked编码真是恶心)，下载文件预判，防止本地文件被覆盖，判断文件是否存在后再下载；部分显示格式调整
 
-	同样的接口，如果换成http请求的话，就不会有问题了，这个问题虽然已经跟官方提交过反馈了，但是目前为止，这个问题依然还是存在的样子，虽然并不影响上传功能的样子，不过，都给我报502错误了，怎么能保证不出现其他更严重的问题额
+- v1.2.2  
 
-	> 上述问题官方已经修复，只是在发布新版本之前自己的代码都没有做过调试，顾没有更新这个信息
-	
-	传统意义上来看的话，500以上的错误都算是严重错误了，虽然七牛的api中还有600+的错误，，好吧，，毕竟不是我的API接口，开发者开心就好
+  修复无效空间名时的无响应处理
 
-+ v1.3.0
+- v1.2.3  
 
-	修复了下载失败的HTTP请求，新增下载、重命名调试支持
-	
-	好吧，虽然下载问题存在了很久，但是由于自己基本上都只是备份文件，并且保存成功，于是并没有太在意这么大的问题=。=，最终发现就是在发送HTTP报文的结尾被注视掉了一行用来添加`\r\n`的语句。。。。导致服务器一直认为没有接收完报文，于是下载毫无响应，然而在其他方法调用时的报文在处理headers的时候添加了`\r\n`，于是就导致只有下载这个功能出问题了(因为不需要处理任何报文)。
-	
-	新增的调试支持其实功能一直都存在，只是一直没有添加进可选的参数中，在这个版本中新增了参数，现在的帮助菜单更长了。
+  进度条显示优化，并且应付七牛云接口不规范的锅出现的问题(。。。。。。这才过了多久，接口就变了，这还是一个对外接口应该有的作为么，，在我看来这并不是一个小事故。我开始猜测七牛云内部是不是还有手动拼接SQL语句这样的行为了，维护这些个接口的人真是不幸)
 
+  +v1.2.4
 
+  取消qiniu SDK依赖，从文件导入所需方法(这并不是卸磨杀驴，在引用代码中已经包含原项目LICENSE声明)，本来这部分独立出来是为了兼容py3(调用SDK之后`requests`内部会报错，为了省去麻烦，反正自己也只使用了SDK中生成安全凭证的部分)，但是后来发现py3中对于字符串的处理挺繁琐的，各种bytes, str不通用，底层socket的send参数也变成了`bytes`，越修改越觉得烦，本以为py3能够对于编码以及字符串问题友好一些，但是最终发现各种类型之间转换起来真是心累，于是最终也就没有做py3兼容了。总之，`只要七牛云服务器端的接口不发生变动，整个程序就能正常运行起来`；优化下载时文件名判断，防止由于文件名中包含特殊符号，下载到其他位置去了，如类似`_log/whatever/2016-11-29/whatever.qiniudn.com_part-00000.gz`这样的文件名，下载时将以有效文件名`whatever.qiniudn.com_part-00000.gz`(顺便吐槽一下貌似这个日志文件内容就是Nginx日志的样子......)存储在当前目录，暂不支持下载目录选择(没有合适的地方来选择这个参数)；总列表按照时间分别逆序排序；
 
+  对于我这样懒得在print后面加括号的人来说，py3已经很烦了，如果在我加完括号之后依然各种编码问题的话，我还是直接放弃py3好了，毕竟py3里并没有太多让我期待的新特性，py2最大的编码问题也有解决方案
+
+  +v1.2.5
+
+  增加导出默认空间或指定空间内所有文件链接的支持；帮助菜单中引入本`README`文件所在链接；获取文件列表方法支持无进度条配置(暂无终端支持)；progress bar获取终端宽度时的异常重定向
+
+  +v1.2.6
+
+  允许下载时指定下载目录，不过会跟很长的指令就是了，虽然一开始并不想添加这个支持的，但是想了想如果放进`cron`里定时执行的话，除非导出下载链接，然后用其他命令下载文件外，直接download的话，系统的默认目录一定不会是操作者想要的，这样的需求作者在某些时候也是需要的，并且这样也会方便一些；帮助菜单显示调整；修复上传文件时七牛的不规范的锅导致的返回报文实体为空的异常
+
+- v1.2.7
+
+  API切换为https接口
+
+  本来以为只是把http换成https辣么简单的事情，后来发现七牛服务器的https证书貌似只有一份，也就是只对应了`qbox.me`，对于文件列表以及操作来说，接口链接直接换成https就好了，但是对于上传接口`up.qiniu.com`，直接换成https会报一个莫名其妙的错误(这是我在一开始写https测试的时候会遇到的错误)
+
+  ![ssl.CertificateError](https://static.hellflame.net/resource/cd85b0deda8a4a4ef6f7a16b7533aa5e)
+
+  然后如果在https连接初始化在server_check的时候将hostname换成`qbox.me`，便也能够正常使用
+  很明显`up.qiniu.com`和`up.qbox.me`对应着同一个后台
+
+  后来发现，貌似这个上传接口链接是有另一个接口来获取的，通过这个接口获取到了如下内容
+
+  ```
+  {
+    "ttl":86400,
+    "http":{
+        "io":["http://iovip.qbox.me"],
+        "up":["http://up.qiniu.com","http://upload.qiniu.com","-H up.qiniu.com http://183.136.139.16"]},
+    "https":{
+        "io":["https://iovip.qbox.me"],
+        "up":["https://up.qbox.me"]
+        }
+  }
+  ```
+
+  所以原来https和http的接口的确有一点不一样的样子
+
+  ![](https://static.hellflame.net/resource/4c5aa93ea010e6a721322e01339b1ba4)
+
+  SDK中将这个json文件默认存在了临时目录，不知道有没有人报了类似的错误，但是直接这样存储的话，可能存在两个文件权限互不开放导致无法读取或者写入的情况，就比如，如果是root用户先创建了`/tmp/.qiniu_pythonsdk_hostscache.json`，普通用户就不能覆盖这个文件了捏，要是root用户不允许其他用户read，那么基本上整个程序又会从这里崩溃了吧，曾经在做终端字符打印的图片缓存的时候就遇到这样的问题(我是怎么想的要用root用户打印字符玩，，，，)。这里更妥善一点的做法是在这个文件名上面跟上用户名或者用户id，这些都是能在py里面获取的吧
+
+  不过在这个项目中我并没有类似的烦恼，因为接口什么的，应该很少变动的，更何况这是接口的域名诶，要是这个都变了，那一定是发生了什么大事了，嗯，一定是酱紫的
+
+  +v1.2.8
+
+  提供部分接口的调试信息选项，包括list和check两个方法
+
+  提供这个方法的主要原因还是API接口响应的不够明确，或者是qiniumanager在开发时偷的懒，没有去一一对应http返回码的错误(我也的确没有找到类似的文档信息)
+
+  如果七牛的API接口能在返回的数据中包含错误原因什么的话，我也应该不需要这个显示整个http请求到响应的报文方法，因为很多报错的返回仅仅是http返回码的不同，我也并没有找到相关的说明，于是为了方便跟官方反馈，我把整个http请求到响应都给你看看，总没有话说是我代码写错了吧
+
+  最近发现的问题便是海外请求https的list接口时，会报502错误(bad gateway)，这样的错误的话，一般是nginx后端代理的服务器无法正常响应的结果
+
+  ![bad gateway](https://static.hellflame.net/resource/011d81b67aa49bb7afb139ed41965205)
+
+  同样的接口，如果换成http请求的话，就不会有问题了，这个问题虽然已经跟官方提交过反馈了，但是目前为止，这个问题依然还是存在的样子，虽然并不影响上传功能的样子，不过，都给我报502错误了，怎么能保证不出现其他更严重的问题额
+
+  > 上述问题官方已经修复，只是在发布新版本之前自己的代码都没有做过调试，顾没有更新这个信息
+
+  传统意义上来看的话，500以上的错误都算是严重错误了，虽然七牛的api中还有600+的错误，，好吧，，毕竟不是我的API接口，开发者开心就好
+
+- v1.3.0
+
+  修复了下载失败的HTTP请求，新增下载、重命名调试支持
+
+  好吧，虽然下载问题存在了很久，但是由于自己基本上都只是备份文件，并且保存成功，于是并没有太在意这么大的问题=。=，最终发现就是在发送HTTP报文的结尾被注视掉了一行用来添加`\r\n`的语句。。。。导致服务器一直认为没有接收完报文，于是下载毫无响应，然而在其他方法调用时的报文在处理headers的时候添加了`\r\n`，于是就导致只有下载这个功能出问题了(因为不需要处理任何报文)。
+
+  新增的调试支持其实功能一直都存在，只是一直没有添加进可选的参数中，在这个版本中新增了参数，现在的帮助菜单更长了。
+
+- v1.3.1
+
+  尝试修复python2.7.9以下导致的`AttributeError: 'module' object has no attribute 'SSLContext'` , [错误提示](https://github.com/hellflame/qiniu_manager/issues/1) , 方案来自于 [ssl 'module' object has no attribute 'SSLContext'](https://stackoverflow.com/questions/28228214/ssl-module-object-has-no-attribute-sslcontext)，由于个人没有该版本python，所以就试试看了

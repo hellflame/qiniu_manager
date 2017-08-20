@@ -103,9 +103,9 @@ class HTTPCons:
         self.connect = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 
     def https_init(self, host, port):
-        context = ssl.SSLContext(ssl.PROTOCOL_TLSv1)
-        context.verify_mode = ssl.CERT_REQUIRED
+        context = ssl.create_default_context()
         context.check_hostname = True
+        context.verify_mode = ssl.CERT_REQUIRED
         context.load_default_certs()
         self.connect = context.wrap_socket(self.connect, server_hostname=host)
         self.connect.settimeout(105)
