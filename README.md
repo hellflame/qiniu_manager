@@ -5,13 +5,13 @@
 ### 安装
 
 ```bash
-    $ sudo pip install qiniumanager --upgrade
+$ sudo pip install qiniumanager --upgrade
 ```
 
 > Mac OS 如果出现权限问题，则可用以下方法安装，可执行脚本路径在
-> /Users/<username>/Library/Python/2.7/bin/
+> `/Users/<username>/Library/Python/2.7/bin/`
 
-```
+```bash
 $ pip install qiniumanager --upgrade --user
 ```
 
