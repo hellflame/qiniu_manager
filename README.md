@@ -60,7 +60,7 @@ https://github.com/hellflame/qiniu_manager/blob/v1.3.3/README.md
 
 ```bash
 $ qiniu
-$ qiniu -v # QiniuManager 版本以及SDK版本
+$ qiniu -v # QiniuManager 版本
 
 ```
 
