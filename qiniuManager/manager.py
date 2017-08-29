@@ -1,4 +1,6 @@
 # coding=utf8
+from __future__ import print_function
+
 import os
 import time
 import json
@@ -166,6 +168,8 @@ class Qiniu(object):
         self.config = Config()
         self.access, self.secret = self.config.get_one_access()
         self.auth = None
+        self.checked_spaces = set()
+        self.COL_WIDTH = 35
 
         self.prepared = False
         self.pre_upload_info = None
@@ -190,6 +194,11 @@ class Qiniu(object):
         if self.file_handle:
             self.file_handle.close()
 
+    def next_space(self):
+        res = filter(lambda x: x[0] not in self.checked_spaces, self.config.get_space_list())
+        if res:
+            return res[0][0]
+
     @auth
     def export_download_links(self, space=None):
         if not space:
@@ -198,7 +207,7 @@ class Qiniu(object):
         state, data = self.__get_list_in_space(space, mute=True)
         if state:
             for i in data:
-                print self.private_download_link(i['key'].encode('utf8'), space)
+                print(self.private_download_link(i['key'].encode('utf8'), space))
 
     @auth
     def regular_download_link(self, target, space=None):
@@ -233,7 +242,7 @@ class Qiniu(object):
         start = time.time()
         feed.http_response(save_path)
         if is_debug:
-            print feed.header
+            print(feed.header)
         if not feed.http_code == 200:
             print("\033[01;31m{}\033[00m not exist !".format(target))
             return False
@@ -288,6 +297,7 @@ class Qiniu(object):
     def check(self, target, space=None, is_debug=False):
         if not space:
             space = self.config.get_default_space()[0]
+        self.checked_spaces.add(space)
         manager_check = http.HTTPCons(is_debug)
         url = self.manager_host + '/stat/{}'.format(urlsafe_base64_encode("{}:{}".format(space, target)))
         manager_check.request(url,
@@ -296,40 +306,49 @@ class Qiniu(object):
         feed.disable_progress = True
         feed.http_response()
         if is_debug:
-            print '{}\n'.format(feed.head)
+            print('{}\n'.format(feed.head))
             for i in feed.header:
-                print "{} : {}".format(i, feed.header[i])
+                print("{} : {}".format(i, feed.header[i]))
 
-            print '\n{}'.format(feed.data), "\n"
+            print('\n{}'.format(feed.data), "\n")
         if not feed.data:
             print("no such file \033[01;31m{}\033[00m in \033[01;32m{}\033[00m".format(target, space))
+            nx_space = self.next_space()
+            if nx_space:
+                return self.check(target, nx_space, is_debug=is_debug)
             return False
         data = json.loads(feed.data)
         if 'error' in data:
             print("Error Occur: \033[01;31m{}\033[00m".format(data['error']))
         else:
-            print("  {}  {}  {}".format('Filename', '·' * (30 - len('filename')), target))
-            print("  {}  {}  {}".format('Size', '·' * (30 - len('size')), http.unit_change(data['fsize'])))
-            print("  {}  {}  {}".format('MimeType',  '·' * (30 - len('MimeType')), data['mimeType']))
-            print("  {}  {}  {}".format('Date', '·' * (30 - len('date')),
-                                        time.strftime('%Y-%m-%d %H:%M:%S',
-                                                      time.localtime(data['putTime']/10000000))))
+            print("  {}  {}  {}".format('Space', '.' * (self.COL_WIDTH - len('Space')), "\033[01;32m{}\033[00m".format(space)))
+            print("  {}  {}  {}".format('Filename', '·' * (self.COL_WIDTH - len('filename')), target))
+            print("  {}  {}  {} ({})".format('Size', '·' * (self.COL_WIDTH - len('size')),
+                                             "\033[01;37m{}\033[00m".format(http.unit_change(data['fsize'])),
+                                             data['fsize']))
+            print("  {}  {}  {}".format('MimeType',  '·' * (self.COL_WIDTH - len('MimeType')), data['mimeType']))
+            print("  {}  {}  {} ({})".format('Date', '·' * (self.COL_WIDTH - len('date')),
+                                             "\033[01;37m{}\033[00m".format(time.strftime('%Y-%m-%d %H:%M:%S',
+                                                                            time.localtime(data['putTime']/10000000))),
+                                             data['putTime']))
 
     @auth
     def list(self, space=None, is_debug=False):
         if not space:
             space = self.config.get_default_space()[0]
-        state, data = self.__get_list_in_space(space, is_debug=is_debug)
+        state, data = self.__get_list_in_space(space, is_debug=is_debug, mute=True)
 
         if state and data:
             total_size = 0
             print("\033[01;32m{}\033[00m".format(space))
             for i in sorted(data, key=lambda x: x['putTime'], reverse=True):
-                print("  {}  {}  {}".format(i['key'], '·' * (30 - str_len(unicode(i['key']))), http.unit_change(i['fsize'])))
+                print("  {}  {}  {}".format(i['key'],
+                                            '·' * (self.COL_WIDTH - str_len(unicode(i['key']))),
+                                            http.unit_change(i['fsize'])))
                 total_size += i['fsize']
             print("\n  \033[01;31m{}\033[00m  \033[01;32m{}\033[00m  \033[01;31m{}\033[00m".format(
                 'Total',
-                '·' * (30 - len('total')),
+                '·' * (self.COL_WIDTH - len('total')),
                 http.unit_change(total_size)))
         elif state and not data:
             print("There is no file in \033[01;31m{}\033[00m".format(space))
@@ -343,17 +362,18 @@ class Qiniu(object):
 
         total_size = 0
         for i in spaces:
-            state, data = self.__get_list_in_space(i[0])
+            state, data = self.__get_list_in_space(i[0], mute=True)
             if state:
                 if data:
                     print("\033[01;32m{}\033[00m".format(i[0]))
                     for target in sorted(data, key=lambda x: x['putTime'], reverse=True):
-                        print("  {}  {}  {}".format(target['key'], '·' * (30 - str_len(unicode(target['key']))),
+                        print("  {}  {}  {}".format(target['key'],
+                                                    '·' * (self.COL_WIDTH - str_len(unicode(target['key']))),
                                                     http.unit_change(target['fsize'])))
                         total_size += target['fsize']
         print("\n  \033[01;31m{}\033[00m  \033[01;32m{}\033[00m  \033[01;31m{}\033[00m".format(
             'Total',
-            '·' * (30 - len('total')),
+            '·' * (self.COL_WIDTH - len('total')),
             http.unit_change(total_size)))
 
     def __get_list_in_space(self, space, mute=False, is_debug=False):
@@ -365,11 +385,11 @@ class Qiniu(object):
         feed.disable_progress = mute
         feed.http_response()
         if is_debug:
-            print '{}\n'.format(feed.head)
+            print('{}\n'.format(feed.head))
             for i in feed.header:
-                print "{} : {}".format(i, feed.header[i])
+                print("{} : {}".format(i, feed.header[i]))
 
-            print '\n', feed.data
+            print('\n', feed.data)
         if not feed.data:
             print("No such space as \033[01;31m{}\033[00m".format(space))
             return False, []
@@ -412,7 +432,7 @@ class Qiniu(object):
         md5 = get_md5(path)
         self.file_handle = open(path, 'rb')
         # self.title = file_name
-        print file_name
+        print(file_name)
         self.total = os.stat(path).st_size + 2
         self.progressed = 0
         self.pre_upload_info = (file_name, md5, space,

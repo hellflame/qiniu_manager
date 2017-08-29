@@ -1,5 +1,7 @@
 #!/usr/bin/env python
 # coding=utf8
+from __future__ import print_function
+
 import os
 import sys
 import manager
@@ -59,7 +61,7 @@ def help_menu():
         print("  {},{}\t\t{}".format(i, short[i], map_target[i]))
     print("\n\033[01;31m首次使用\033[00m请设置密钥对 qiniu [--key|-k] <access key> <secret key>")
     print("必要情况下请设置默认空间名")
-    print "\n更多帮助信息\nhttps://github.com/hellflame/qiniu_manager/blob/v{}/README.md\n".format(__version__)
+    print("\n更多帮助信息\nhttps://github.com/hellflame/qiniu_manager/blob/v{}/README.md\n".format(__version__))
 
 
 def main():
@@ -229,7 +231,7 @@ def main():
             elif arg[0] in ('-d', '--download'):
                 if arg[2] in ('-t', '--directory'):
                     if not os.path.exists(arg[3]):
-                        print "target path \033[01;31m{}\033[00m not exist".format(arg[3])
+                        print("target path \033[01;31m{}\033[00m not exist".format(arg[3]))
                     else:
                         qiniu.download(arg[1], None, directory=arg[3])
                 else:
@@ -240,7 +242,7 @@ def main():
             if arg[0] in ('-d', '--download'):
                 if arg[-2] in ('-t', '--directory'):
                     if not os.path.exists(arg[-1]):
-                        print "target path \033[01;31m{}\033[00m not exist".format(arg[-1])
+                        print("target path \033[01;31m{}\033[00m not exist".format(arg[-1]))
                     else:
                         qiniu.download(arg[1], arg[2], arg[-1])
                 else:

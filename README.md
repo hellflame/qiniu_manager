@@ -6,7 +6,6 @@
 
 ```bash
 $ sudo pip install qiniumanager --upgrade
-
 ```
 
 > Mac OS 如果出现权限问题，则可用以下方法安装，可执行脚本路径在
@@ -14,7 +13,6 @@ $ sudo pip install qiniumanager --upgrade
 
 ```bash
 $ pip install qiniumanager --upgrade --user
-
 ```
 
 ### 七牛云存储 Qiniu Manager
@@ -51,7 +49,6 @@ Usage:
 
 更多帮助信息
 https://github.com/hellflame/qiniu_manager/blob/v1.3.3/README.md
-
 ```
 
 ### 具体操作
@@ -61,7 +58,6 @@ https://github.com/hellflame/qiniu_manager/blob/v1.3.3/README.md
 ```bash
 $ qiniu
 $ qiniu -v # QiniuManager 版本
-
 ```
 
 #### 基本设置
@@ -71,7 +67,6 @@ $ qiniu -v # QiniuManager 版本
 ```bash
 $ qiniu -k <access key> <secret key>  
 $ qiniu -k # 显示密钥对
-
 ```
 
 ![这里的AK及SK](https://static.hellflame.net/resource/5ccf929aae10fc0fb5a26a63c28e6d45)
@@ -82,7 +77,6 @@ $ qiniu -k # 显示密钥对
 $ qiniu -s share # 可以省略测试域名
 $ qiniu -s share 7xqh1q.dl1.z0.glb.clouddn.com
 $ qiniu -s # 显示空间信息(bucket)
-
 ```
 
 ![space & alias](https://static.hellflame.net/resource/e506e9787b0a693da3a4d5be381b28ad)
@@ -97,7 +91,6 @@ $ qiniu -s # 显示空间信息(bucket)
 
 ```bash
 $ qiniu -rs <space name> # 尝试删除空间名为<space name>的空间信息
-
 ```
 
 该操作仅仅针对本地数据库，并不会影响实际空间的存在；如果删除一个并没有保存进本地数据库的空间名并不会报错，因为在执行SQL语句之前并没有判断该空间名是否存在于数据库(~/.qiniu.sql)中，如果被删除的空间是默认空间的话，需要再一次手动指定默认空间，否则默认空间为空
@@ -109,7 +102,6 @@ $ qiniu -rs <space name> # 尝试删除空间名为<space name>的空间信息
 ```bash
 $ qiniu <file to upload> # 上传文件到默认空间(bucket)
 $ qiniu <file to upload> <space name> # 上传文件到空间<space name>
-
 ```
 
 这里如果没有设置默认空间名的话，上传结束之后会报错显示不存在这个bucket(空间)，因为如果获取不到默认空间名的话，空间名就是`''`(空字符串)，如果上传指定的空间不存在的话，也会报同样的错误
@@ -127,14 +119,12 @@ $ qiniu <file to upload> <space name> # 上传文件到空间<space name>
 ```bash
 $ qiniu -l # 显示当前空间(bucket)文件列表
 $ qiniu -l backup # 显示`backup`中的文件列表
-
 ```
 
 可以显示已经保存下来的所有空间的文件列表总表，这里的已知空间可以通过`qiniu -s`查看空间列表信息
 
 ```bash
 $ qiniu -la # 显示已知所有空间的文件列表
-
 ```
 
 在显示的时候其实有一个问题，就是非英文字符在终端打印时所占的宽度与英文字符宽度不同(应该是等宽字体并不包含其他语言文字的缘故)，导致排版略错乱
@@ -152,7 +142,6 @@ $ qiniu -la # 显示已知所有空间的文件列表
 
 $ qiniu -le 
 $ qiniu -le <bucket name> # 空间名称
-
 ```
 
 调试结果的可能返回界面
@@ -166,24 +155,36 @@ $ qiniu -le <bucket name> # 空间名称
 ```bash
 $ qiniu -c <filename> # 显示当前空间(bucket)中<filename>的信息(讲真这个信息炒鸡简略)
 $ qiniu -c <filename> <space name> # 显示<space name>这个空间(bucket)中<filename>的信息
-
 ```
 
 ![qiniu -c](https://static.hellflame.net/resource/ffcf828ae54effbb8bb3e669b43db2ec)
 
 好吧，总觉得这些信息甚至都没有这个文件被下载或者引用的次数什么的，意义看上去不是太大的样子。顺便一说，这里服务器返回的文件上传时间被'精确'了10000000倍，好吧，这里应该说至少精确了1000倍(到达毫秒级)，剩下的应该是随机值吧(自己做的静态文件服务器也有类似的处理)，因为实际上我只觉得秒级别对于普通用户而言已经很精确了
 
+> v1.3.3 添加在所有空间中查找的功能
+
+![遍历查询](https://static.hellflame.net/resource/65b1e9d28fe2a602ee30bee2f84de5e9)
+
+程序会从默认空间开始查询给定文件，直到查找到，或者遍历完所有空间。遍历空间的范围通过 `qiniu -s` 可以查看。可以给定开始查找的空间，通过 `qiniu -c xxxx space` ，就可以先从space这个空间开始查找指定文件，找不到的话再从其他空间查找。
+
+由于查看文件详情这样的功能一般都会是人手动查看，所以仅有这个功能添加了自动遍历查找的功能，输出的结果也在这一版本之后发生些许变化(然而再怎么变，官方给的输出都是那么一点点)
+
+![文件详情](https://static.hellflame.net/resource/55795fc256e92140997aa91d606b0253)
+
+如果不指定查找的空间的话，就可能出现自动遍历的情况。另外，在输出当中，给出了查找到该文件的空间名称和具体的文件大小(精确到B)，以及时间戳(精确到毫秒)。
+
 > 这里存在一个可调式的模式调用
 
 ```bash
 $ qiniu -ce <filename>
 $ qiniu -ce <filename> <space name>
-
 ```
 
 调试结果的可能返回界面
 
 ![响应结果](https://static.hellflame.net/resource/c29bde23662503d278ba215ca8f63fc8)
+
+> v1.3.3 之后调试输出的结果可能会更多一点，毕竟会遍历很多空间
 
 ##### iv.获取下载链接
 
@@ -194,7 +195,6 @@ $ qiniu -i <filename> <space name> # 获取<space name>中<filename>的下载链
 # 获取私有空间的有效链接(expire 3600)
 $ qiniu -p <filename> # 获取当前空间(bucket)中<filename>的私有下载链接,开放空间返回的链接可下载，但不会被expire限制可下载时间
 $ qiniu -p <filename> <space name># 获取<space name>中<filename>的私有下载链接，开放空间返回的链接可下载，但不会被expire限制可下载时间
-
 ```
 
 如果不知道该空间是否为私有空间，直接用`qiniu -p <target>`获取的链接将保证对于开放空间以及私有空间都有效，前提是能够正确设置空间的测试域名(对于作者这样的免费用户而言)。对于一个只有测试域名的空间来说，这个测试域名也是唯一有效的域名，必须将这个域名通过`-s`参数绑定给这个空间，否则下载链接将不可用
@@ -208,7 +208,6 @@ $ qiniu -p <filename> <space name># 获取<space name>中<filename>的私有下�
 ```bash
 $ qiniu -d <filename> # 下载当前空间(bucket)中的<filename>
 $ qiniu -d <filename> <space name> # 下载<space name>空间(bucket)中的<filename>
-
 ```
 
 下载的文件存储在当前目录，与空间中文件名相同，如果当前目录存在同名文件，将用后缀的形式区分新下载的文件和旧文件，当判断文档不存在时，并不会下载空间的默认处理方式，而是报告404错误
@@ -238,7 +237,6 @@ $ qiniu -d <filename> <space name> # 下载<space name>空间(bucket)中的<file
 ```bash
 $ qiniu -d <target file> -t <dir> # 在当前默认空间(bucket)中下载<dir>/<target file>
 $ qiniu -d <target file> <space name> -t <dir> # 下载<space name>中的文件到<dir>/<target file>
-
 ```
 
 新的支持基本上就是在原来的下载指令后面接上指定目录的操作；在执行操作之前，程序会预先判断指定的目录`<dir>`是否存在，如果不存在的话，将放弃进一步操作。同样，如果下载的文件名中包含`/`等特殊字符的，文件最终会保存为实际文件名
@@ -248,7 +246,6 @@ $ qiniu -d <target file> <space name> -t <dir> # 下载<space name>中的文件�
 ```bash
 $ qiniu -dd <filename>
 $ qiniu -dd <filename> <space name>
-
 ```
 
 可能的响应结果如下
@@ -260,7 +257,6 @@ $ qiniu -dd <filename> <space name>
 ```bash
 $ qiniu -r <filename> # 删除当前空间(bucket)中的<filename>
 $ qiniu -r <filename> <space name> # 删除<space name>空间(bucket)中的<filename>
-
 ```
 
 想要吐槽的是，无论是七牛SDK的返回值规范性还是七牛服务器的返回值的规范性都不是很一致（与自己所认为的规范性不是很一致）
@@ -282,7 +278,6 @@ $ qiniu -r <filename> <space name> # 删除<space name>空间(bucket)中的<file
 ```bash
 $ qiniu -n <target file> <to file> # 将当前空间中的<target file>重命名为<to file>
 $ qiniu -n <target file> <to file> <space name> # 将<space name>空间中的<target file>重命名为<space name>空间中的<to file>
-
 ```
 
 ![sdk move](https://static.hellflame.net/resource/45dfd760b9d4dcf54ecd6ea81f32b8a1)
@@ -302,7 +297,6 @@ $ qiniu -n <target file> <to file> <space name> # 将<space name>空间中的<ta
 ```bash
 $ qiniu -dr <filename> <another name>
 $ qiniu -dr <filename> <another name> <space name>
-
 ```
 
 调试结果的可能返回界面
@@ -314,7 +308,6 @@ $ qiniu -dr <filename> <another name> <space name>
 ```bash
 $ qiniu -x # 导出当前空间(bucket)中的所有文件链接
 $ qiniu -x <space name> # 导出<space name>空间中的所有文件链接
-
 ```
 
 若空间中不存在任何文件的话，导出内容将为空，并且没有提示信息；若空间不存在，则会报错提示不存在该空间
@@ -324,7 +317,6 @@ $ qiniu -x <space name> # 导出<space name>空间中的所有文件链接
 ```bash
 $ qiniu -x > target.txt
 $ qiniu -x <space name> > target.txt
-
 ```
 
 批量链接将存放在`target.txt`中
@@ -339,7 +331,6 @@ qiniu -x | xargs -n1 wget --content-disposition
     
 # target list
 qiniu -x <space name> | xargs -n1 wget --content-disposition
-
 ```
 
 or `curl`
@@ -525,13 +516,16 @@ qiniuManager现在同时只能运行一个实例，因为manager从用户家目�
 
   在**等宽字体**环境中，将中文、日文和韩文字符以及全角英文、数字等字符的宽度假定为ASCII字符宽度的两倍(大多数情况下应该都是没问题的)
 
-  ![等宽字体终端中的uft8和ascii](https://static.hellflame.net/resource/01d94c49c30ebb803f60f03b55ffea30)
+  ![等宽字体终端中的uft8和ascii](https://static.hellflame.net/resource/6ccfa25ccfd39fb136dab5954e161eae)
 
 - v1.3.3
 
   旧式类替换为新式类，以免谁多继承出什么问题(谁竟然还在多继承!)
 
-  版本更新放到下一次有什么问题了再累计发布好了=.=
+  增加显示宽度，文件详情添加自动查找功能，等宽字体检查，将2倍宽度字体编码左边界增大，右边界不是很清楚=。=
 
-  (unreleased on pypi)
+  print from \_\_future\_\_ 
 
+  文件详情更详细了一点点
+
+  
