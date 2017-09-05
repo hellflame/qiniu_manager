@@ -1,6 +1,6 @@
 # coding=utf8
 from __future__ import print_function
-from qiniuManager import progress
+from qiniuManager import progress, __version__
 import socket
 import time
 import sys
@@ -174,15 +174,17 @@ class HTTPCons(object):
 
     def __send(self, href, method='GET', headers=None, post_data=None):
         data = """{method} {href} HTTP/1.1\r\n{headers}\r\n\r\n"""
+        # UA = "{user}_on_{platform}_HELLFLAME"  # 出于隐私考虑，暂时还是不用这样的UA了
+        UA = "QiniuManager {version} by hellflame".format(version=__version__)
         if not headers:
             head = """Host: {}\r\n""".format(self.host)
-            head += "User-Agent: HELLFLAME"
+            head += "User-Agent: " + UA
         else:
             head = "\r\n".join(["{}: {}".format(x, headers[x]) for x in headers])
             if 'Host' not in headers:
                 head += """\r\nHost: {}""".format(self.host)
             if 'User-Agent' not in headers:
-                head += "\r\nUser-Agent: HELLFLAME"
+                head += "\r\nUser-Agent: " + UA
         if method == 'POST':
             if data and type(data) == str:
                 # upload for one time
