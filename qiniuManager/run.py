@@ -4,9 +4,7 @@ from __future__ import print_function
 
 import os
 import sys
-import manager
-
-__version__ = '1.3.3'
+from qiniuManager import manager, __version__
 
 short = {
     '--check': '-c',
@@ -106,7 +104,7 @@ def main():
                 data = qiniu.config.access_list(include_discard=False)
                 if data:
                     for i in data:
-                        print ("{} {} {}".format(data.index(i) + 1, i[1], i[2]))
+                        print("{} {} {}".format(data.index(i) + 1, i[1], i[2]))
                 else:
                     print("no access secret key pair found")
 

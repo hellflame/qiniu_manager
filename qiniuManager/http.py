@@ -1,10 +1,32 @@
 # coding=utf8
-import cStringIO
-import progress
+from __future__ import print_function
+from qiniuManager import progress
 import socket
 import time
+import sys
 import ssl
 import os
+
+if sys.version_info.major == 2:
+    from cStringIO import StringIO
+
+    def s2b(s):
+        return s
+
+    def b2s(s):
+        return s
+else:
+    from io import StringIO
+
+    def s2b(s):
+        if isinstance(s, bytes):
+            return s
+        return bytes(s.encode())
+
+    def b2s(s):
+        if isinstance(s, str):
+            return s
+        return s.decode(errors='ignore')
 
 
 class SockFeed(object):
@@ -41,10 +63,11 @@ class SockFeed(object):
 
             self.file_handle = open(path_choice, 'wb')
             self.title = path_choice
-            # print("\033[01;31m{}\033[00m Downloading".format(path_choice))
-        # while True:
+        if self.head and self.progressed == self.total:
+            self.total = self.progressed = 100
+            return self.data
         data = self.socket.recv(self.chuck_size)
-        temp = cStringIO.StringIO(data)
+        temp = StringIO(b2s(data))
         if not data:
             self.progressed = self.total = 100
             return self.data
@@ -67,32 +90,31 @@ class SockFeed(object):
                     elif self.header.get("Transfer-Encoding") == 'chunked':
                         self.chucked = True
                         print("\033[01;31mchucked encoding is not supported here for now\033[00m")
-                        assert not self.chucked
+                        assert False
                     break
                 index = partial.index(":")
                 key = partial[0: index].strip()
                 val = partial[index + 1:].strip()
                 self.header[key] = val
             if skip_body:
-                self.total = self.progressed = 1
+                self.total = self.progressed = 100
                 return self.header
             left = temp.read()
 
             if left:
                 if self.file_handle:
-                    self.file_handle.write(left)
+                    self.file_handle.write(s2b(left))
                 else:
-                    self.data += left
+                    self.data += b2s(left)
 
-                self.progressed += len(left)
+                self.progressed += len(s2b(left))
 
         else:
             if self.file_handle:
-                self.file_handle.write(data)
-                self.progressed += len(data)
+                self.file_handle.write(s2b(data))
             else:
-                self.data += data
-                self.progressed += len(data)
+                self.data += b2s(data)
+            self.progressed += len(s2b(data))
 
 
 class HTTPCons(object):
@@ -100,21 +122,23 @@ class HTTPCons(object):
         self.host = ''
         self.port = 0
         self.is_debug = debug
-        self.connect = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        self.s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        self.connect = None
 
     def https_init(self, host, port):
         context = ssl.create_default_context()
         context.check_hostname = True
         context.verify_mode = ssl.CERT_REQUIRED
         context.load_default_certs()
-        self.connect = context.wrap_socket(self.connect, server_hostname=host)
-        self.connect.settimeout(105)
+        self.connect = context.wrap_socket(self.s, server_hostname=host)
+        # self.connect.settimeout(65)
         self.connect.connect((host, port))
         self.host = host
         self.port = port
 
     def http_init(self, host, port):
-        self.connect.settimeout(100)
+        self.connect = self.s
+        # self.connect.settimeout(60)
         self.connect.connect((host, port))
         self.host = host
         self.port = port
@@ -149,25 +173,21 @@ class HTTPCons(object):
         self.__send(url, method, headers, post_data=data)
 
     def __send(self, href, method='GET', headers=None, post_data=None):
-        data = """{method} {href} HTTP/1.1
-{headers}
-"""
+        data = """{method} {href} HTTP/1.1\r\n{headers}\r\n\r\n"""
         if not headers:
             head = """Host: {}\r\n""".format(self.host)
             head += "User-Agent: HELLFLAME"
         else:
-            head = ""
-            for i in headers:
-                head += "{}: {}\r\n".format(i, headers[i])
+            head = "\r\n".join(["{}: {}".format(x, headers[x]) for x in headers])
             if 'Host' not in headers:
-                head += """Host: {}\r\n""".format(self.host)
+                head += """\r\nHost: {}""".format(self.host)
             if 'User-Agent' not in headers:
-                head += "User-Agent: HELLFLAME\r\n"
+                head += "\r\nUser-Agent: HELLFLAME"
         if method == 'POST':
             if data and type(data) == str:
                 # upload for one time
-                head += "Content-Length: {}\r\n\r\n".format(len(post_data))
-                head += "{}".format(post_data)
+                head += "\r\nContent-Length: {}".format(len(post_data))
+                head += "\r\n{}".format(post_data)
             else:
                 raise URLNotComplete(href, 'POST data')
         elif method == 'GET':
@@ -178,14 +198,18 @@ class HTTPCons(object):
 
                 for i in post_data:
                     href += '{}={}&'.format(i, post_data[i])
-        head += "\r\n"
         data = data.format(method=method, href=href, headers=head)
         if self.is_debug:
-            print data
-        self.connect.sendall(data)
+            print("\033[01;33mRequest:\033[00m\033[01;31m(DANGER)\033[00m")
+            print(data.__repr__().strip("'"))
+        self.connect.sendall(s2b(data))
 
     def __del__(self):
-        self.connect.close()
+        if self.connect is self.s:
+            self.connect.close()
+        else:
+            self.connect.close()
+            self.s.close()
 
 
 def unit_change(target):

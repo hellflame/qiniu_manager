@@ -30,6 +30,7 @@ and now, py3 makes me awful, it upgraded nothing but chaos
 
 """
 
+from __future__ import print_function
 
 import sys
 import time
@@ -37,12 +38,30 @@ import json
 import hmac
 
 from hashlib import sha1
-from urlparse import urlparse
 from base64 import urlsafe_b64encode
 
+if sys.version_info.major == 2:
+    from urlparse import urlparse
+    reload(sys)
+    sys.setdefaultencoding('utf8')
 
-reload(sys)
-sys.setdefaultencoding('utf8')
+    def b(data):
+        return bytes(data)
+
+    def s(data):
+        return bytes(data)
+else:
+    from urllib.parse import urlparse
+
+    def b(data):
+        if isinstance(data, str):
+            return data.encode('utf-8')
+        return data
+
+    def s(data):
+        if isinstance(data, bytes):
+            data = data.decode('utf-8')
+        return data
 
 
 def str_len(s):
@@ -56,14 +75,6 @@ def str_len(s):
         else:
             l += 1
     return l
-
-
-def b(data):
-    return bytes(data)
-
-
-def s(data):
-    return bytes(data)
 
 
 def urlsafe_base64_encode(data):

@@ -2,18 +2,17 @@
 from __future__ import print_function
 
 import os
+import sys
 import time
 import json
 import random
 import urllib
 import sqlite3
 import hashlib
-import progress
+from qiniuManager import progress, http, __version__
 
 # from qiniu import Auth, __version__ as sdk_version
-from utils import urlsafe_base64_encode, Auth, str_len
-
-import http
+from qiniuManager.utils import urlsafe_base64_encode, Auth, str_len
 
 
 def db_ok(function):
@@ -31,7 +30,7 @@ def access_ok(function):
         if self.access and self.secret:
             return function(self, *args, **kwargs)
         else:
-            print ("Please Set At Lease one pair of usable access and secret".title())
+            print("Please Set At Lease one pair of usable access and secret".title())
             return ''
     return access_wrap
 
@@ -43,7 +42,7 @@ def auth(function):
         else:
             self.get_auth()
             if not self.auth:
-                print ("failed to initialize the authorization".title())
+                print("failed to initialize the authorization".title())
                 return ''
             else:
                 return function(*args, **kwargs)
@@ -194,9 +193,24 @@ class Qiniu(object):
         if self.file_handle:
             self.file_handle.close()
 
+    @staticmethod
+    def print_debug(feed):
+        # ENV
+        print("\033[01;33mEnv:\033[00m")
+        print("\n".join(["\033[01;31m{}\033[00m {}".format(i, j) for i, j in [('Py Ver.', sys.version), ('Tool Ver.', __version__)]]))
+        # HTTP Response
+        print("\033[01;33mResponse:\033[00m")
+        print('{}'.format(feed.head))
+        print("\n".join(["{} : {}".format(i, feed.header[i]) for i in feed.header]))
+        # HTTP entity
+        print('\n{}'.format(feed.data), "\n\033[01;33mEOF\033[00m")
+
     def next_space(self):
         res = filter(lambda x: x[0] not in self.checked_spaces, self.config.get_space_list())
         if res:
+            if filter.__class__ is type:
+                # py3
+                return list(res)[0][0]
             return res[0][0]
 
     @auth
@@ -221,6 +235,9 @@ class Qiniu(object):
         else:
             host = "http://{}.qiniudn.com".format(space)
         # link = os.path.join(host, urllib.quote(target))
+        if sys.version_info.major == 3:
+            from urllib.parse import quote
+            return os.path.join(host, quote(target))
         return os.path.join(host, urllib.quote(target))
 
     @auth
@@ -238,13 +255,18 @@ class Qiniu(object):
         link = self.private_download_link(target, space)
         downloader = http.HTTPCons(is_debug)
         downloader.request(link)
-        feed = http.SockFeed(downloader, 5 * 1024 * 1024)
+        feed = http.SockFeed(downloader, 4096)
         start = time.time()
         feed.http_response(save_path)
         if is_debug:
-            print(feed.header)
+            print("\033[01;33mResponse:\033[00m")
+            print('{}'.format(feed.head))
+            print("\n".join(["{} : {}".format(i, feed.header[i]) for i in feed.header]))
+
         if not feed.http_code == 200:
             print("\033[01;31m{}\033[00m not exist !".format(target))
+            if feed.file_handle:
+                os.unlink(feed.file_handle.name)
             return False
         end = time.time()
         size = int(feed.header.get('Content-Length', 1))
@@ -279,6 +301,17 @@ class Qiniu(object):
     def remove(self, target, space=None):
         if not space:
             space = self.config.get_default_space()[0]
+        prompt = 'Are You Sure to \033[01;31mDELETE\033[00m `\033[01;32m{}\033[00m` from \033[01;34m{}\033[00m ? y/n '.format(target, space)
+        try:
+            if sys.version_info.major == 2:
+                if not raw_input(prompt).lower().startswith('y'):
+                    return False
+            else:
+                if not input(prompt).lower().startswith('y'):
+                    return False
+        except:
+            return False
+
         manager_remove = http.HTTPCons()
         url = self.manager_host + '/delete/{}'.format(urlsafe_base64_encode("{}:{}".format(space, target)))
         manager_remove.request(url,
@@ -306,11 +339,8 @@ class Qiniu(object):
         feed.disable_progress = True
         feed.http_response()
         if is_debug:
-            print('{}\n'.format(feed.head))
-            for i in feed.header:
-                print("{} : {}".format(i, feed.header[i]))
+            self.print_debug(feed)
 
-            print('\n{}'.format(feed.data), "\n")
         if not feed.data:
             print("no such file \033[01;31m{}\033[00m in \033[01;32m{}\033[00m".format(target, space))
             nx_space = self.next_space()
@@ -334,6 +364,7 @@ class Qiniu(object):
 
     @auth
     def list(self, space=None, is_debug=False):
+        # TODO:: 分页支持
         if not space:
             space = self.config.get_default_space()[0]
         state, data = self.__get_list_in_space(space, is_debug=is_debug, mute=True)
@@ -343,7 +374,7 @@ class Qiniu(object):
             print("\033[01;32m{}\033[00m".format(space))
             for i in sorted(data, key=lambda x: x['putTime'], reverse=True):
                 print("  {}  {}  {}".format(i['key'],
-                                            '·' * (self.COL_WIDTH - str_len(unicode(i['key']))),
+                                            '·' * (self.COL_WIDTH - str_len(u"{}".format(i['key']))),
                                             http.unit_change(i['fsize'])))
                 total_size += i['fsize']
             print("\n  \033[01;31m{}\033[00m  \033[01;32m{}\033[00m  \033[01;31m{}\033[00m".format(
@@ -368,7 +399,7 @@ class Qiniu(object):
                     print("\033[01;32m{}\033[00m".format(i[0]))
                     for target in sorted(data, key=lambda x: x['putTime'], reverse=True):
                         print("  {}  {}  {}".format(target['key'],
-                                                    '·' * (self.COL_WIDTH - str_len(unicode(target['key']))),
+                                                    '·' * (self.COL_WIDTH - str_len(u'{}'.format(target['key']))),
                                                     http.unit_change(target['fsize'])))
                         total_size += target['fsize']
         print("\n  \033[01;31m{}\033[00m  \033[01;32m{}\033[00m  \033[01;31m{}\033[00m".format(
@@ -381,15 +412,12 @@ class Qiniu(object):
         url = self.list_host + '/list?bucket={}'.format(space)
         space_list.request(url,
                            headers={'Authorization': 'QBox {}'.format(self.auth.token_of_request(url))})
-        feed = http.SockFeed(space_list, 10 * 1024)
+        feed = http.SockFeed(space_list, 1024)
         feed.disable_progress = mute
         feed.http_response()
         if is_debug:
-            print('{}\n'.format(feed.head))
-            for i in feed.header:
-                print("{} : {}".format(i, feed.header[i]))
+            self.print_debug(feed)
 
-            print('\n', feed.data)
         if not feed.data:
             print("No such space as \033[01;31m{}\033[00m".format(space))
             return False, []
