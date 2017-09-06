@@ -189,7 +189,7 @@ class HTTPCons(object):
             if data and type(data) == str:
                 # upload for one time
                 head += "\r\nContent-Length: {}".format(len(post_data))
-                head += "\r\n{}".format(post_data)
+                head += "\r\n\r\n{}\r\n".format(post_data)
             else:
                 raise URLNotComplete(href, 'POST data')
         elif method == 'GET':

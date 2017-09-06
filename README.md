@@ -48,7 +48,7 @@ Usage:
 必要情况下请设置默认空间名
 
 更多帮助信息
-https://github.com/hellflame/qiniu_manager/blob/v1.4.0/README.md
+https://github.com/hellflame/qiniu_manager/blob/v1.4.1/README.md
 ```
 
 ### 具体操作
@@ -541,6 +541,11 @@ qiniuManager现在同时只能运行一个实例，因为manager从用户家目�
   删除时需要手动确认(还没有添加强制删除选项)。因为有人反馈自己公司的资源被莫名删除了，员工也没有谁承认是自己删除了资源，通过我在http请求的UA信息找到我。如果七牛云一边什么问题都没有的话，或者没有人冒用了我的UA的话，那就应该是有人手残，测试命令删除，工具里也没有进一步提示信息，于是资源就被删除了，而且也没有办法恢复。
 
   暂时添加了加密模块，但尚未使用，主要原因就是py3里面str和bytes很烦=。=
+
+- v1.4.1
+
+  上传修复
+
 
   ​
 
