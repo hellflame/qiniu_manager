@@ -98,10 +98,10 @@ def main():
                 for i in space_list:
                     print("{} {}\t{}".format(space_list.index(i) + 1, i[0], i[1]))
                 if data:
-                    print ('\ndefault space name:\t\033[01;31m{}\033[00m'.format(data[0]))
+                    print('\ndefault space name:\t\033[01;31m{}\033[00m'.format(data[0]))
 
             elif arg[0] in ('-k', '--key'):
-                data = qiniu.config.access_list(include_discard=False)
+                data = qiniu.config.access_list()
                 if data:
                     for i in data:
                         print("{} {} {}".format(data.index(i) + 1, i[1], i[2]))

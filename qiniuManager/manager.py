@@ -13,6 +13,7 @@ from qiniuManager import progress, http, __version__
 
 # from qiniu import Auth, __version__ as sdk_version
 from qiniuManager.utils import urlsafe_base64_encode, Auth, str_len
+from qiniuManager.crypto import decrypt, encrypt
 
 
 def db_ok(function):
@@ -20,7 +21,7 @@ def db_ok(function):
         if self.db and self.cursor:
             return function(self, *args, **kwargs)
         else:
-            print ("Failed To Access {}, please check you authority".format(self.config_path).title())
+            print("Failed To Access {}, please check you authority".format(self.config_path).title())
             return ''
     return func_wrapper
 
@@ -76,8 +77,8 @@ class Config(object):
             self.cursor.execute("CREATE TABLE IF NOT EXISTS {} ("
                                 "id INTEGER PRIMARY KEY AUTOINCREMENT,"
                                 "access VARCHAR(64) NOT NULL UNIQUE,"
-                                "secret VARCHAR(64) NOT NULL,"
-                                "discard INTEGER NOT NULL DEFAULT 0)".format(self.API_keys))
+                                "secret VARCHAR(64) NOT NULL, "
+                                "x INTEGER NOT NULL DEFAULT 0)".format(self.API_keys))
             self.cursor.execute("CREATE TABLE IF NOT EXISTS {} ("
                                 "id INTEGER PRIMARY KEY AUTOINCREMENT,"
                                 "name VARCHAR(50) NOT NULL DEFAULT '',"
@@ -88,29 +89,41 @@ class Config(object):
 
     @db_ok
     def get_one_access(self):
-        self.cursor.execute("select access, secret from {} WHERE discard = 0".format(self.API_keys))
-        result = self.cursor.fetchall()
-        if not result:
+        fetch = random.choice(self.access_list())
+        if not fetch:
             return '', ''
-        return random.choice(result)
+        else:
+            return fetch[1], fetch[2]
 
     @db_ok
-    def access_list(self, include_discard=True):
+    def access_list(self):
         sql = "select * from {} ".format(self.API_keys)
-        if not include_discard:
-            sql += "where discard = 0"
         self.cursor.execute(sql)
         result = self.cursor.fetchall()
         if not result:
-            return None
-        return result
+            return []
+
+        return [(item[0],
+                 decrypt(item[1]) if item[3] else item[1],
+                 decrypt(item[2]) if item[3] else item[2],
+                 item[3]) for item in result]
 
     @db_ok
     def add_access(self, access, secret):
-        """Though two pair of key pair is allowed, but I hate to operate on this"""
-        self.cursor.execute("delete from {}".format(self.API_keys))
-        self.cursor.execute("insert into {} (access, secret) "
-                            "VALUES ('{}', '{}')".format(self.API_keys, access, secret))
+        def add_key():
+            self.cursor.execute("insert into {} (access, secret, x) "
+                                "VALUES ('{}', '{}', 1)".format(self.API_keys, encrypt(access), encrypt(secret)))
+
+        try:
+            self.cursor.execute("delete from {}".format(self.API_keys))
+            add_key()
+        except:
+            """
+            旧版本SQLite处理
+            """
+            self.cursor.execute("drop table {}".format(self.API_keys))
+            self.init_db()
+            add_key()
 
     @db_ok
     def set_space(self, space, alias=''):
@@ -157,6 +170,7 @@ class Config(object):
 
     def __del__(self):
         if self.db:
+            """一次性commit"""
             self.db.commit()
             self.db.close()
 
