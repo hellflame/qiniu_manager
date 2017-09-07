@@ -120,8 +120,8 @@ def main():
                                qiniu.avg_speed
                               ))
                     else:
-                        print("\033[01;31m{}\033[00m uploaded \033[01;31mFailed\033[00m !!".
-                              format(os.path.basename(target)))
+                        print("\033[01;31m{}\033[00m uploaded \033[01;31mFailed\033[00m !!\n{}".
+                              format(os.path.basename(target), qiniu.fail_reason or ''))
                 else:
                     print("\033[01;31m{}\033[00m not exist, use '-h' to help".format(target))
         elif argv_len == 3:

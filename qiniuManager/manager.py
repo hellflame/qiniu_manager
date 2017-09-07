@@ -182,11 +182,16 @@ class Qiniu(object):
 
         self.state = False
         self.avg_speed = ''
+        self.last_failed = None
+        self.retry_count = 0
+        self.MAX_RETRY = 10
+        self.fail_reason = None
 
         # API restrict
         self.R_BLOCK_SIZE = 4 * 1024 * 1024
         self.list_host = "https://rsf.qbox.me"
         self.manager_host = 'https://rs.qbox.me'
+        self.upload_host = 'https://up.qbox.me'
         self.get_auth()
 
     def __del__(self):
@@ -324,7 +329,7 @@ class Qiniu(object):
             data = json.loads(data)
             print("Error Occur: \033[01;31m{}\033[00m".format(data['error']))
         else:
-            print("\033[01;31m{}\033[00m DELETED from \033[01;32m{}\033[00m".format(target, space))
+            print("`\033[01;31m{}\033[00m` DELETED from \033[01;34m{}\033[00m".format(target, space))
 
     @auth
     def check(self, target, space=None, is_debug=False):
@@ -454,7 +459,7 @@ class Qiniu(object):
         if space:
             token = self.auth.upload_token(space, file_name, 7200)
         else:
-            space, alias = self.config.get_default_space()
+            space, _ = self.config.get_default_space()
             token = self.auth.upload_token(space, file_name, 7200)
         # mime_type = self.get_mime_type(path)
         md5 = get_md5(path)
@@ -464,7 +469,7 @@ class Qiniu(object):
         self.total = os.stat(path).st_size + 2
         self.progressed = 0
         self.pre_upload_info = (file_name, md5, space,
-                                token, 0, 'https://up.qbox.me')
+                                token, 0, self.upload_host)
         self.prepared = True
 
     @progress.bar(100)
@@ -473,8 +478,18 @@ class Qiniu(object):
         if not self.prepared:
             self.__pre_upload(abs_path, space)
             self.start_stamp = time.time()
-        data = self.file_handle.read(self.R_BLOCK_SIZE)
+        if not self.last_failed:
+            data = self.file_handle.read(self.R_BLOCK_SIZE)
+            self.retry_count = 0
+        else:
+            data = self.last_failed
+            self.retry_count += 1
+            if self.retry_count > self.MAX_RETRY:
+                self.progressed = self.total
+                self.fail_reason = "超过最大重传限制"
+                return False
         if not data:
+            # total submit
             file_url = self.__make_url(abs_path)
             mkfile = http.HTTPCons()
             mkfile.request(file_url, 'POST',
@@ -485,29 +500,43 @@ class Qiniu(object):
             feed.http_response()
             if not feed.data:
                 self.progressed = self.total
+                self.fail_reason = "服务器未响应合并操作"
                 return False
-            data = json.loads(feed.data)
-            # print data
-            avg_speed = http.unit_change(self.progressed / (time.time() - self.start_stamp))
-            self.progressed = self.total
-            if data.get('key', '') == self.pre_upload_info[0]:
-                self.state = True
-                self.avg_speed = '{}/s'.format(avg_speed)
-                return True
+            try:
+                data = json.loads(feed.data)
+                avg_speed = http.unit_change(self.progressed / (time.time() - self.start_stamp))
+                self.progressed = self.total
+                if data.get('key', '') == self.pre_upload_info[0]:
+                    self.state = True
+                    self.avg_speed = '{}/s'.format(avg_speed)
+                    return True
+            except:
+                self.fail_reason = "合并操作响应无效"
             return False
 
-        size = len(data)
-        url = '{0}/mkblk/{1}'.format(self.pre_upload_info[-1], size)
-        labor = http.HTTPCons()
-        labor.request(url, 'POST',
-                      {'Authorization': 'UpToken {}'.format(self.pre_upload_info[3])},
-                      data=data)
-        feed = http.SockFeed(labor)
-        feed.disable_progress = True
-        feed.http_response()
-        # print feed.data
-        self.block_status.append(json.loads(feed.data).get('ctx'))
-        self.progressed += size
+        # block upload
+        done = False
+        try:
+            labor = http.HTTPCons()
+            labor.request('{0}/mkblk/{1}'.format(self.pre_upload_info[-1], len(data)),
+                          'POST',
+                          {'Authorization': 'UpToken {}'.format(self.pre_upload_info[3])},
+                          data=data)
+            feed = http.SockFeed(labor)
+            feed.disable_progress = True
+            feed.http_response()
+            if '401' in feed.head:
+                self.progressed = self.total
+                self.fail_reason = "上传凭证无效"
+                return False
+            self.block_status.append(json.loads(feed.data).get('ctx'))
+            done = True
+            self.last_failed = None
+        except:
+            self.last_failed = data
+
+        if done:
+            self.progressed += len(data)
         # print self.progressed, self.total
 
 
