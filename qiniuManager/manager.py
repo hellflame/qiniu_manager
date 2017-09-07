@@ -9,44 +9,43 @@ import random
 import urllib
 import sqlite3
 import hashlib
-from qiniuManager import progress, http, __version__
 
-# from qiniu import Auth, __version__ as sdk_version
+from qiniuManager import progress, http, __version__
 from qiniuManager.utils import urlsafe_base64_encode, Auth, str_len
 from qiniuManager.crypto import decrypt, encrypt
 
 
-def db_ok(function):
+def db_ok(func):
     def func_wrapper(self, *args, **kwargs):
         if self.db and self.cursor:
-            return function(self, *args, **kwargs)
+            return func(self, *args, **kwargs)
         else:
             print("Failed To Access {}, please check you authority".format(self.config_path).title())
             return ''
     return func_wrapper
 
 
-def access_ok(function):
+def access_ok(func):
     def access_wrap(self, *args, **kwargs):
         if self.access and self.secret:
-            return function(self, *args, **kwargs)
+            return func(self, *args, **kwargs)
         else:
             print("Please Set At Lease one pair of usable access and secret".title())
             return ''
     return access_wrap
 
 
-def auth(function):
+def auth(func):
     def auth_ok(self, *args, **kwargs):
         if self.auth:
-            return function(self, *args, **kwargs)
+            return func(self, *args, **kwargs)
         else:
             self.get_auth()
             if not self.auth:
                 print("failed to initialize the authorization".title())
                 return ''
             else:
-                return function(*args, **kwargs)
+                return func(*args, **kwargs)
     return auth_ok
 
 
