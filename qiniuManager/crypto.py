@@ -84,6 +84,9 @@ if __name__ == '__main__':
         def test_dec(self):
             self.assertEqual(self.words, decrypt(encrypt(self.words)))
 
+        def test_dec_is_str(self):
+            self.assertIsInstance(decrypt(encrypt(self.words)), str)
+
     unittest.main()
 
 
