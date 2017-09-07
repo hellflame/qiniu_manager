@@ -48,7 +48,7 @@ Usage:
 必要情况下请设置默认空间名
 
 更多帮助信息
-https://github.com/hellflame/qiniu_manager/blob/v1.4.1/README.md
+https://github.com/hellflame/qiniu_manager/blob/v1.4.2/README.md
 ```
 
 ### 具体操作
