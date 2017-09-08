@@ -36,13 +36,13 @@ Usage:
   --space,-s        修改或查看当前空间名
   --rename,-n       重命名
   --list-ex,-le     显示请求空间文件列表http报文
-  --key,-k      修改或查看access key，secret key
-  --link,-i     返回开放云空间文件下载链接
+  --key,-k          修改或查看access key，secret key
+  --link,-i         返回开放云空间文件下载链接
   --check-e,-ce     显示请求文件状态的http报文
-  --list,-l     文件列表
+  --list,-l         文件列表
   --r-space,-rs     删除本地保存的空间名
   --version,-v      当前版本号
-  --help,-h     显示当前帮助页面
+  --help,-h         显示当前帮助页面
 
 首次使用请设置密钥对 qiniu [--key|-k] <access key> <secret key>
 必要情况下请设置默认空间名
