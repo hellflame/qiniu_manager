@@ -5,7 +5,6 @@ import os
 import sys
 import time
 import json
-import random
 import urllib
 import sqlite3
 import hashlib
@@ -88,24 +87,13 @@ class Config(object):
 
     @db_ok
     def get_one_access(self):
-        fetch = random.choice(self.access_list())
+        self.cursor.execute("select * from {} ".format(self.API_keys))
+        fetch = self.cursor.fetchone()
         if not fetch:
             return '', ''
         else:
-            return fetch[1], fetch[2]
-
-    @db_ok
-    def access_list(self):
-        sql = "select * from {} ".format(self.API_keys)
-        self.cursor.execute(sql)
-        result = self.cursor.fetchall()
-        if not result:
-            return []
-
-        return [(item[0],
-                 decrypt(item[1]) if item[3] else item[1],
-                 decrypt(item[2]) if item[3] else item[2],
-                 item[3]) for item in result]
+            return decrypt(fetch[1]) if fetch[3] else fetch[1], \
+                   decrypt(fetch[2]) if fetch[3] else fetch[2]
 
     @db_ok
     def add_access(self, access, secret):

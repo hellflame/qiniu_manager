@@ -72,6 +72,7 @@ def main():
         if argv_len == 2:
             if arg[0] in ('-v', '--version'):
                 print("Qiniu Manager {}".format(__version__))
+                print("Python: " + sys.version)
             elif arg[0] in ('-h', '--help'):
                 help_menu()
 
@@ -100,10 +101,9 @@ def main():
                     print('\ndefault space name:\t\033[01;31m{}\033[00m'.format(data[0]))
 
             elif arg[0] in ('-k', '--key'):
-                data = qiniu.config.access_list()
+                data = qiniu.config.get_one_access()
                 if data:
-                    for i in data:
-                        print("{} {} {}".format(data.index(i) + 1, i[1], i[2]))
+                    print("AK: {}\nSK: {}".format(data[0], data[1]))
                 else:
                     print("no access secret key pair found")
 
