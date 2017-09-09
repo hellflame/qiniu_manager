@@ -13,6 +13,8 @@ from qiniuManager import progress, http, __version__
 from qiniuManager.utils import urlsafe_base64_encode, Auth, str_len
 from qiniuManager.crypto import decrypt, encrypt
 
+__all__ = ['Qiniu', 'Config']
+
 
 def db_ok(func):
     def func_wrapper(self, *args, **kwargs):
