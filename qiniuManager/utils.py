@@ -65,16 +65,20 @@ else:
 
 
 def str_len(s):
-    # string length adjust for monospaced fonts
-    l = 0
+    """
+    获取占用等宽字体终端实际宽度，适用`Monaco`等其他等宽字体字体
+    :param s:
+    :return:
+    """
+    length = 0
     for i in s:
         # Chinese,Japanese,Korean character utf8 range
         # Test Font `Monaco`
         if 3105 <= ord(i) <= 65535:
-            l += 2
+            length += 2
         else:
-            l += 1
-    return l
+            length += 1
+    return length
 
 
 def urlsafe_base64_encode(data):
@@ -182,10 +186,7 @@ class Auth(object):
             scope=scope,
             deadline=int(time.time()) + expires,
         )
-
-        return self.__upload_token(args)
-
-    def __upload_token(self, policy):
-        data = json.dumps(policy, separators=(',', ':'))
+        data = json.dumps(args, separators=(',', ':'))
         return self.token_with_data(data)
+
 

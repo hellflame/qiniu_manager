@@ -5,21 +5,31 @@ import sys
 import os
 import math
 
+__all__ = ['bar']
+
 
 def bar(width=0, fill='#'):
-    def function_wrapper(function):
+    """
+    进度条处理
+    :param width: 手动设置进度条宽度
+    :param fill: 进度填充字符
+    """
+    def function_wrapper(func):
         def arguments(self, *args, **kwargs):
             if not hasattr(self, 'progressed') or not hasattr(self, 'total'):
-                raise EssentialException
+                print("progressed, total attribute is needed!")
+                return
             while self.progressed <= self.total:
-                function(self, *args, **kwargs)
+                func(self, *args, **kwargs)
                 if not hasattr(self, 'disable_progress') or not self.disable_progress:
                     if self.total <= 0:
-                        raise InvalidBar("Total Length Invalid !")
+                        print("Total Length Invalid !")
+                        self.progressed = self.total = 1
+                        break
                     if not width:
                         try:
                             w = int(os.popen("stty size 2>/dev/null").read().split(" ")[1])
-                        except Exception as e:
+                        except:
                             w = 50
                     else:
                         w = width
@@ -47,17 +57,5 @@ def bar(width=0, fill='#'):
         return arguments
     return function_wrapper
 
-
-class EssentialException(Exception):
-    def __str__(self):
-        return "instance must have `progressed` and `total` attributes"
-
-
-class InvalidBar(Exception):
-    def __init__(self, reason):
-        self.reason = reason
-
-    def __str__(self):
-        return "This progress bar is invalid for: {}".format(self.reason)
 
 

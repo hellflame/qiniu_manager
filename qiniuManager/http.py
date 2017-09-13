@@ -7,6 +7,9 @@ import sys
 import ssl
 import os
 
+__all__ = ['SockFeed', 'HTTPCons', 'unit_change']
+
+
 if sys.version_info.major == 2:
     from cStringIO import StringIO
 
@@ -30,6 +33,9 @@ else:
 
 
 class SockFeed(object):
+    """
+    连接响应
+    """
     def __init__(self, httpConnection, chuck=1024):
         self.socket = httpConnection.connect
         self.buffer = None
@@ -54,6 +60,12 @@ class SockFeed(object):
 
     @progress.bar()
     def http_response(self, file_path='', skip_body=False):
+        """
+        通过进度条控制获取响应结果
+        :param file_path: str => 下载文件位置，若文件已存在，则在后面用数字区分版本
+        :param skip_body: bool => 是否跳过http实体
+        :return:
+        """
         if file_path and not self.file_handle:
             file_index = 1
             path_choice = file_path
@@ -118,6 +130,9 @@ class SockFeed(object):
 
 
 class HTTPCons(object):
+    """
+    启动连接，发出请求
+    """
     def __init__(self, debug=False):
         self.host = ''
         self.port = 0
@@ -126,6 +141,12 @@ class HTTPCons(object):
         self.connect = None
 
     def https_init(self, host, port):
+        """
+        https连接
+        :param host: str
+        :param port: int
+        :return: None
+        """
         context = ssl.create_default_context()
         context.check_hostname = True
         context.verify_mode = ssl.CERT_REQUIRED
@@ -137,6 +158,12 @@ class HTTPCons(object):
         self.port = port
 
     def http_init(self, host, port):
+        """
+        http连接
+        :param host: str
+        :param port: int
+        :return: None
+        """
         self.connect = self.s
         # self.connect.settimeout(60)
         self.connect.connect((host, port))
@@ -144,6 +171,14 @@ class HTTPCons(object):
         self.port = port
 
     def request(self, url, method='GET', headers=None, data=None):
+        """
+        链接解析，完成请求
+        :param url: str
+        :param method: str => GET | POST
+        :param headers: dict
+        :param data: str => post data entity
+        :return: None
+        """
         if '//' not in url:
             raise URLNotComplete(url, 'url protocol')
         index = url.index('//')
@@ -215,6 +250,13 @@ class HTTPCons(object):
 
 
 def unit_change(target):
+    """
+    单位换算
+    :param target: unsigned int
+    :return: str
+    """
+    if target < 0:
+        return str(target)
     unit_list = ('B', 'KB', 'MB', 'GB', 'TB')
     index = 0
     target = float(target)

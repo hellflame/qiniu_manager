@@ -17,6 +17,9 @@ __all__ = ['Qiniu', 'Config']
 
 
 def db_ok(func):
+    """
+    确认数据库可用
+    """
     def func_wrapper(self, *args, **kwargs):
         if self.db and self.cursor:
             return func(self, *args, **kwargs)
@@ -27,6 +30,9 @@ def db_ok(func):
 
 
 def access_ok(func):
+    """
+    确认qiniu API key可用
+    """
     def access_wrap(self, *args, **kwargs):
         if self.access and self.secret:
             return func(self, *args, **kwargs)
@@ -51,6 +57,11 @@ def auth(func):
 
 
 def get_md5(path):
+    """
+    计算本地文件 md5
+    :param path: str => path to file
+    :return: str => md5
+    """
     if os.path.exists(path):
         hash_md5 = hashlib.md5()
         with open(path, 'rb') as handle:
@@ -71,6 +82,9 @@ class Config(object):
         self.init_db()
 
     def init_db(self):
+        """
+        初始化本地数据库
+        """
         try:
             self.db = sqlite3.connect(self.config_path)
             self.cursor = self.db.cursor()
@@ -89,6 +103,11 @@ class Config(object):
 
     @db_ok
     def get_one_access(self):
+        """
+        从本地数据库获取API key，若没有，返回('', '')
+        已解密
+        :return tuple => ('ak', 'sk')
+        """
         self.cursor.execute("select * from {} ".format(self.API_keys))
         fetch = self.cursor.fetchone()
         if not fetch:
@@ -99,6 +118,13 @@ class Config(object):
 
     @db_ok
     def add_access(self, access, secret):
+        """
+        添加API ak，sk 到本地数据库
+        (在数据库可访问的情况下)
+        :param access: str => ak
+        :param secret: str => sk
+        :return: None
+        """
         def add_key():
             self.cursor.execute("insert into {} (access, secret, x) "
                                 "VALUES ('{}', '{}', 1)".format(self.API_keys, encrypt(access), encrypt(secret)))
@@ -116,6 +142,14 @@ class Config(object):
 
     @db_ok
     def set_space(self, space, alias=''):
+        """
+        设置某存储空间为默认访问空间
+        或
+        添加新的存储空间并设置为默认访问空间
+        :param space: str => 存储空间名
+        :param alias: str => 关联域名，测试域名
+        :return: None
+        """
         self.cursor.execute("update {} set as_default = 0".format(self.SPACE_ALIAS))
         self.cursor.execute("select id from {} WHERE name = '{}'".format(self.SPACE_ALIAS, space))
         result = self.cursor.fetchone()
@@ -129,10 +163,14 @@ class Config(object):
         else:
             self.cursor.execute("insert into {} (name, alias, as_default)"
                                 " VALUES ('{}', '{}', 1)".format(self.SPACE_ALIAS, space, alias))
-        return True
 
     @db_ok
     def get_space(self, space_name):
+        """
+        获取本地数据库中指定空间信息
+        :param space_name: str
+        :return:
+        """
         self.cursor.execute("select name, alias from {} WHERE name = '{}'".format(self.SPACE_ALIAS, space_name))
         result = self.cursor.fetchone()
         if result:
@@ -141,16 +179,30 @@ class Config(object):
 
     @db_ok
     def remove_space(self, space_name):
-        """default space may be deleted, so you must set the default manually"""
+        """
+        删除本地数据库中存储的空间名，
+        可能删除默认空间名，需要手动重新设置默认空间
+        由于空间误删后恢复的可能性很大，没有进一步获取用户的确认信息，需要使用者考虑清楚
+        :param space_name: str
+        :return None
+        """
         self.cursor.execute("delete from {} WHERE name = '{}'".format(self.SPACE_ALIAS, space_name))
 
     @db_ok
     def get_space_list(self):
+        """
+        获取本地已经存储的空间列表
+        :return: list
+        """
         self.cursor.execute("select name, alias from {}".format(self.SPACE_ALIAS))
         return self.cursor.fetchall()
 
     @db_ok
     def get_default_space(self):
+        """
+        获取默认存储空间
+        :return: tuple
+        """
         self.cursor.execute("select name, alias from {} WHERE as_default = 1".format(self.SPACE_ALIAS))
         result = self.cursor.fetchone()
         if result:
@@ -165,7 +217,9 @@ class Config(object):
 
 
 class Qiniu(object):
-    """Single Line"""
+    """
+    七牛云资源管理
+    """
     def __init__(self):
         self.config = Config()
         self.access, self.secret = self.config.get_one_access()
@@ -203,6 +257,11 @@ class Qiniu(object):
 
     @staticmethod
     def print_debug(feed):
+        """
+        输出七牛云请求调试信息
+        :param feed: SockFeed => 响应
+        :return: None
+        """
         # ENV
         print("\033[01;33mEnv:\033[00m")
         print("\n".join(["\033[01;31m{}\033[00m {}".format(i, j) for i, j in [('Py Ver.', sys.version), ('Tool Ver.', __version__)]]))
@@ -214,6 +273,10 @@ class Qiniu(object):
         print('\n{}'.format(feed.data), "\n\033[01;33mEOF\033[00m")
 
     def next_space(self):
+        """
+        获取下一个需要尝试查找的空间
+        :return: str => 空间名称
+        """
         res = filter(lambda x: x[0] not in self.checked_spaces, self.config.get_space_list())
         if res:
             if filter.__class__ is type:
@@ -223,6 +286,11 @@ class Qiniu(object):
 
     @auth
     def export_download_links(self, space=None):
+        """
+        导出下载链接，包括私有空间，默认输出链接到终端，可重定向到其他文件
+        :param space: str => 需要导出的空间名称
+        :return: None
+        """
         if not space:
             space, alias = self.config.get_default_space()
 
@@ -233,6 +301,13 @@ class Qiniu(object):
 
     @auth
     def regular_download_link(self, target, space=None):
+        """
+        视空间为开放公开空间，返回已编码的链接
+        不会检查该文件是否存在
+        :param target: str => 空间中的文件名
+        :param space: str => 指定空间名，否则为默认空间
+        :return: str => 下载链接
+        """
         if not space:
             space, alias = self.config.get_default_space()
         else:
@@ -250,12 +325,26 @@ class Qiniu(object):
 
     @auth
     def private_download_link(self, target, space=None):
+        """
+        获取私有下载链接，1小时有效
+        :param target: str => 文件名
+        :param space: str => 指定空间名，否则为默认空间
+        :return: str => 私有下载链接
+        """
         link = self.regular_download_link(target, space)
         private_link = self.auth.private_download_url(link, expires=3600)
         return private_link
 
     @auth
     def download(self, target, space=None, directory=None, is_debug=False):
+        """
+        调用进度条，下载文件
+        :param target: str => 文件名
+        :param space: str => 指定空间名，否则为默认空间
+        :param directory: str => 下载到指定目录, 相对目录或绝对目录
+        :param is_debug: bool => 是否输出调试信息
+        :return: None
+        """
         if directory:
             save_path = os.path.join(directory, os.path.basename(target))
         else:
@@ -307,6 +396,12 @@ class Qiniu(object):
 
     @auth
     def remove(self, target, space=None):
+        """
+        删除指定空间中文件
+        :param target: str => 文件名
+        :param space: str => 指定空间或默认空间
+        :return: None
+        """
         if not space:
             space = self.config.get_default_space()[0]
         prompt = 'Are You Sure to \033[01;31mDELETE\033[00m `\033[01;32m{}\033[00m` from \033[01;34m{}\033[00m ? y/n '.format(target, space)
@@ -336,6 +431,13 @@ class Qiniu(object):
 
     @auth
     def check(self, target, space=None, is_debug=False):
+        """
+        检查单个文件`详细`信息
+        :param target: str => 文件名
+        :param space: str => 指定空间或默认空间开始往下查找
+        :param is_debug: bool => 是否输出调试信息
+        :return: None
+        """
         if not space:
             space = self.config.get_default_space()[0]
         self.checked_spaces.add(space)
@@ -372,6 +474,12 @@ class Qiniu(object):
 
     @auth
     def list(self, space=None, is_debug=False):
+        """
+        列出空间中的所有文件
+        :param space: str => 指定空间或默认空间
+        :param is_debug: bool => 是否输出调试信息
+        :return: None
+        """
         # TODO:: 分页支持
         if not space:
             space = self.config.get_default_space()[0]
@@ -394,6 +502,9 @@ class Qiniu(object):
 
     @auth
     def list_all(self):
+        """
+        列出当前数据库中存储的所有空间的文件列表，统计总大小
+        """
         spaces = self.config.get_space_list()
         if not spaces:
             print("I don't Know any of them")
@@ -438,6 +549,10 @@ class Qiniu(object):
 
     @access_ok
     def get_auth(self):
+        """
+        计算授权码
+        :return: auth
+        """
         try:
             self.auth = Auth(self.access, self.secret)
         except:
@@ -477,7 +592,9 @@ class Qiniu(object):
 
     @progress.bar(100)
     def upload(self, abs_path, space=None):
-        """upload data"""
+        """
+        调用进度条，上传文件到指定空间或默认空间
+        """
         if not self.prepared:
             self.__pre_upload(abs_path, space)
             self.start_stamp = time.time()
