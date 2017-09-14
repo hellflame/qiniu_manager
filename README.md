@@ -563,4 +563,7 @@ qiniuManager现在同时只能运行一个实例，因为manager从用户家目�
 - v1.4.4 (plan)
 
   TODO:: 日志记录
+  TODO:: 搜索功能，正则匹配
+  TODO:: 按大小排序，文件大小过滤
+
   ​
