@@ -562,6 +562,7 @@ qiniuManager现在同时只能运行一个实例，因为manager从用户家目�
 
 - v1.4.4 (unreleased)
 
+  进一步降低调用于功能之间的耦合(极大的解耦)
   TODO:: argparse
   TODO:: 搜索功能，正则匹配，全局搜索(搜索所有空间内容)
   TODO:: 按大小排序，文件大小过滤
