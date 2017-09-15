@@ -226,6 +226,7 @@ class Qiniu(object):
         self.auth = None
         self.checked_spaces = set()
         self.COL_WIDTH = 35
+        self.total_size = 0
 
         self.prepared = False
         self.pre_upload_info = None
@@ -474,7 +475,7 @@ class Qiniu(object):
                                              data['putTime']))
 
     @auth
-    def list(self, space=None, reverse=True, by_date=True, is_debug=False):
+    def list(self, space=None, reverse=True, by_date=True, is_debug=False, get_sum=True):
         """
         列出指定空间或默认空间中的所有文件
         :param space: str => 指定空间或默认空间
@@ -489,10 +490,9 @@ class Qiniu(object):
 
         if data:
             ret = "\033[01;32m{}\033[00m\r\n".format(space)
-            total_size = 0
 
             for i in data:
-                total_size += i['fsize']
+                self.total_size += i['fsize']
 
             if by_date:
                 def sort_tool(x):
@@ -506,10 +506,11 @@ class Qiniu(object):
                                                       http.unit_change(i['fsize']))
                                 for i in sorted(data, key=sort_tool, reverse=reverse)])
 
-            ret += "\r\n\r\n  \033[01;31m{}\033[00m  \033[01;32m{}\033[00m  \033[01;31m{}\033[00m".format(
-                'Total',
-                '·' * (self.COL_WIDTH - len('total')),
-                http.unit_change(total_size))
+            if get_sum:
+                ret += "\r\n\r\n  \033[01;31m{}\033[00m  \033[01;32m{}\033[00m  \033[01;31m{}\033[00m".format(
+                    'Total',
+                    '·' * (self.COL_WIDTH - len('total')),
+                    http.unit_change(self.total_size))
             return True, ret
         else:
             return False, "There is no file in \033[01;31m{}\033[00m".format(space)
@@ -525,7 +526,12 @@ class Qiniu(object):
         if not spaces:
             return False, "没有保存任何空间信息"
 
-        return True, "\r\n\r\n".join([self.list(space=i[0], reverse=reverse, by_date=by_date)[1] for i in spaces])
+        return True, "\r\n\r\n".join([self.list(space=i[0], reverse=reverse, by_date=by_date, get_sum=False)[1]
+                                      for i in spaces]) + "\r\n\r\n  \033[01;31m{}\033[00m  \033[01;32m{}\033[00m " \
+                                                          " \033[01;31m{}\033[00m".format(
+                                                          'Total',
+                                                          '·' * (self.COL_WIDTH - len('total')),
+                                                          http.unit_change(self.total_size))
 
     def __get_list_in_space(self, space, mute=False, is_debug=False):
         space_list = http.HTTPCons(is_debug)
