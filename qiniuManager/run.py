@@ -82,7 +82,8 @@ def parser():
     parse.add_argument("-l", '--list', action='append', nargs="?", metavar='ns', help="显示文件列表")
     parse.add_argument("-la", '--list-all', action="store_true", help="显示本地已知所有空间文件列表")
     parse.add_argument("-ld", dest="list_debug", action='append', nargs="?", metavar='ns', help="调试文件列表输出")
-    parse.add_argument("-s", dest="space", action='append', nargs="?", metavar='ns', help="添加、设置默认空间或查看空间列表")
+    parse.add_argument("-s", dest="space_check", action="append", nargs='?', metavar='ns', help="添加、设置默认空间或查看空间列表")
+    parse.add_argument("--alias", help="指定空间关联域名")
     parse.add_argument("-sr", dest="space_remove", metavar="ns", help="删除本地空间")
     parse.add_argument("-c", dest="check", action="store_true", help="查看文件状态")
     parse.add_argument("-cd", dest="check_debug", action="store_true", help="调试查看文件状态的输出")
@@ -136,8 +137,49 @@ def command(args, parse):
                 _, result = qiniu.list(args.list[0], reverse=args.revert, by_date=not args.size)
             print(result)
 
+        elif args.list_debug:
+            if not args.list_debug[0]:
+                _, result = qiniu.list(reverse=args.revert, by_date=not args.size,
+                                       is_debug=True)
+            else:
+                _, result = qiniu.list(args.list_debug[0], reverse=args.revert,
+                                       by_date=not args.size, is_debug=True)
+            print(result)
+
         elif args.list_all:
             print(qiniu.list_all(reverse=args.revert, by_date=not args.size)[1])
+
+        elif args.space_check:
+            if not args.space_check[0]:
+                default = qiniu.config.get_default_space()
+                space_list = qiniu.config.get_space_list()
+                print("已知空间名如下:")
+                print("\r\n".join(["\r\n{}.name: {}\r\n  alias: {}".format(space_list.index(s) + 1, s[0], s[1])
+                                   for s in space_list]))
+                if default:
+                    print('\n默认空间:  \033[01;31m{}\033[00m'.format(default[0]))
+            else:
+                if not args.alias:
+                    qiniu.config.set_space(args.space_check[0])
+                    print("\033[01;31m{}\033[00m 现在变为默认空间".format(args.space_check[0]))
+                else:
+                    qiniu.config.set_space(args.space_check[0], args.alias)
+                    print("\033[01;31m{}\033[00m 现在使用 {} 作为关联域名".format(args.space_check[0], args.alias))
+
+        elif args.alias:
+            default = qiniu.config.get_default_space()
+            if default:
+                qiniu.config.set_space(default, args.alias)
+                print("默认空间现在使用 {} 作为关联域名")
+            else:
+                print("若不指定空间，则需要设置默认空间")
+
+        elif args.space_remove:
+            qiniu.config.remove_space(args.space_remove)
+            print("\033[01;31m{}\033[00m 已从本地数据库中删除".format(args.space_remove))
+
+        else:
+            parse.print_help()
 
 
 def run():

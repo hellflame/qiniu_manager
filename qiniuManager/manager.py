@@ -264,7 +264,8 @@ class Qiniu(object):
         """
         # ENV
         print("\033[01;33mEnv:\033[00m")
-        print("\n".join(["\033[01;31m{}\033[00m {}".format(i, j) for i, j in [('Py Ver.', sys.version), ('Tool Ver.', __version__)]]))
+        print("\n".join(["\033[01;31m{}\033[00m {}".format(i, j) for i, j in [('Tool Ver.', __version__),
+                                                                              ('Py Ver.', sys.version)]]))
         # HTTP Response
         print("\033[01;33mResponse:\033[00m")
         print('{}'.format(feed.head))
