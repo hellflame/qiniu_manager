@@ -482,7 +482,7 @@ class Qiniu(object):
         :param reverse: bool => 反向排序
         :param by_date: bool => 默认按时间排序，否则按大小排序
         :param is_debug: bool => 是否输出调试信息
-        :return: (状态码, 数据)
+        :return: (状态码, 输出到终端的字符串)
         """
         if not space:
             space = self.config.get_default_space()[0]

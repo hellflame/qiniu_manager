@@ -91,6 +91,7 @@ def command(args, parse):
             print(result)
 
         elif args.list_all:
+            # v1.4.4: 所有空间的文件列表信息被缓存起来，整体速度会显得慢一些
             print(qiniu.list_all(reverse=args.revert, by_date=not args.size)[1])
 
         elif args.space_check:
@@ -207,6 +208,16 @@ def command(args, parse):
                 qiniu.rename(args.rename_debug, args.file, args.space, is_debug=True)
             else:
                 print("请给出新的文件名")
+
+        elif type(args.key) is list:
+            if len(args.key) == 0:
+                key = qiniu.config.get_one_access()
+                print("AK: {}\nSK: {}".format(key[0], key[1]) if key else "数据库中暂无存储的密钥")
+            elif len(args.key) == 2:
+                qiniu.config.add_access(args.key[0], args.key[1])
+                print("密钥添加成功")
+            else:
+                print("若要添加密钥，请按序输入AK、SK")
 
         else:
             parse.print_help()
