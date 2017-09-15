@@ -209,6 +209,12 @@ def command(args, parse):
             else:
                 print("请给出新的文件名")
 
+        elif args.find:
+            if args.file:
+                print(qiniu.list_all(reverse=args.revert, by_date=not args.size, find_pattern=args.file)[1])
+            else:
+                print("请输入要匹配的模式")
+
         elif type(args.key) is list:
             if len(args.key) == 0:
                 key = qiniu.config.get_one_access()

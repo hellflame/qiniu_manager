@@ -8,6 +8,7 @@ import json
 import urllib
 import sqlite3
 import hashlib
+import fnmatch
 
 from qiniuManager import progress, http, __version__
 from qiniuManager.utils import urlsafe_base64_encode, Auth, str_len
@@ -475,13 +476,15 @@ class Qiniu(object):
                                              data['putTime']))
 
     @auth
-    def list(self, space=None, reverse=True, by_date=True, is_debug=False, get_sum=True):
+    def list(self, space=None, reverse=True, by_date=True, is_debug=False, get_sum=True, find_pattern=None):
         """
         列出指定空间或默认空间中的所有文件
         :param space: str => 指定空间或默认空间
         :param reverse: bool => 反向排序
         :param by_date: bool => 默认按时间排序，否则按大小排序
         :param is_debug: bool => 是否输出调试信息
+        :param get_sum: bool => 是否计算文件总大小
+        :param find_pattern: str => 文件查找正则
         :return: (状态码, 输出到终端的字符串)
         """
         if not space:
@@ -489,11 +492,6 @@ class Qiniu(object):
         _, data = self.__get_list_in_space(space, is_debug=is_debug, mute=True)
 
         if data:
-            ret = "\033[01;32m{}\033[00m\r\n".format(space)
-
-            for i in data:
-                self.total_size += i['fsize']
-
             if by_date:
                 def sort_tool(x):
                     return x['putTime']
@@ -501,12 +499,22 @@ class Qiniu(object):
                 def sort_tool(x):
                     return x['fsize']
 
-            ret += "\r\n".join(["  {}  {}  {}".format(i['key'],
-                                                      '·' * (self.COL_WIDTH - str_len(u"{}".format(i['key']))),
-                                                      http.unit_change(i['fsize']))
-                                for i in sorted(data, key=sort_tool, reverse=reverse)])
+            chew = sorted(filter(lambda x: fnmatch.fnmatch(x['key'], u"{}".format(find_pattern)), data)
+                          if find_pattern else data, key=sort_tool, reverse=reverse)
+            for i in chew:
+                self.total_size += i['fsize']
+
+            tmp = "\r\n".join(["  {}  {}  {}".format(i['key'],
+                                                     '·' * (self.COL_WIDTH - str_len(u"{}".format(i['key']))),
+                                                     http.unit_change(i['fsize']))
+                               for i in chew])
+            if tmp:
+                ret = "\033[01;32m{}\033[00m\r\n".format(space) + tmp
+            else:
+                return True, ''
 
             if get_sum:
+
                 ret += "\r\n\r\n  \033[01;31m{}\033[00m  \033[01;32m{}\033[00m  \033[01;31m{}\033[00m".format(
                     'Total',
                     '·' * (self.COL_WIDTH - len('total')),
@@ -516,22 +524,36 @@ class Qiniu(object):
             return False, "There is no file in \033[01;31m{}\033[00m".format(space)
 
     @auth
-    def list_all(self, reverse=True, by_date=True):
+    def list_all(self, reverse=True, by_date=True, find_pattern=None):
         """
         列出当前数据库中存储的所有空间的文件列表，统计总大小
         :param reverse: bool => 是否在单个空间中反向排序
         :param by_date: bool => 是否在单个空间中按照时间排序，否则按大小排序
+        :param find_pattern: str => 文件查找正则
         """
         spaces = self.config.get_space_list()
         if not spaces:
             return False, "没有保存任何空间信息"
 
-        return True, "\r\n\r\n".join([self.list(space=i[0], reverse=reverse, by_date=by_date, get_sum=False)[1]
-                                      for i in spaces]) + "\r\n\r\n  \033[01;31m{}\033[00m  \033[01;32m{}\033[00m " \
-                                                          " \033[01;31m{}\033[00m".format(
-                                                          'Total',
-                                                          '·' * (self.COL_WIDTH - len('total')),
-                                                          http.unit_change(self.total_size))
+        if not find_pattern:
+            chew = [self.list(space=i[0], reverse=reverse, by_date=by_date, get_sum=False,
+                              find_pattern=find_pattern)[1] for i in spaces]
+        else:
+            chew = []
+            for i in spaces:
+                state, result = self.list(space=i[0], reverse=reverse,
+                                          by_date=by_date, get_sum=False,
+                                          find_pattern=find_pattern)
+                if state and result or not state and result:
+                    chew.append(result)
+        if chew:
+            return True, "\r\n\r\n".join(chew) + "\r\n\r\n  \033[01;31m{}\033[00m  \033[01;32m{}\033[00m " \
+                                                 " \033[01;31m{}\033[00m".format(
+                                                              'Total',
+                                                              '·' * (self.COL_WIDTH - len('total')),
+                                                              http.unit_change(self.total_size))
+        else:
+            return False, "空无一物"
 
     def __get_list_in_space(self, space, mute=False, is_debug=False):
         space_list = http.HTTPCons(is_debug)

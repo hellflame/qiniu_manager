@@ -341,7 +341,6 @@ $ qiniu -x | xargs -n1 curl -J -O
 
 # target list
 $ qiniu -x <space name> | xargs -n1 curl -J -O
-
 ```
 
 ### Issue
@@ -566,8 +565,36 @@ qiniuManager现在同时只能运行一个实例，因为manager从用户家目�
 
   显示所有空间文件列表的功能换成一次性输出，而非以往的获取一个空间的列表信息就开始输出到终端
 
-  TODO:: 搜索功能，正则匹配，全局搜索(搜索所有空间内容)
+  添加搜索功能，使用unix文件匹配模式，使用方法如：
+
+  ```bash
+  $ qiniu -f *.txt
+  $ qiniu -f wha?.tar
+  ...
+  ```
+
+  关于文件匹配，这里有一个问题:
+
+  ```bash
+  $ qiniu -f *
+  ```
+
+  正常情况下应该返回所有文件，然而实际情况却是报了一个错误：
+
+  ```bash
+  qiniu: error: unrecognized arguments: xxx build dist qiniuManager qiniuManager.egg-info setup.py
+  ```
+
+  也就是把当前目录的文件列表给传进去了，应该是 `argparser` 的默认行为，所以如果出现这样的问题的话，可以用下面的方法：
+
+  ```bash
+  $ qiniu -f "*"
+  ```
+
+  放进引号里面就好了=.=
+
   TODO:: 文件大小过滤
+
   > 由于七牛服务器返回的数据并不会分页，把所有数据都下载下来，对于这样的一次性程序而言，每次都需要更新操作，结果相当于没有保存，所以就不考虑分页操作了。相信使用者对于海量存储的解决方案肯定不会基于这样的终端命令了。
 
   ​
