@@ -62,9 +62,14 @@ def help_menu():
 
 
 def parser():
+    """
+    终端参数解析
+    :return: (args, parser)
+    """
     import argparse
     parse = argparse.ArgumentParser(description="七牛云存储管理助手 Qiniu Manager",
                                     formatter_class=argparse.RawTextHelpFormatter,
+                                    conflict_handler='resolve',
                                     epilog="\033[01;31m首次使用\033[00m请设置密钥对"
                                            "\r\nqiniu [-k|--key] <access key> <secret key>\r\n"
                                            "\r\n必要情况下请设置\033[01;31m默认空间名\033[00m\r\n"
@@ -72,8 +77,8 @@ def parser():
                                            "\r\nhttps://github.com/{}/qiniu_manager/blob/"
                                            "v{}/README.md".format(__author__, __version__))
     parse.add_argument('-v', '--version', action="store_true", help="显示程序版本号以及运行环境")
+    parse.add_argument('-h', '--help', action="store_true", help="显示此帮助信息")
     parse.add_argument("-x", dest="export", action='append', nargs="?", metavar='ns', help="导出默认或指定空间文件下载链接")
-    parse.add_argument("--remove-space", metavar='ns', help="删除本地保存的空间名")
     parse.add_argument("-l", '--list', action='append', nargs="?", metavar='ns', help="显示文件列表")
     parse.add_argument("-la", '--list-all', action="store_true", help="显示本地已知所有空间文件列表")
     parse.add_argument("-ld", dest="list_debug", action='append', nargs="?", metavar='ns', help="调试文件列表输出")
@@ -89,13 +94,18 @@ def parser():
     parse.add_argument("-t", dest="target", help="选择下载目录")
     parse.add_argument('-rn', dest="rename", metavar="name", nargs="?", help="文件重命名")
     parse.add_argument("-rd", dest="rename_debug", metavar="name", nargs="?", help="调试文件重命名")
+    parse.add_argument("-f", '--find', action="store_true", help="搜索文件")
+    parse.add_argument("--size", action='append', nargs="?", metavar='ns', help="按大小排序")
+    parse.add_argument("--revert", action="store_true", help="反向排序")
+    parse.add_argument("-gt", action="append", nargs="+", metavar=("size", 'space'), help="大于指定大小的文件列表")
+    parse.add_argument("-lt", action="append", nargs="+", metavar=("size", 'space'), help="小于指定大小的文件列表")
 
     parse.add_argument("file", nargs="?", help="文件名")
     parse.add_argument("space", nargs="?", help="空间名")
-    parse.add_argument("-k", '--key', nargs=argparse.REMAINDER)
+    parse.add_argument("-k", '--key', nargs=argparse.REMAINDER, help="查看或添加as、ak")
 
     args = parse.parse_args()
-    return args
+    return args, parse
 
 
 def main():
