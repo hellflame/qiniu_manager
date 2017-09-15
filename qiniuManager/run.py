@@ -3,7 +3,7 @@ from __future__ import print_function
 
 import os
 import sys
-from qiniuManager import manager, __version__
+from qiniuManager import manager, __version__, __author__
 
 short = {
     '--check': '-c',
@@ -59,6 +59,44 @@ def help_menu():
     print("\n\033[01;31m首次使用\033[00m请设置密钥对 qiniu [--key|-k] <access key> <secret key>")
     print("必要情况下请设置默认空间名")
     print("\n更多帮助信息\nhttps://github.com/hellflame/qiniu_manager/blob/v{}/README.md\n".format(__version__))
+
+
+def parser():
+    import argparse
+    parse = argparse.ArgumentParser(description="七牛云存储管理助手 Qiniu Manager",
+                                    formatter_class=argparse.RawTextHelpFormatter,
+                                    epilog="\033[01;31m首次使用\033[00m请设置密钥对"
+                                           "\r\nqiniu [--key|-k] <access key> <secret key>\r\n"
+                                           "\r\n必要情况下请设置\033[01;31m默认空间名\033[00m\r\n"
+                                           "\r\n查看更多帮助信息"
+                                           "\r\nhttps://github.com/{}/qiniu_manager/blob/v{}/README.md".format(__author__,
+                                                                                                             __version__))
+    parse.add_argument('-v', '--version', action="store_true", help="显示程序版本号以及运行环境")
+    parse.add_argument("-x", dest="export", action='append', nargs="?", metavar='ns', help="导出默认或指定空间文件下载链接")
+    parse.add_argument("--remove-space", metavar='ns', help="删除本地保存的空间名")
+    parse.add_argument("-l", '--list', action='append', nargs="?", metavar='ns', help="显示文件列表")
+    parse.add_argument("-la", '--list-all', action="store_true", help="显示本地已知所有空间文件列表")
+    parse.add_argument("-ld", dest="list_debug", action='append', nargs="?", metavar='ns', help="调试文件列表输出")
+    parse.add_argument("-s", dest="space", action='append', nargs="?", metavar='ns', help="添加、设置默认空间或查看空间列表")
+    parse.add_argument("-sr", dest="space_remove", metavar="ns", help="删除本地空间")
+    parse.add_argument("-c", dest="check", action="store_true", help="查看文件状态")
+    parse.add_argument("-cd", dest="check_debug", action="store_true", help="调试查看文件状态的输出")
+    parse.add_argument("-r", '--remove', action="store_true", help="删除云文件")
+    parse.add_argument("-d", '--download', action="store_true", help="下载文件")
+    parse.add_argument("-dd", dest="download_debug", action="store_true", help="调试下载")
+    parse.add_argument("-p", '--private', dest="private_link", action="store_true", help="获取私有下载链接")
+    parse.add_argument("-i", '--link', action="store_true", help="获取公开下载链接")
+    parse.add_argument("-t", dest="target", help="选择下载目录")
+    parse.add_argument('-rn', dest="rename", nargs="?", help="文件重命名")
+    parse.add_argument("-rd", dest="rename_debug", nargs="?", help="调试文件重命名")
+
+    parse.add_argument("file", nargs="?", help="添加上传文件")
+    parse.add_argument("space", nargs="?", help="选择空间")
+    parse.add_argument("-k", '--key', nargs=argparse.REMAINDER)
+
+    args = parse.parse_args()
+    print(args)
+
 
 
 def main():
@@ -250,6 +288,6 @@ def main():
 
 
 if __name__ == '__main__':
-    main()
+    parser()
 
 
