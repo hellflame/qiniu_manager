@@ -66,11 +66,11 @@ def parser():
     parse = argparse.ArgumentParser(description="七牛云存储管理助手 Qiniu Manager",
                                     formatter_class=argparse.RawTextHelpFormatter,
                                     epilog="\033[01;31m首次使用\033[00m请设置密钥对"
-                                           "\r\nqiniu [--key|-k] <access key> <secret key>\r\n"
+                                           "\r\nqiniu [-k|--key] <access key> <secret key>\r\n"
                                            "\r\n必要情况下请设置\033[01;31m默认空间名\033[00m\r\n"
                                            "\r\n查看更多帮助信息"
-                                           "\r\nhttps://github.com/{}/qiniu_manager/blob/v{}/README.md".format(__author__,
-                                                                                                             __version__))
+                                           "\r\nhttps://github.com/{}/qiniu_manager/blob/"
+                                           "v{}/README.md".format(__author__, __version__))
     parse.add_argument('-v', '--version', action="store_true", help="显示程序版本号以及运行环境")
     parse.add_argument("-x", dest="export", action='append', nargs="?", metavar='ns', help="导出默认或指定空间文件下载链接")
     parse.add_argument("--remove-space", metavar='ns', help="删除本地保存的空间名")
@@ -87,16 +87,15 @@ def parser():
     parse.add_argument("-p", '--private', dest="private_link", action="store_true", help="获取私有下载链接")
     parse.add_argument("-i", '--link', action="store_true", help="获取公开下载链接")
     parse.add_argument("-t", dest="target", help="选择下载目录")
-    parse.add_argument('-rn', dest="rename", nargs="?", help="文件重命名")
-    parse.add_argument("-rd", dest="rename_debug", nargs="?", help="调试文件重命名")
+    parse.add_argument('-rn', dest="rename", metavar="name", nargs="?", help="文件重命名")
+    parse.add_argument("-rd", dest="rename_debug", metavar="name", nargs="?", help="调试文件重命名")
 
-    parse.add_argument("file", nargs="?", help="添加上传文件")
-    parse.add_argument("space", nargs="?", help="选择空间")
+    parse.add_argument("file", nargs="?", help="文件名")
+    parse.add_argument("space", nargs="?", help="空间名")
     parse.add_argument("-k", '--key', nargs=argparse.REMAINDER)
 
     args = parse.parse_args()
-    print(args)
-
+    return args
 
 
 def main():
