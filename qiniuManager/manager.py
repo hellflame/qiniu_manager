@@ -289,15 +289,15 @@ class Qiniu(object):
         """
         导出下载链接，包括私有空间，默认输出链接到终端，可重定向到其他文件
         :param space: str => 需要导出的空间名称
-        :return: None
+        :return: 私有链接地址
         """
         if not space:
             space, alias = self.config.get_default_space()
 
-        state, data = self.__get_list_in_space(space, mute=True)
-        if state:
-            for i in data:
-                print(self.private_download_link(i['key'].encode('utf8'), space))
+        info, data = self.__get_list_in_space(space, mute=True)
+        if not info:
+            return True, "\r\n".join([self.private_download_link(i['key'].encode('utf8'), space) for i in data])
+        return False, info
 
     @auth
     def regular_download_link(self, target, space=None):
@@ -473,58 +473,58 @@ class Qiniu(object):
                                              data['putTime']))
 
     @auth
-    def list(self, space=None, is_debug=False):
+    def list(self, space=None, reverse=True, by_date=True, is_debug=False):
         """
-        列出空间中的所有文件
+        列出指定空间或默认空间中的所有文件
         :param space: str => 指定空间或默认空间
+        :param reverse: bool => 反向排序
+        :param by_date: bool => 默认按时间排序，否则按大小排序
         :param is_debug: bool => 是否输出调试信息
-        :return: None
+        :return: (状态码, 数据)
         """
-        # TODO:: 分页支持
         if not space:
             space = self.config.get_default_space()[0]
-        state, data = self.__get_list_in_space(space, is_debug=is_debug, mute=True)
+        _, data = self.__get_list_in_space(space, is_debug=is_debug, mute=True)
 
-        if state and data:
+        if data:
+            ret = "\033[01;32m{}\033[00m\r\n".format(space)
             total_size = 0
-            print("\033[01;32m{}\033[00m".format(space))
-            for i in sorted(data, key=lambda x: x['putTime'], reverse=True):
-                print("  {}  {}  {}".format(i['key'],
-                                            '·' * (self.COL_WIDTH - str_len(u"{}".format(i['key']))),
-                                            http.unit_change(i['fsize'])))
+
+            for i in data:
                 total_size += i['fsize']
-            print("\n  \033[01;31m{}\033[00m  \033[01;32m{}\033[00m  \033[01;31m{}\033[00m".format(
+
+            if by_date:
+                def sort_tool(x):
+                    return x['putTime']
+            else:
+                def sort_tool(x):
+                    return x['fsize']
+
+            ret += "\r\n".join(["  {}  {}  {}".format(i['key'],
+                                                      '·' * (self.COL_WIDTH - str_len(u"{}".format(i['key']))),
+                                                      http.unit_change(i['fsize']))
+                                for i in sorted(data, key=sort_tool, reverse=reverse)])
+
+            ret += "\r\n\r\n  \033[01;31m{}\033[00m  \033[01;32m{}\033[00m  \033[01;31m{}\033[00m".format(
                 'Total',
                 '·' * (self.COL_WIDTH - len('total')),
-                http.unit_change(total_size)))
-        elif state and not data:
-            print("There is no file in \033[01;31m{}\033[00m".format(space))
+                http.unit_change(total_size))
+            return True, ret
+        else:
+            return False, "There is no file in \033[01;31m{}\033[00m".format(space)
 
     @auth
-    def list_all(self):
+    def list_all(self, reverse=True, by_date=True):
         """
         列出当前数据库中存储的所有空间的文件列表，统计总大小
+        :param reverse: bool => 是否在单个空间中反向排序
+        :param by_date: bool => 是否在单个空间中按照时间排序，否则按大小排序
         """
         spaces = self.config.get_space_list()
         if not spaces:
-            print("I don't Know any of them")
-            return False
+            return False, "没有保存任何空间信息"
 
-        total_size = 0
-        for i in spaces:
-            state, data = self.__get_list_in_space(i[0], mute=True)
-            if state:
-                if data:
-                    print("\033[01;32m{}\033[00m".format(i[0]))
-                    for target in sorted(data, key=lambda x: x['putTime'], reverse=True):
-                        print("  {}  {}  {}".format(target['key'],
-                                                    '·' * (self.COL_WIDTH - str_len(u'{}'.format(target['key']))),
-                                                    http.unit_change(target['fsize'])))
-                        total_size += target['fsize']
-        print("\n  \033[01;31m{}\033[00m  \033[01;32m{}\033[00m  \033[01;31m{}\033[00m".format(
-            'Total',
-            '·' * (self.COL_WIDTH - len('total')),
-            http.unit_change(total_size)))
+        return True, "\r\n\r\n".join([self.list(space=i[0], reverse=reverse, by_date=by_date)[1] for i in spaces])
 
     def __get_list_in_space(self, space, mute=False, is_debug=False):
         space_list = http.HTTPCons(is_debug)
@@ -538,14 +538,13 @@ class Qiniu(object):
             self.print_debug(feed)
 
         if not feed.data:
-            print("No such space as \033[01;31m{}\033[00m".format(space))
-            return False, []
+            # print("No such space as \033[01;31m{}\033[00m".format(space))
+            return "No such space as \033[01;31m{}\033[00m".format(space), []
         data = json.loads(feed.data)
         if 'error' in data:
-            print("Error Occur: \033[01;31m{}\033[00m @\033[01;35m{}\033[00m".format(data['error'], space))
-            return False, []
+            return "Error Occur: \033[01;31m{}\033[00m @\033[01;35m{}\033[00m".format(data['error'], space), []
         else:
-            return True, data['items']
+            return '', data['items']
 
     @access_ok
     def get_auth(self):

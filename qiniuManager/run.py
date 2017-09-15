@@ -95,8 +95,8 @@ def parser():
     parse.add_argument('-rn', dest="rename", metavar="name", nargs="?", help="文件重命名")
     parse.add_argument("-rd", dest="rename_debug", metavar="name", nargs="?", help="调试文件重命名")
     parse.add_argument("-f", '--find', action="store_true", help="搜索文件")
-    parse.add_argument("--size", action='append', nargs="?", metavar='ns', help="按大小排序")
-    parse.add_argument("--revert", action="store_true", help="反向排序")
+    parse.add_argument("--size", action='store_true', help="按大小排序")
+    parse.add_argument("--revert", action="store_false", help="反向排序")
     parse.add_argument("-gt", action="append", nargs="+", metavar=("size", 'space'), help="大于指定大小的文件列表")
     parse.add_argument("-lt", action="append", nargs="+", metavar=("size", 'space'), help="小于指定大小的文件列表")
 
@@ -104,8 +104,44 @@ def parser():
     parse.add_argument("space", nargs="?", help="空间名")
     parse.add_argument("-k", '--key', nargs=argparse.REMAINDER, help="查看或添加as、ak")
 
-    args = parse.parse_args()
-    return args, parse
+    return parse.parse_args(), parse
+
+
+def command(args, parse):
+    """
+    调用参数解析，完成指令响应
+    :param args: 参数名字空间
+    :param parse: 参数解析器
+    :return: None
+    """
+    # print("\r\n".join(["{} => {}".format(k, v) for k, v in args.__dict__.items()]))
+    if args.help:
+        parse.print_help()
+    elif args.version:
+        print("Qiniu Manager {}".format(__version__))
+        print("Python: " + sys.version)
+    else:
+        qiniu = manager.Qiniu()
+        if args.export:
+            if not args.export[0]:
+                _, result = qiniu.export_download_links()
+            else:
+                _, result = qiniu.export_download_links(args.export[0])
+            print(result)
+
+        elif args.list:
+            if not args.list[0]:
+                _, result = qiniu.list(reverse=args.revert, by_date=not args.size)
+            else:
+                _, result = qiniu.list(args.list[0], reverse=args.revert, by_date=not args.size)
+            print(result)
+
+        elif args.list_all:
+            print(qiniu.list_all(reverse=args.revert, by_date=not args.size)[1])
+
+
+def run():
+    command(*parser())
 
 
 def main():
@@ -297,6 +333,6 @@ def main():
 
 
 if __name__ == '__main__':
-    parser()
+    command(*parser())
 
 

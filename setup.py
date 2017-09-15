@@ -34,7 +34,7 @@ setup(
     ],
     entry_points={
         'console_scripts': [
-            'qiniu=qiniuManager.run:main'
+            'qiniu=qiniuManager.run:run'
         ]
     }
 )
