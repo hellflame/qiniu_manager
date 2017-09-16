@@ -403,7 +403,7 @@ $ qiniu -gt 1024
 $ qiniu -lt 1024
 ```
 
-##### xi. unix-style 文件查找
+##### xi. unix-style 文件查找，通配符支持
 
 ```bash
 $ qiniu -f pattern
@@ -656,7 +656,7 @@ qiniuManager现在同时只能运行一个实例，因为manager从用户家目�
 
   显示所有空间文件列表的功能换成一次性输出，而非以往的获取一个空间的列表信息就开始输出到终端
 
-  添加搜索功能，使用unix文件匹配模式，使用方法如：
+  添加搜索功能，使用unix文件匹配模式(通配符)，使用方法如：
 
   ```bash
   $ qiniu -f *.txt
@@ -676,7 +676,7 @@ qiniuManager现在同时只能运行一个实例，因为manager从用户家目�
   qiniu: error: unrecognized arguments: xxx build dist qiniuManager qiniuManager.egg-info setup.py
   ```
 
-  也就是把当前目录的文件列表给传进去了，应该是 `argparser` 的默认行为，所以如果出现这样的问题的话，可以用下面的方法：
+  也就是把当前目录的文件列表给传进去了，应该是终端的默认行为，所以如果出现这样的问题的话，可以用下面的方法：
 
   ```bash
   $ qiniu -f "*"
