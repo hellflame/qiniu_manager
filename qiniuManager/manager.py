@@ -236,6 +236,7 @@ class Qiniu(object):
         self.title = ''
         self.file_handle = None
         self.block_status = []
+        self.default_space, self.default_alias = self.config.get_default_space()
 
         self.start_stamp = 0
 
@@ -295,7 +296,7 @@ class Qiniu(object):
         :return: 私有链接地址
         """
         if not space:
-            space, alias = self.config.get_default_space()
+            space, alias = self.default_space, self.default_alias
 
         info, data = self.__get_list_in_space(space, mute=True)
         if not info:
@@ -312,7 +313,7 @@ class Qiniu(object):
         :return: str => 下载链接
         """
         if not space:
-            space, alias = self.config.get_default_space()
+            space, alias = self.default_space, self.default_alias
         else:
             temp_space, alias = self.config.get_space(space)
 
@@ -379,7 +380,7 @@ class Qiniu(object):
         """I don't want to move files between buckets,
         so you can not move file to different bucket by default"""
         if not space:
-            space = self.config.get_default_space()[0]
+            space = self.default_space
         manager_rename = http.HTTPCons(debug=is_debug)
         url = self.manager_host + '/move/{}/{}/force/false'.format(
             urlsafe_base64_encode("{}:{}".format(space, target)),
@@ -406,7 +407,7 @@ class Qiniu(object):
         :return: None
         """
         if not space:
-            space = self.config.get_default_space()[0]
+            space = self.default_space
         prompt = 'Are You Sure to \033[01;31mDELETE\033[00m `\033[01;32m{}\033[00m` from \033[01;34m{}\033[00m ? y/n '.format(target, space)
         try:
             if sys.version_info.major == 2:
@@ -442,7 +443,7 @@ class Qiniu(object):
         :return: None
         """
         if not space:
-            space = self.config.get_default_space()[0]
+            space = self.default_space
         self.checked_spaces.add(space)
         manager_check = http.HTTPCons(is_debug)
         url = self.manager_host + '/stat/{}'.format(urlsafe_base64_encode("{}:{}".format(space, target)))
@@ -492,7 +493,7 @@ class Qiniu(object):
         :return: (状态码, 输出到终端的字符串)
         """
         if not space:
-            space = self.config.get_default_space()[0]
+            space = self.default_space
         _, data = self.__get_list_in_space(space, is_debug=is_debug, mute=True)
 
         if data:
@@ -623,20 +624,23 @@ class Qiniu(object):
         if space:
             token = self.auth.upload_token(space, file_name, 7200)
         else:
-            space, _ = self.config.get_default_space()
+            space = self.default_space
             token = self.auth.upload_token(space, file_name, 7200)
         # mime_type = self.get_mime_type(path)
+        if not space:
+            self.progressed = self.total
+            self.fail_reason = "默认上传请设置默认空间名"
+            return
         md5 = get_md5(path)
         self.file_handle = open(path, 'rb')
         # self.title = file_name
-        print(file_name)
         self.total = os.stat(path).st_size + 2
         self.progressed = 0
         self.pre_upload_info = (file_name, md5, space,
                                 token, 0, self.upload_host)
         self.prepared = True
 
-    @progress.bar(100)
+    @progress.bar()
     def upload(self, abs_path, space=None):
         """
         调用进度条，上传文件到指定空间或默认空间

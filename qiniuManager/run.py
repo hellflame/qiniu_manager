@@ -1,6 +1,7 @@
 # coding=utf8
 from __future__ import print_function
 
+import os
 import sys
 from qiniuManager import manager, __version__, __author__
 
@@ -244,6 +245,24 @@ def command(args, parse):
                 print("密钥添加成功")
             else:
                 print("若要添加密钥，请按序输入AK、SK")
+
+        elif args.file:
+            # 放在最后判断
+            if os.path.isfile(args.file):
+                if args.space:
+                    qiniu.upload(args.file, args.space)
+                else:
+                    qiniu.upload(args.file)
+
+                if qiniu.state:
+                    print("\033[01;31m{}\033[00m 已上传到 \033[01;32m{}\033[00m \r\n上传速率: \033[01;32m{}\033[00m".
+                          format(os.path.basename(args.file), args.space or qiniu.default_space, qiniu.avg_speed))
+                else:
+                    print("\033[01;31m{}\033[00m 上传失败，请检查网络或空间状态".format(
+                        os.path.basename(args.file)))
+
+            else:
+                print("\033[01;31m{}\033[00m 文件不存在或为目录".format(args.file))
 
         else:
             parse.print_help()
