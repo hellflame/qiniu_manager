@@ -476,7 +476,9 @@ class Qiniu(object):
                                              data['putTime']))
 
     @auth
-    def list(self, space=None, reverse=True, by_date=True, is_debug=False, get_sum=True, find_pattern=None):
+    def list(self, space=None, reverse=True, by_date=True,
+             is_debug=False, get_sum=True, find_pattern=None,
+             greater=None, littler=None):
         """
         列出指定空间或默认空间中的所有文件
         :param space: str => 指定空间或默认空间
@@ -485,6 +487,8 @@ class Qiniu(object):
         :param is_debug: bool => 是否输出调试信息
         :param get_sum: bool => 是否计算文件总大小
         :param find_pattern: str => 文件查找正则
+        :param greater: int => 文件大小底线
+        :param littler: int => 文件大小高线
         :return: (状态码, 输出到终端的字符串)
         """
         if not space:
@@ -499,8 +503,18 @@ class Qiniu(object):
                 def sort_tool(x):
                     return x['fsize']
 
-            chew = sorted(filter(lambda x: fnmatch.fnmatch(x['key'], u"{}".format(find_pattern)), data)
-                          if find_pattern else data, key=sort_tool, reverse=reverse)
+            if greater is not None:
+                chew = sorted(filter(lambda x: x['fsize'] >= greater, data),
+                              key=sort_tool, reverse=reverse)
+
+            elif littler is not None:
+                chew = sorted(filter(lambda x: x['fsize'] <= littler, data),
+                              key=sort_tool, reverse=reverse)
+
+            else:
+                chew = sorted(filter(lambda x: fnmatch.fnmatch(x['key'], u"{}".format(find_pattern)), data)
+                              if find_pattern else data, key=sort_tool, reverse=reverse)
+
             for i in chew:
                 self.total_size += i['fsize']
 
@@ -524,34 +538,38 @@ class Qiniu(object):
             return False, "There is no file in \033[01;31m{}\033[00m".format(space)
 
     @auth
-    def list_all(self, reverse=True, by_date=True, find_pattern=None):
+    def list_all(self, reverse=True, by_date=True, find_pattern=None,
+                 greater=None, littler=None):
         """
         列出当前数据库中存储的所有空间的文件列表，统计总大小
         :param reverse: bool => 是否在单个空间中反向排序
         :param by_date: bool => 是否在单个空间中按照时间排序，否则按大小排序
         :param find_pattern: str => 文件查找正则
+        :param greater: int => 文件大小底线
+        :param littler: int => 文件大小高线
         """
         spaces = self.config.get_space_list()
         if not spaces:
             return False, "没有保存任何空间信息"
 
-        if not find_pattern:
-            chew = [self.list(space=i[0], reverse=reverse, by_date=by_date, get_sum=False,
-                              find_pattern=find_pattern)[1] for i in spaces]
-        else:
+        if find_pattern or greater or littler:
             chew = []
             for i in spaces:
                 state, result = self.list(space=i[0], reverse=reverse,
                                           by_date=by_date, get_sum=False,
-                                          find_pattern=find_pattern)
+                                          find_pattern=find_pattern,
+                                          greater=greater, littler=littler)
                 if state and result or not state and result:
                     chew.append(result)
+
+        else:
+            chew = [self.list(space=i[0], reverse=reverse, by_date=by_date, get_sum=False)[1] for i in spaces]
+
         if chew:
             return True, "\r\n\r\n".join(chew) + "\r\n\r\n  \033[01;31m{}\033[00m  \033[01;32m{}\033[00m " \
-                                                 " \033[01;31m{}\033[00m".format(
-                                                              'Total',
-                                                              '·' * (self.COL_WIDTH - len('total')),
-                                                              http.unit_change(self.total_size))
+                                                 " \033[01;31m{}\033[00m".format('Total',
+                                                                                 '·' * (self.COL_WIDTH - len('total')),
+                                                                                 http.unit_change(self.total_size))
         else:
             return False, "空无一物"
 

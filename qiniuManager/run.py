@@ -42,8 +42,8 @@ def parser():
     parse.add_argument('-rn', dest="rename", metavar="name", nargs="?", help="文件重命名")
     parse.add_argument("-rd", dest="rename_debug", metavar="name", nargs="?", help="调试文件重命名")
     parse.add_argument("-f", '--find', action="store_true", help="搜索文件")
-    parse.add_argument("-gt", action="append", nargs="+", metavar=("size", 'space'), help="大于指定大小的文件列表")
-    parse.add_argument("-lt", action="append", nargs="+", metavar=("size", 'space'), help="小于指定大小的文件列表")
+    parse.add_argument("-gt", dest='greater', action="store_true", help="大于指定大小的文件列表")
+    parse.add_argument("-lt", dest='littler', action="store_true", help="小于指定大小的文件列表")
 
     parse.add_argument("file", nargs="?", help="文件名")
     parse.add_argument("space", nargs="?", help="空间名")
@@ -217,6 +217,23 @@ def command(args, parse):
                                  by_date=not args.size, find_pattern=args.file)[1])
             else:
                 print("请输入要匹配的模式")
+
+        elif args.greater:
+            if args.file.isdigit() and not args.space:
+                print(qiniu.list_all(reverse=args.revert, by_date=not args.size, greater=int(args.file))[1])
+            elif args.file.isdigit() and args.space:
+                print(qiniu.list(args.space, reverse=args.revert, by_date=not args.size, greater=int(args.file))[1])
+            else:
+                print("请输入正确大小，单位为字节")
+
+        elif args.littler:
+            if args.file.isdigit() and not args.space:
+                print(qiniu.list_all(reverse=args.revert, by_date=not args.size, littler=int(args.file))[1])
+            elif args.file.isdigit() and args.space:
+                print(qiniu.list(space=args.space, reverse=args.revert, by_date=not args.size,
+                                 littler=int(args.file))[1])
+            else:
+                print("请输入正确大小，单位为字节")
 
         elif type(args.key) is list:
             if len(args.key) == 0:
