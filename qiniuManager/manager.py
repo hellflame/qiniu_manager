@@ -25,7 +25,7 @@ def db_ok(func):
         if self.db and self.cursor:
             return func(self, *args, **kwargs)
         else:
-            print("Failed To Access {}, please check you authority".format(self.config_path).title())
+            print("`{}` 访问失败,请检查访问权限".format(self.config_path))
             return ''
     return func_wrapper
 
@@ -38,7 +38,7 @@ def access_ok(func):
         if self.access and self.secret:
             return func(self, *args, **kwargs)
         else:
-            print("Please Set At Lease one pair of usable access and secret".title())
+            print("请添加授权密钥对")
             return ''
     return access_wrap
 
@@ -50,7 +50,7 @@ def auth(func):
         else:
             self.get_auth()
             if not self.auth:
-                print("failed to initialize the authorization".title())
+                print("授权初始化失败".title())
                 return ''
             else:
                 return func(*args, **kwargs)
@@ -366,7 +366,7 @@ class Qiniu(object):
 
         if not feed.http_code == 200:
             print("\033[01;31m{}\033[00m not exist !".format(target))
-            if feed.file_handle:
+            if feed.file_handle and os.path.isfile(feed.file_handle.name):
                 os.unlink(feed.file_handle.name)
             return False
         end = time.time()
@@ -408,7 +408,8 @@ class Qiniu(object):
         """
         if not space:
             space = self.default_space
-        prompt = 'Are You Sure to \033[01;31mDELETE\033[00m `\033[01;32m{}\033[00m` from \033[01;34m{}\033[00m ? y/n '.format(target, space)
+        prompt = '是否确定从 \033[01;34m{space}\033[00m' \
+                 '中\033[01;31m删除\033[00m `\033[01;32m{target}\033[00m` ? y/n '.format(target=target, space=space)
         try:
             if sys.version_info.major == 2:
                 if not raw_input(prompt).lower().startswith('y'):
@@ -429,9 +430,9 @@ class Qiniu(object):
         data = feed.data
         if 'error' in data:
             data = json.loads(data)
-            print("Error Occur: \033[01;31m{}\033[00m".format(data['error']))
+            print("发生错误: \033[01;31m{}\033[00m".format(data['error']))
         else:
-            print("`\033[01;31m{}\033[00m` DELETED from \033[01;34m{}\033[00m".format(target, space))
+            print("`\033[01;31m{}\033[00m` 已从 \033[01;34m{}\033[00m 中删除".format(target, space))
 
     @auth
     def check(self, target, space=None, is_debug=False):
@@ -456,14 +457,15 @@ class Qiniu(object):
             self.print_debug(feed)
 
         if not feed.data:
-            print("no such file \033[01;31m{}\033[00m in \033[01;32m{}\033[00m".format(target, space))
+            print("文件 \033[01;31m{target}\033[00m 不存在于 \033[01;32m{space}\033[00m".format(target=target,
+                                                                                           space=space))
             nx_space = self.next_space()
             if nx_space:
                 return self.check(target, nx_space, is_debug=is_debug)
             return False
         data = json.loads(feed.data)
         if 'error' in data:
-            print("Error Occur: \033[01;31m{}\033[00m".format(data['error']))
+            print("发生错误: \033[01;31m{}\033[00m".format(data['error']))
         else:
             print("  {}  {}  {}".format('Space', '.' * (self.COL_WIDTH - len('Space')), "\033[01;32m{}\033[00m".format(space)))
             print("  {}  {}  {}".format('Filename', '·' * (self.COL_WIDTH - len('filename')), target))
@@ -536,7 +538,7 @@ class Qiniu(object):
                     http.unit_change(self.total_size))
             return True, ret
         else:
-            return False, "There is no file in \033[01;31m{}\033[00m".format(space)
+            return False, "\033[01;31m{}\033[00m 空间不存在或没有文件".format(space)
 
     @auth
     def list_all(self, reverse=True, by_date=True, find_pattern=None,
@@ -587,10 +589,10 @@ class Qiniu(object):
 
         if not feed.data:
             # print("No such space as \033[01;31m{}\033[00m".format(space))
-            return "No such space as \033[01;31m{}\033[00m".format(space), []
+            return "\033[01;31m{}\033[00m 空间不存在".format(space), []
         data = json.loads(feed.data)
         if 'error' in data:
-            return "Error Occur: \033[01;31m{}\033[00m @\033[01;35m{}\033[00m".format(data['error'], space), []
+            return "发生错误: \033[01;31m{}\033[00m @\033[01;35m{}\033[00m".format(data['error'], space), []
         else:
             return '', data['items']
 
