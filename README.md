@@ -1,11 +1,12 @@
 # QiniuManager
 
-七牛云本地调用
+七牛云本地终端调用
 
 ### 安装
 
 ```bash
-$ sudo pip install qiniumanager --upgrade
+$ pip install qiniumanager --upgrade
+# 如果出现权限问题，加上sudo或者用root用户安装
 ```
 
 > Mac OS 如果出现权限问题，则可用以下方法安装，可执行脚本路径在
@@ -15,49 +16,68 @@ $ sudo pip install qiniumanager --upgrade
 $ pip install qiniumanager --upgrade --user
 ```
 
-### 七牛云存储 Qiniu Manager
+### 七牛云存储管理助手 Qiniu Manager
 
-```
-七牛云存储 Qiniu Manager
+```bash
+七牛云存储管理助手 Qiniu Manager
 
-Usage:
-  qiniu <your file> [space]     选择文件位置上传，指定空间名或使用默认空间名
-  qiniu [option] <file name> [space]    对云空间中文件进行操作
-  qiniu [--key|-k] <access key> <secret key>    设置密钥
+positional arguments:
+  file                  文件名
+  space                 空间名
 
-  --drename,-dr     调试重命名
-  --private,-p      返回私有文件下载链接
-  --remove,-r       删除云文件
-  --export,-x       导出默认或指定空间文件下载链接
-  --download,-d     下载文件
-  --ddebug,-dd      调试下载
-  --list-a,-la      显示本地已知所有空间文件列表
-  --check,-c        查看文件状态
-  --space,-s        修改或查看当前空间名
-  --rename,-n       重命名
-  --list-ex,-le     显示请求空间文件列表http报文
-  --key,-k          修改或查看access key，secret key
-  --link,-i         返回开放云空间文件下载链接
-  --check-e,-ce     显示请求文件状态的http报文
-  --list,-l         文件列表
-  --r-space,-rs     删除本地保存的空间名
-  --version,-v      当前版本号
-  --help,-h         显示当前帮助页面
+optional arguments:
+  -v, --version         显示程序版本号以及运行环境
+  -h, --help            显示此帮助信息
+  -x [ns]               导出默认或指定空间文件下载链接
+  -l [ns], --list [ns]  显示文件列表
+  --size                按大小排序
+  --revert              反向排序
+  -la, --list-all       显示本地已知所有空间文件列表
+  -ld [ns]              调试文件列表输出
+  -s [ns]               添加、设置默认空间或查看空间列表
+  --alias ALIAS         指定空间关联域名
+  -sr ns                删除本地空间
+  -c                    查看文件状态
+  -cd                   调试查看文件状态的输出
+  -r, --remove          删除云文件
+  -d, --download        下载文件
+  -t TARGET             选择下载`目录`
+  -dd                   调试下载
+  -p, --private         获取私有下载链接
+  -i, --link            获取公开下载链接
+  -rn [name]            文件重命名
+  -rd [name]            调试文件重命名
+  -f, --find            搜索文件
+  -gt                   大于指定大小的文件列表
+  -lt                   小于指定大小的文件列表
+  -k ..., --key ...     查看或添加as、ak
 
-首次使用请设置密钥对 qiniu [--key|-k] <access key> <secret key>
+首次使用请设置密钥对
+qiniu [-k|--key] <access key> <secret key>
+
 必要情况下请设置默认空间名
 
-更多帮助信息
-https://github.com/hellflame/qiniu_manager/blob/v1.4.3/README.md
+查看更多帮助信息
+https://github.com/hellflame/qiniu_manager/blob/v1.4.4/README.md
 ```
 
-### 具体操作
+### 使用方法
+
+使用:
+
+```bash
+usage: qiniu [-v] [-h] [-x [ns]] [-l [ns]] [--size] [--revert] [-la]
+             [-ld [ns]] [-s [ns]] [--alias ALIAS] [-sr ns] [-c] [-cd] [-r]
+             [-d] [-t TARGET] [-dd] [-p] [-i] [-rn [name]] [-rd [name]] [-f]
+             [-gt] [-lt] [-k ...]
+             [file] [space]
+```
 
 #### 显示帮助信息方式
 
 ```bash
 $ qiniu
-$ qiniu -v # QiniuManager 版本
+$ qiniu -h # qiniu --help
 ```
 
 #### 基本设置
@@ -90,7 +110,7 @@ $ qiniu -s # 显示空间信息(bucket)
 ##### iii.删除本地保存的空间信息
 
 ```bash
-$ qiniu -rs <space name> # 尝试删除空间名为<space name>的空间信息
+$ qiniu -sr <space name> # 尝试删除空间名为<space name>的空间信息
 ```
 
 该操作仅仅针对本地数据库，并不会影响实际空间的存在；如果删除一个并没有保存进本地数据库的空间名并不会报错，因为在执行SQL语句之前并没有判断该空间名是否存在于数据库(~/.qiniu.sql)中，如果被删除的空间是默认空间的话，需要再一次手动指定默认空间，否则默认空间为空
@@ -100,8 +120,8 @@ $ qiniu -rs <space name> # 尝试删除空间名为<space name>的空间信息
 ##### i.上传
 
 ```bash
-$ qiniu <file to upload> # 上传文件到默认空间(bucket)
-$ qiniu <file to upload> <space name> # 上传文件到空间<space name>
+$ qiniu <file> # 上传文件到默认空间(bucket)
+$ qiniu <file> <space> # 上传文件到空间<space>
 ```
 
 这里如果没有设置默认空间名的话，上传结束之后会报错显示不存在这个bucket(空间)，因为如果获取不到默认空间名的话，空间名就是`''`(空字符串)，如果上传指定的空间不存在的话，也会报同样的错误
@@ -125,9 +145,11 @@ $ qiniu -l backup # 显示`backup`中的文件列表
 
 ```bash
 $ qiniu -la # 显示已知所有空间的文件列表
+
+# 在v1.4.4版本之后，缓存下所有空间的文件列表之后才一次性输出，所以等待响应时间会明显变长
 ```
 
-在显示的时候其实有一个问题，就是非英文字符在终端打印时所占的宽度与英文字符宽度不同(应该是等宽字体并不包含其他语言文字的缘故)，导致排版略错乱
+在显示的时候其实有一个问题，就是非英文字符在终端打印时所占的宽度与英文字符宽度不同(应该是等宽字体并不包含其他语言文字的缘故)，导致排版略错乱 **在现在版本中基本上修复该问题**
 
 ![list issue - terminal font type](https://static.hellflame.net/resource/9cd1d0ab79aa311a65dda6923c5ef1b0)
 
@@ -140,13 +162,17 @@ $ qiniu -la # 显示已知所有空间的文件列表
 ```bash
 # 显示列表操作的HTTP发起请求到获取的整个HTTP响应
 
-$ qiniu -le
-$ qiniu -le <bucket name> # 空间名称
+$ qiniu -ld
+$ qiniu -ld <bucket name> # 空间名称
 ```
 
 调试结果的可能返回界面
 
 ![响应结果](https://static.hellflame.net/resource/c25077a48f5690f3e161b220a078776f)
+
+在v1.4.0之后应该是类似这样的返回:
+
+![](https://static.hellflame.net/resource/f3b1ed039f440d0d02ea5df5dacb9ff6)
 
 ##### iii.文件详情
 
@@ -176,8 +202,8 @@ $ qiniu -c <filename> <space name> # 显示<space name>这个空间(bucket)中<f
 > 这里存在一个可调式的模式调用
 
 ```bash
-$ qiniu -ce <filename>
-$ qiniu -ce <filename> <space name>
+$ qiniu -cd <filename>
+$ qiniu -cd <filename> <space name>
 ```
 
 调试结果的可能返回界面
@@ -235,8 +261,8 @@ $ qiniu -d <filename> <space name> # 下载<space name>空间(bucket)中的<file
 - `v1.2.6`中添加指定下载目录的支持
 
 ```bash
-$ qiniu -d <target file> -t <dir> # 在当前默认空间(bucket)中下载<dir>/<target file>
-$ qiniu -d <target file> <space name> -t <dir> # 下载<space name>中的文件到<dir>/<target file>
+$ qiniu -t <dir> -d <target file> # 在当前默认空间(bucket)中下载<dir>/<target file>
+$ qiniu -t <dir> -d <target file> <space name> # 下载<space name>中的文件到<dir>/<target file>
 ```
 
 新的支持基本上就是在原来的下载指令后面接上指定目录的操作；在执行操作之前，程序会预先判断指定的目录`<dir>`是否存在，如果不存在的话，将放弃进一步操作。同样，如果下载的文件名中包含`/`等特殊字符的，文件最终会保存为实际文件名
@@ -276,8 +302,8 @@ $ qiniu -r <filename> <space name> # 删除<space name>空间(bucket)中的<file
 ##### vii.重命名
 
 ```bash
-$ qiniu -n <target file> <to file> # 将当前空间中的<target file>重命名为<to file>
-$ qiniu -n <target file> <to file> <space name> # 将<space name>空间中的<target file>重命名为<space name>空间中的<to file>
+$ qiniu -rn <target file> <to file> # 将当前空间中的<target file>重命名为<to file>
+$ qiniu -rn <target file> <to file> <space name> # 将<space name>空间中的<target file>重命名为<space name>空间中的<to file>
 ```
 
 ![sdk move](https://static.hellflame.net/resource/45dfd760b9d4dcf54ecd6ea81f32b8a1)
@@ -295,8 +321,8 @@ $ qiniu -n <target file> <to file> <space name> # 将<space name>空间中的<ta
 - `v1.3.0` 新增调试支持
 
 ```bash
-$ qiniu -dr <filename> <another name>
-$ qiniu -dr <filename> <another name> <space name>
+$ qiniu -rd <filename> <another name>
+$ qiniu -rd <filename> <another name> <space name>
 ```
 
 调试结果的可能返回界面
@@ -342,6 +368,71 @@ $ qiniu -x | xargs -n1 curl -J -O
 # target list
 $ qiniu -x <space name> | xargs -n1 curl -J -O
 ```
+
+> 一下功能在v1.4.4及之后版本提供
+
+##### ix. 按大小排序
+
+在显示文件列表的时候默认按照上传时间逆序排序，也可以按照文件大小排序，只需要在查看文件列表的时候加上 `--size` 记号即可
+
+```bash
+$ qiniu -l --size
+$ qiniu -l <space> --size
+$ qiniu -la --size
+```
+
+当然，也可以逆序输出，只需要加上 `--revert` 记号即可：
+
+```bash
+$ qiniu -l --revert # 按时间排序，从旧到新
+$ qiniu -l <space> --size --revert # 按大小排序，从小到大
+...
+```
+
+##### x. 文件大小过滤
+
+如果需要获取文件大小大于 1KB 的文件列表，可以使用 `-gt` 
+
+```bash
+$ qiniu -gt 1024
+```
+
+则会输出存储的空间中所有文件大小超过1k的文件，反之，若要获取文件大小小于1KB的文件列表，可使用 `-lt`
+
+```bash
+$ qiniu -lt 1024
+```
+
+##### xi. unix-style 文件查找
+
+```bash
+$ qiniu -f pattern
+```
+
+如要查找所有以 `.txt` 结尾的文件
+
+```bash
+$ qiniu -f *.txt
+```
+
+类似查找有很多：
+
+```bash
+$ qiniu -f wh?t.apk
+$ qiniu -f backup-*.zip
+...
+```
+
+> 这里有一个问题
+
+当什么都不过滤的时候，即传入 `*` 作为过滤的时候，会报错，应该加上 `""` 修正问题
+
+```bash
+$ qiniu -f * # 会报错
+$ qiniu -f "*" # pass
+```
+
+如果表达式刚好在当前目录存在匹配，也会出现问题，因为终端会自动把当前目录的匹配结果传给程序，然后就报错了，不过解决方法依然是在表达式两边加上引号即可。
 
 ### Issue
 
@@ -559,7 +650,7 @@ qiniuManager现在同时只能运行一个实例，因为manager从用户家目�
 
   > 部分时候发现一些奇怪的问题，就是下载的时候下载到99%，就卡住了，再也收不到来自服务器的数据，检查了很多次http模块，怀疑了很多次是我在得到recv之后取字符串长度的时候的问题，毕竟py3中bytes和str不一样(但是为什么就偏偏在下载的时候出问题捏，难道跟下载的媒体类型有关？)，嗯，py2貌似倒是没什么问题的样子=。= 后来莫名其妙又没问题了
 
-- v1.4.4 (unreleased)
+- v1.4.4
 
   进一步降低调用于功能之间的耦合(极大的解耦)
 
@@ -593,8 +684,8 @@ qiniuManager现在同时只能运行一个实例，因为manager从用户家目�
 
   放进引号里面就好了=.=
 
-  TODO:: 文件大小过滤
+  添加文件大小过滤功能，字节为单位，单边范围，未支持范围内过滤
 
-  > 由于七牛服务器返回的数据并不会分页，把所有数据都下载下来，对于这样的一次性程序而言，每次都需要更新操作，结果相当于没有保存，所以就不考虑分页操作了。相信使用者对于海量存储的解决方案肯定不会基于这样的终端命令了。
+  由于命令行换用argparse，虽然原本的功能都还在，但是总会有一点变化，所以感觉整个使用文档又要重写一遍了=。=虽然argparse用起来方便，但是果然还是没有自己写的命令解析灵活，虽然也可能是很少用argparse的缘故，py2和py3在参数上还有一点区别，真的是，，，
 
   ​
