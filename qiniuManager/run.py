@@ -210,8 +210,11 @@ def command(args, parse):
                 print("请给出新的文件名")
 
         elif args.find:
-            if args.file:
+            if args.file and not args.space:
                 print(qiniu.list_all(reverse=args.revert, by_date=not args.size, find_pattern=args.file)[1])
+            elif args.file and args.space:
+                print(qiniu.list(space=args.space, reverse=args.revert,
+                                 by_date=not args.size, find_pattern=args.file)[1])
             else:
                 print("请输入要匹配的模式")
 
