@@ -273,7 +273,34 @@ def run():
 
 
 if __name__ == '__main__':
-    # TODO:: parser test
-    command(*parser())
+    if len(sys.argv) > 1:
+        command(*parser())
+    else:
+
+        import unittest
+        import string
+        import random
+        import shlex
+
+        class ParserTest(unittest.TestCase):
+            def setUp(self):
+                _, self.parser = parser()
+
+            @staticmethod
+            def generate_random_target(length):
+                target = string.ascii_letters + string.digits
+                return ''.join([random.choice(target) for _ in range(length)])
+
+            def test_export(self):
+                args = self.parser.parse_args(shlex.split("-x"))
+                self.assertEqual(args.export, [None])
+
+            def test_export_with_space(self):
+                rand = self.generate_random_target(20)
+                self.assertListEqual(self.parser.parse_args(shlex.split("-x '{}'".format(rand))).export, [rand])
+
+        unittest.main()
+
+
 
 
