@@ -40,6 +40,8 @@ import hmac
 from hashlib import sha1
 from base64 import urlsafe_b64encode
 
+__all__ = ['str_len', 'urlsafe_base64_encode', 'Auth']
+
 if sys.version_info.major == 2:
     from urlparse import urlparse
     reload(sys)

@@ -5,6 +5,8 @@ import os
 import sys
 from qiniuManager import manager, __version__, __author__
 
+__all__ = ['parser', 'command']
+
 
 def parser():
     """

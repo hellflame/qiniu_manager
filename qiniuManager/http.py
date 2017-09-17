@@ -101,8 +101,8 @@ class SockFeed(object):
                         self.total = int(self.header.get("Content-Length"))
                     elif self.header.get("Transfer-Encoding") == 'chunked':
                         self.chucked = True
-                        print("\033[01;31mchucked encoding is not supported here for now\033[00m")
-                        assert False
+                        self.progressed = self.total = 1
+                        raise Exception("chucked encoding not supported!")
                     break
                 index = partial.index(":")
                 key = partial[0: index].strip()
@@ -229,7 +229,8 @@ class HTTPCons(object):
                 raise URLNotComplete(href, 'POST data')
         elif method == 'GET':
             if post_data:
-                assert type(post_data) == dict
+                if not type(post_data) == dict:
+                    raise Exception("post data must be a dict")
                 if '?' not in href[-1]:
                     href += '?'
 
