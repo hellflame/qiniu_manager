@@ -37,10 +37,7 @@ def bar(width=0, fill='#'):
                     # marks count
                     percent_show = "{}%".format(int(percent * 100))
                     # marks width
-                    if hasattr(self, 'title'):
-                        title = self.title
-                    else:
-                        title = ''
+                    title = getattr(self, 'title', '')
                     mark_width = w - len(percent_show) - 5 - len(title) - 2
                     mark_count = int(math.floor(mark_width * percent))
                     sys.stdout.write(

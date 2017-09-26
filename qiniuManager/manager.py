@@ -11,8 +11,8 @@ import hashlib
 import fnmatch
 
 from qiniuManager import progress, http, __version__
-from qiniuManager.utils import urlsafe_base64_encode, Auth, str_len
-from qiniuManager.crypto import decrypt, encrypt
+from qiniuManager.utils import *
+from qiniuManager.crypto import *
 
 __all__ = ['Qiniu', 'Config']
 
@@ -271,8 +271,9 @@ class Qiniu(object):
                                                                               ('Py Ver.', sys.version)]]))
         # HTTP Response
         print("\033[01;33mResponse:\033[00m")
-        print('{}'.format(feed.head))
-        print("\n".join(["{} : {}".format(i, feed.header[i]) for i in feed.header]))
+        if feed.status:
+            print('{}'.format(feed.status['status']))
+        print("\n".join(["{} : {}".format(i, feed.headers[i]) for i in feed.headers]))
         # HTTP entity
         print('\n{}'.format(feed.data), "\n\033[01;33mEOF\033[00m")
 
@@ -281,12 +282,8 @@ class Qiniu(object):
         获取下一个需要尝试查找的空间
         :return: str => 空间名称
         """
-        res = filter(lambda x: x[0] not in self.checked_spaces, self.config.get_space_list())
-        if res:
-            if filter.__class__ is type:
-                # py3
-                return list(res)[0][0]
-            return res[0][0]
+        res = list(filter(lambda x: x[0] not in self.checked_spaces, self.config.get_space_list()))
+        return res[0][0] if res else None
 
     @auth
     def export_download_links(self, space=None):
@@ -356,24 +353,25 @@ class Qiniu(object):
         link = self.private_download_link(target, space)
         downloader = http.HTTPCons(is_debug)
         downloader.request(link)
-        feed = http.SockFeed(downloader, 4096)
+        feed = http.SockFeed(downloader)
         start = time.time()
         feed.http_response(save_path)
         if is_debug:
             print("\033[01;33mResponse:\033[00m")
-            print('{}'.format(feed.head))
-            print("\n".join(["{} : {}".format(i, feed.header[i]) for i in feed.header]))
+            if feed.status:
+                print('{}'.format(feed.status['status']))
+            print("\n".join(["{} : {}".format(i, feed.headers[i]) for i in feed.headers]))
 
-        if not feed.http_code == 200:
+        if not feed.status or not int(feed.status['code']) == 200:
             print("\033[01;31m{}\033[00m not exist !".format(target))
             if feed.file_handle and os.path.isfile(feed.file_handle.name):
                 os.unlink(feed.file_handle.name)
             return False
         end = time.time()
-        size = int(feed.header.get('Content-Length', 1))
+        size = int(feed.headers.get('Content-Length', 1))
         print("\033[01;31m{}\033[00m downloaded @speed \033[01;32m{}/s\033[00m"
               .format(target,
-                      http.unit_change(size / (end - start))))
+                      unit_change(size / (end - start))))
 
     @auth
     def rename(self, target, to_target, space=None, is_debug=False):
@@ -456,7 +454,7 @@ class Qiniu(object):
         if is_debug:
             self.print_debug(feed)
 
-        if not feed.data:
+        if int(feed.status['code']) == 612:
             print("文件 \033[01;31m{target}\033[00m 不存在于 \033[01;32m{space}\033[00m".format(target=target,
                                                                                            space=space))
             nx_space = self.next_space()
@@ -470,7 +468,7 @@ class Qiniu(object):
             print("  {}  {}  {}".format('Space', '.' * (self.COL_WIDTH - len('Space')), "\033[01;32m{}\033[00m".format(space)))
             print("  {}  {}  {}".format('Filename', '·' * (self.COL_WIDTH - len('filename')), target))
             print("  {}  {}  {} ({})".format('Size', '·' * (self.COL_WIDTH - len('size')),
-                                             "\033[01;37m{}\033[00m".format(http.unit_change(data['fsize'])),
+                                             "\033[01;37m{}\033[00m".format(unit_change(data['fsize'])),
                                              data['fsize']))
             print("  {}  {}  {}".format('MimeType',  '·' * (self.COL_WIDTH - len('MimeType')), data['mimeType']))
             print("  {}  {}  {} ({})".format('Date', '·' * (self.COL_WIDTH - len('date')),
@@ -523,7 +521,7 @@ class Qiniu(object):
 
             tmp = "\r\n".join(["  {}  {}  {}".format(i['key'],
                                                      '·' * (self.COL_WIDTH - str_len(u"{}".format(i['key']))),
-                                                     http.unit_change(i['fsize']))
+                                                     unit_change(i['fsize']))
                                for i in chew])
             if tmp:
                 ret = "\033[01;32m{}\033[00m\r\n".format(space) + tmp
@@ -535,7 +533,7 @@ class Qiniu(object):
                 ret += "\r\n\r\n  \033[01;31m{}\033[00m  \033[01;32m{}\033[00m  \033[01;31m{}\033[00m".format(
                     'Total',
                     '·' * (self.COL_WIDTH - len('total')),
-                    http.unit_change(self.total_size))
+                    unit_change(self.total_size))
             return True, ret
         else:
             return False, "\033[01;31m{}\033[00m 空间不存在或没有文件".format(space)
@@ -572,7 +570,7 @@ class Qiniu(object):
             return True, "\r\n\r\n".join(chew) + "\r\n\r\n  \033[01;31m{}\033[00m  \033[01;32m{}\033[00m " \
                                                  " \033[01;31m{}\033[00m".format('Total',
                                                                                  '·' * (self.COL_WIDTH - len('total')),
-                                                                                 http.unit_change(self.total_size))
+                                                                                 unit_change(self.total_size))
         else:
             return False, "空无一物"
 
@@ -581,7 +579,7 @@ class Qiniu(object):
         url = self.list_host + '/list?bucket={}'.format(space)
         space_list.request(url,
                            headers={'Authorization': 'QBox {}'.format(self.auth.token_of_request(url))})
-        feed = http.SockFeed(space_list, 1024)
+        feed = http.SockFeed(space_list)
         feed.disable_progress = mute
         feed.http_response()
         if is_debug:
@@ -676,7 +674,7 @@ class Qiniu(object):
                 return False
             try:
                 data = json.loads(feed.data)
-                avg_speed = http.unit_change(self.progressed / (time.time() - self.start_stamp))
+                avg_speed = unit_change(self.progressed / (time.time() - self.start_stamp))
                 self.progressed = self.total
                 if data.get('key', '') == self.pre_upload_info[0]:
                     self.state = True
@@ -697,7 +695,7 @@ class Qiniu(object):
             feed = http.SockFeed(labor)
             feed.disable_progress = True
             feed.http_response()
-            if '401' in feed.head:
+            if not feed.status or '401' in feed.status['status']:
                 self.progressed = self.total
                 self.fail_reason = "上传凭证无效"
                 return False

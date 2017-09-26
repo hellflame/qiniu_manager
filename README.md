@@ -58,7 +58,7 @@ qiniu [-k|--key] <access key> <secret key>
 必要情况下请设置默认空间名
 
 查看更多帮助信息
-https://github.com/hellflame/qiniu_manager/blob/v1.4.4/README.md
+https://github.com/hellflame/qiniu_manager/blob/v1.4.5/README.md
 ```
 
 ### 使用方法
@@ -391,7 +391,7 @@ $ qiniu -l <space> --size --revert # 按大小排序，从小到大
 
 ##### x. 文件大小过滤
 
-如果需要获取文件大小大于 1KB 的文件列表，可以使用 `-gt` 
+如果需要获取文件大小大于 1KB 的文件列表，可以使用 `-gt`
 
 ```bash
 $ qiniu -gt 1024
@@ -434,6 +434,8 @@ $ qiniu -f "*" # pass
 
 如果表达式刚好在当前目录存在匹配，也会出现问题，因为终端会自动把当前目录的匹配结果传给程序，然后就报错了，不过解决方法依然是在表达式两边加上引号即可。
 
+------
+
 ### Issue
 
 #### nodename nor servname provided, or not known
@@ -463,6 +465,8 @@ qiniuManager现在同时只能运行一个实例，因为manager从用户家目�
 项目使用`SQLite3`作为数据库支持，数据库文件位于`~/.qiniu.sql`，并将密钥对明文存储在数据库中，将空间名称存于数据库，这两个数据由于都是用户自己输入其中的，所以除非自己想的话，自己可以给自己的数据库注入，如果使用了特别的语句想要注入的话，应该还是比较简单的，当然我自己是不会自己尝试的
 
 ![](https://static.hellflame.net/resource/be76316468bca0bd2cd753cca17c82fe)
+
+------
 
 ### 历史版本
 
@@ -688,8 +692,25 @@ qiniuManager现在同时只能运行一个实例，因为manager从用户家目�
 
   由于命令行换用argparse，虽然原本的功能都还在，但是总会有一点变化，所以感觉整个使用文档又要重写一遍了=。=虽然argparse用起来方便，但是果然还是没有自己写的命令解析灵活，虽然也可能是很少用argparse的缘故，py2和py3在参数上还有一点区别，真的是，，，
 
-- v1.4.5 (unreleased)
+- v1.4.5
 
   修复下载不存在文件时的报错
 
-  ​
+  结构优化
+
+  ​更新底层http库，支持chunked编码，添加testcase，测试通过：
+
+  ```bash
+  *   Python 3.6.2 (default, Sep  4 2017, 19:45:38)
+      [GCC 4.2.1 Compatible Apple LLVM 8.1.0 (clang-802.0.42)] on darwin
+  *   Python 3.5.3 (a37ecfe5f142bc971a86d17305cc5d1d70abec64, Jun 10 2017, 18:23:14)
+      [PyPy 5.8.0-beta0 with GCC 4.2.1 Compatible Apple LLVM 8.1.0 (clang-802.0.42)] on darwin
+  *   Python 2.7.14 (default, Sep 25 2017, 20:46:21)
+      [GCC 4.2.1 Compatible Apple LLVM 9.0.0 (clang-900.0.37)] on darwin
+  ```
+
+  虽然在这个小程序中貌似没有用到过chunked编码，但是作为预防，还是顺便加上了chunked编码支持，因为另一个小项目中考虑从自己的服务器上下载东西，然而自己的静态文件服务器大多数时候都使用分块编码传输数据，所以其实是在另一个项目中开始着手支持的。
+
+  同时，在这次更新中，发现了曾经在py3中出现的下载到99%就一动不动的情况是来源于bytes与str之间的相互转换问题。由于二进制内容并不能编码后转换为字符串，曾经将bytes转换为utf8，忽略了错误，于是放进stringIO之后内容久丢失了，长度也因此变短了，所以进度条就无法到达100%了。曾经用StringIO还是为了偷懒，让StringIO来处理一行一行的数据，现在直接用bytes来记录数据，手动查找换行标志 `\r\n` ，发现也不是很难，就效果而言，反而更简单了。
+
+  剩下的问题就是chunked编码时候的进度条乱跳问题了=。=

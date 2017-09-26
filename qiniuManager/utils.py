@@ -40,7 +40,7 @@ import hmac
 from hashlib import sha1
 from base64 import urlsafe_b64encode
 
-__all__ = ['str_len', 'urlsafe_base64_encode', 'Auth']
+__all__ = ['str_len', 'urlsafe_base64_encode', 'Auth', 'unit_change']
 
 if sys.version_info.major == 2:
     from urlparse import urlparse
@@ -81,6 +81,23 @@ def str_len(s):
         else:
             length += 1
     return length
+
+
+def unit_change(target):
+    """
+    单位换算
+    :param target: unsigned int
+    :return: str
+    """
+    if target < 0:
+        return str(target)
+    unit_list = ('B', 'KB', 'MB', 'GB', 'TB')
+    index = 0
+    target = float(target)
+    while target > 1024:
+        index += 1
+        target /= 1024
+    return "{} {}".format(round(target, 2), unit_list[index])
 
 
 def urlsafe_base64_encode(data):
