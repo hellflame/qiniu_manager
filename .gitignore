@@ -1,4 +1,4 @@
-*.pyc
+*.py[cod]
 .idea
 qiniuManager/conf/qiniu.conf
 #packages
