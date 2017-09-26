@@ -38,7 +38,7 @@ class SockFeed(object):
         :return: None
         """
         self.progressed = self.total = 100
-        self.con.close()
+        self.con.close()  # 关闭tcp连接
         if self.file_handle:
             self.file_handle.close()
 
@@ -64,20 +64,27 @@ class SockFeed(object):
             self.data += data
 
     @progress.bar()
-    def http_response(self, file_path='', skip_body=False, chunk=4094):
+    def http_response(self, file_path='', skip_body=False, chunk=4094, overwrite=False):
         """
         通过进度条控制获取响应结果
         :param file_path: str => 下载文件位置，若文件已存在，则在前面用数字区分版本
         :param skip_body: bool => 是否跳过http实体
         :param chunk: int => 缓存块大小
+        :param overwrite: bool => 是否覆盖重名文件
         :return:
         """
         if file_path and not self.file_handle:
-            file_index = 1
             path_choice = file_path
-            while os.path.exists(path_choice):
-                path_choice = '{}_{}'.format(file_index, file_path)
-                file_index += 1
+            if os.path.exists(file_path):
+                if overwrite:
+                    os.remove(file_path)
+                else:
+                    file_index = 1
+                    dirname = os.path.dirname(path_choice)
+                    filename = os.path.basename(path_choice)
+                    while os.path.exists(path_choice):
+                        path_choice = os.path.join(dirname, '{}_{}'.format(file_index, filename))
+                        file_index += 1
 
             self.file_handle = open(path_choice, 'wb')
             self.title = os.path.basename(path_choice)
@@ -138,10 +145,13 @@ class SockFeed(object):
             if not self.chunked:
                 self.save_data(data)
                 self.progressed += len(data)
+                if self.progressed == self.total:
+                    self.finish_loop()
             else:
                 if self.current_chunk:
                     diff = self.current_chunk['size'] - len(self.current_chunk['content'])
                     if diff > 0:
+                        # 数据未装满一个chuck
                         if len(data) > diff:
                             self.current_chunk['content'] += data[0: diff]
                             self.save_data(self.current_chunk['content'])
@@ -158,10 +168,13 @@ class SockFeed(object):
                         self.save_data(self.current_chunk['content'][: self.current_chunk['size']])
                         left = self.current_chunk['content'][self.current_chunk['size'] + 2:] + data
                         if left:
-                            self.current_chunk = {
-                                'size': int(left[: left.index(b'\r\n')], 16),
-                                'content': left[left.index(b'\r\n') + 2:]
-                            }
+                            if left[: left.index(b'\r\n')]:
+                                self.current_chunk = {
+                                    'size': int(left[: left.index(b'\r\n')], 16),
+                                    'content': left[left.index(b'\r\n') + 2:]
+                                }
+                            else:
+                                self.current_chunk = None
                         else:
                             self.current_chunk = None
                 else:
@@ -188,6 +201,10 @@ class HTTPCons(object):
         self.connect = None
 
     def close(self):
+        """
+        需要请求接收完成之后手动关闭
+        :return: None
+        """
         if self.connect is self.s:
             self.connect.close()
         else:
@@ -260,6 +277,7 @@ class HTTPCons(object):
                 port = 80
             self.http_init(host, port)
         self.__send(url, method, headers, post_data=data)
+        return self.connect
 
     def __send(self, href, method='GET', headers=None, post_data=None):
         data = """{method} {href} HTTP/1.1\r\n{headers}\r\n\r\n"""
@@ -306,8 +324,72 @@ class URLNotComplete(Exception):
 
 
 if __name__ == '__main__':
-    req = HTTPCons(debug=True)
-    req.request('https://static.hellflame.net/resource/de5ca9cf5320673dc43b526e3d737f05')
-    resp = SockFeed(req)
-    resp.http_response()
-    print(resp.status, resp.headers)
+    import unittest
+    import hashlib
+    import tempfile
+
+    class HTTPTest(unittest.TestCase):
+        """
+        static.hellflame.net域名下的文件大多数情况下都是chunked编码
+
+        """
+        def test_https_request(self):
+            req = HTTPCons()
+            connect = req.request("https://static.hellflame.net/resource/de5ca9cf5320673dc43b526e3d737f05")
+            self.assertEqual(req.host, 'static.hellflame.net')
+            self.assertEqual(req.port, 443)
+            self.assertIs(connect, req.connect)
+            req.close()
+
+        def test_http_request(self):
+            req = HTTPCons()
+            connect = req.request("http://static.hellflame.net/resource/de5ca9cf5320673dc43b526e3d737f05")
+            self.assertEqual(req.host, 'static.hellflame.net')
+            self.assertEqual(req.port, 80)
+            self.assertIs(connect, req.connect)
+            req.close()
+
+        def test_response_in_memory(self):
+            req = HTTPCons()
+            req.request("https://static.hellflame.net/resource/c8c12b1c34af9808c34fa60d862016b7")
+            resp = SockFeed(req)
+            resp.disable_progress = True
+            resp.http_response()
+            self.assertEqual(hashlib.md5(resp.data).hexdigest(), '9a50ddbef4c82eb9003bd496a00e0989')
+
+        def test_response_downloading(self):
+            file_path = os.path.join(tempfile.gettempdir(), '1m.data')
+            req = HTTPCons()
+            req.request("https://static.hellflame.net/resource/c8c12b1c34af9808c34fa60d862016b7")
+            resp = SockFeed(req)
+            resp.disable_progress = True
+            resp.http_response(file_path, overwrite=True)
+
+            with open(file_path, 'rb') as handle:
+                content = handle.read()
+
+            os.remove(resp.file_handle.name)
+            self.assertEqual(hashlib.md5(content).hexdigest(), '9a50ddbef4c82eb9003bd496a00e0989')
+
+        def test_small_response_in_memory(self):
+            req = HTTPCons()
+            req.request("https://static.hellflame.net/resource/5573012afe7227ab4457331df42af57d")
+            resp = SockFeed(req)
+            resp.disable_progress = True
+            resp.http_response()
+            self.assertEqual(hashlib.md5(resp.data).hexdigest(), '8688229badcaa3cb2730dab99a618be6')
+
+        def test_small_response_downloading(self):
+            file_path = os.path.join(tempfile.gettempdir(), '3k.data')
+            req = HTTPCons()
+            req.request("https://static.hellflame.net/resource/5573012afe7227ab4457331df42af57d")
+            resp = SockFeed(req)
+            resp.disable_progress = True
+            resp.http_response(file_path, overwrite=True)
+            with open(file_path, 'rb') as handle:
+                content = handle.read()
+            os.remove(resp.file_handle.name)
+            self.assertEqual(hashlib.md5(content).hexdigest(), '8688229badcaa3cb2730dab99a618be6')
+
+    unittest.main()
+
