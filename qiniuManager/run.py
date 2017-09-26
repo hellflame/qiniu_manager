@@ -260,8 +260,8 @@ def command(args, parse):
                     print("\033[01;31m{}\033[00m 已上传到 \033[01;32m{}\033[00m \r\n上传速率: \033[01;32m{}\033[00m".
                           format(os.path.basename(args.file), args.space or qiniu.default_space, qiniu.avg_speed))
                 else:
-                    print("\033[01;31m{}\033[00m 上传失败，请检查网络或空间状态".format(
-                        os.path.basename(args.file)))
+                    print("\033[01;31m{}\033[00m 上传失败\r\n错误：`{}`\r\n请检查网络或空间状态".format(
+                        os.path.basename(args.file), qiniu.fail_reason))
 
             else:
                 print("\033[01;31m{}\033[00m 文件不存在或为目录".format(args.file))

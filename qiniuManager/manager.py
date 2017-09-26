@@ -695,14 +695,14 @@ class Qiniu(object):
             feed = http.SockFeed(labor)
             feed.disable_progress = True
             feed.http_response()
-            if not feed.status or '401' in feed.status['status']:
+            if not feed.status or b'401' in feed.status['status']:
                 self.progressed = self.total
                 self.fail_reason = "上传凭证无效"
                 return False
             self.block_status.append(json.loads(feed.data).get('ctx'))
             done = True
             self.last_failed = None
-        except:
+        except Exception as e:
             self.last_failed = data
 
         if done:

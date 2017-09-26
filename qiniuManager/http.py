@@ -3,6 +3,7 @@ from __future__ import print_function
 from qiniuManager import progress, __version__
 import socket
 import random
+import sys
 import ssl
 import os
 
@@ -311,7 +312,10 @@ class HTTPCons(object):
         if self.is_debug:
             print("\033[01;33mRequest:\033[00m\033[01;31m(DANGER)\033[00m")
             print(data.__repr__().strip("'"))
-        self.connect.sendall(data.encode())
+        if sys.version_info.major == 3:
+            self.connect.sendall(data.encode())
+        else:
+            self.connect.sendall(data)
 
 
 class URLNotComplete(Exception):
