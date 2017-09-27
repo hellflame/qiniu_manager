@@ -1,5 +1,4 @@
 # coding=utf8
-import os
 import time
 import unittest
 
@@ -27,9 +26,11 @@ class Pro(object):
 
 class ProgressTester(unittest.TestCase):
     def test_100_progress(self):
+        print("先换行")
         Pro().loader()
 
     def test_auto_width_progress(self):
+        print("先换行")
         Pro().auto_loader()
 
 

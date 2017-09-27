@@ -372,6 +372,7 @@ class Qiniu(object):
         print("\033[01;31m{}\033[00m downloaded @speed \033[01;32m{}/s\033[00m"
               .format(target,
                       unit_change(size / (end - start))))
+        return True
 
     @auth
     def rename(self, target, to_target, space=None, is_debug=False):
@@ -389,34 +390,36 @@ class Qiniu(object):
         feed = http.SockFeed(manager_rename)
         feed.disable_progress = True
         feed.http_response()
-        data = feed.data
-        if 'error' in data:
-            data = json.loads(data)
-            print("Error Occur: \033[01;31m{}\033[00m".format(data['error']))
+        if b'error' in feed.data:
+            data = json.loads(feed.data.decode())
+            print("发生错误: \033[01;31m{}\033[00m".format(data['error']))
         else:
             print("\033[01;31m{}\033[00m now RENAME as \033[01;32m{}\033[00m".format(target, to_target))
 
     @auth
-    def remove(self, target, space=None):
+    def remove(self, target, space=None, no_prompt=False):
         """
         删除指定空间中文件
         :param target: str => 文件名
         :param space: str => 指定空间或默认空间
+        :param no_prompt: bool => 无反馈，直接删除
         :return: None
         """
         if not space:
             space = self.default_space
-        prompt = '是否确定从 \033[01;34m{space}\033[00m' \
-                 '中\033[01;31m删除\033[00m `\033[01;32m{target}\033[00m` ? y/n '.format(target=target, space=space)
-        try:
-            if sys.version_info.major == 2:
-                if not raw_input(prompt).lower().startswith('y'):
-                    return False
-            else:
-                if not input(prompt).lower().startswith('y'):
-                    return False
-        except:
-            return False
+
+        if not no_prompt:
+            prompt = '是否确定从 \033[01;34m{space}\033[00m' \
+                     '中\033[01;31m删除\033[00m `\033[01;32m{target}\033[00m` ? y/n '.format(target=target, space=space)
+            try:
+                if sys.version_info.major == 2:
+                    if not raw_input(prompt).lower().startswith('y'):
+                        return False
+                else:
+                    if not input(prompt).lower().startswith('y'):
+                        return False
+            except:
+                return False
 
         manager_remove = http.HTTPCons()
         url = self.manager_host + '/delete/{}'.format(urlsafe_base64_encode("{}:{}".format(space, target)))
@@ -426,11 +429,13 @@ class Qiniu(object):
         feed.disable_progress = True
         feed.http_response()
         data = feed.data
-        if 'error' in data:
-            data = json.loads(data)
+        if b'error' in data:
+            data = json.loads(data.decode())
             print("发生错误: \033[01;31m{}\033[00m".format(data['error']))
+            return False
         else:
             print("`\033[01;31m{}\033[00m` 已从 \033[01;34m{}\033[00m 中删除".format(target, space))
+            return True
 
     @auth
     def check(self, target, space=None, is_debug=False):
@@ -461,8 +466,8 @@ class Qiniu(object):
             if nx_space:
                 return self.check(target, nx_space, is_debug=is_debug)
             return False
-        data = json.loads(feed.data)
-        if 'error' in data:
+        data = json.loads(feed.data.decode())
+        if b'error' in data:
             print("发生错误: \033[01;31m{}\033[00m".format(data['error']))
         else:
             print("  {}  {}  {}".format('Space', '.' * (self.COL_WIDTH - len('Space')), "\033[01;32m{}\033[00m".format(space)))
@@ -475,6 +480,7 @@ class Qiniu(object):
                                              "\033[01;37m{}\033[00m".format(time.strftime('%Y-%m-%d %H:%M:%S',
                                                                             time.localtime(data['putTime']/10000000))),
                                              data['putTime']))
+            return True
 
     @auth
     def list(self, space=None, reverse=True, by_date=True,
@@ -588,8 +594,8 @@ class Qiniu(object):
         if not feed.data:
             # print("No such space as \033[01;31m{}\033[00m".format(space))
             return "\033[01;31m{}\033[00m 空间不存在".format(space), []
-        data = json.loads(feed.data)
-        if 'error' in data:
+        data = json.loads(feed.data.decode())
+        if b'error' in data:
             return "发生错误: \033[01;31m{}\033[00m @\033[01;35m{}\033[00m".format(data['error'], space), []
         else:
             return '', data['items']
@@ -673,7 +679,7 @@ class Qiniu(object):
                 self.fail_reason = "服务器未响应合并操作"
                 return False
             try:
-                data = json.loads(feed.data)
+                data = json.loads(feed.data.decode())
                 avg_speed = unit_change(self.progressed / (time.time() - self.start_stamp))
                 self.progressed = self.total
                 if data.get('key', '') == self.pre_upload_info[0]:
@@ -699,7 +705,7 @@ class Qiniu(object):
                 self.progressed = self.total
                 self.fail_reason = "上传凭证无效"
                 return False
-            self.block_status.append(json.loads(feed.data).get('ctx'))
+            self.block_status.append(json.loads(feed.data.decode()).get('ctx'))
             done = True
             self.last_failed = None
         except Exception as e:
