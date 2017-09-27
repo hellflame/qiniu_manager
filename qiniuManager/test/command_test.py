@@ -37,3 +37,7 @@ class ParserTest(unittest.TestCase):
         ak, sk = self.generate_random_target(50), self.generate_random_target(50)
         parse = self.parser.parse_args(shlex.split("-k '{}' '{}'".format(ak, sk)))
         self.assertEqual(parse.key, [ak, sk])
+
+
+if __name__ == '__main__':
+    unittest.main()

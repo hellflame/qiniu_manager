@@ -33,3 +33,8 @@ class Tests(unittest.TestCase):
 
     def test_dec_is_str(self):
         self.assertIsInstance(decrypt(encrypt(self.words)), str)
+
+
+if __name__ == '__main__':
+    unittest.main()
+

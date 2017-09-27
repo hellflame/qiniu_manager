@@ -189,12 +189,11 @@ class Auth(object):
             bucket:  上传的空间名
             key:     上传的文件名，默认为空
             expires: 上传凭证的过期时间，默认为3600s
-            policy:  上传策略，默认为空
 
         Returns:
             上传凭证
         """
-        if bucket is None or bucket == '':
+        if not bucket:
             raise ValueError('invalid bucket name')
 
         scope = bucket

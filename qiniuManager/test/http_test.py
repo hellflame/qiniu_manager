@@ -69,3 +69,8 @@ class HTTPTest(unittest.TestCase):
             content = handle.read()
         os.remove(resp.file_handle.name)
         self.assertEqual(hashlib.md5(content).hexdigest(), '8688229badcaa3cb2730dab99a618be6')
+
+
+if __name__ == '__main__':
+    unittest.main()
+
