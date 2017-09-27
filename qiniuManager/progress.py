@@ -1,3 +1,4 @@
+# coding=utf8
 """
     Progress Bar decorator for classes
 """
