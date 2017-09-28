@@ -25,8 +25,7 @@ def db_ok(func):
         if self.db and self.cursor:
             return func(self, *args, **kwargs)
         else:
-            print("`{}` 访问失败,请检查访问权限".format(self.config_path))
-            return ''
+            return False, "`{}` 访问失败,请检查访问权限".format(self.config_path)
     return func_wrapper
 
 
@@ -38,8 +37,7 @@ def access_ok(func):
         if self.access and self.secret:
             return func(self, *args, **kwargs)
         else:
-            print("请添加授权密钥对")
-            return ''
+            return False, "请添加授权密钥对"
     return access_wrap
 
 
@@ -48,10 +46,8 @@ def auth(func):
         if self.auth:
             return func(self, *args, **kwargs)
         else:
-            self.get_auth()
             if not self.auth:
-                print("授权初始化失败".title())
-                return ''
+                return False, "授权初始化失败"
             else:
                 return func(*args, **kwargs)
     return auth_ok
@@ -297,7 +293,7 @@ class Qiniu(object):
 
         info, data = self.__get_list_in_space(space, mute=True)
         if not info:
-            return True, "\r\n".join([self.private_download_link(i['key'].encode('utf8'), space) for i in data])
+            return True, "\r\n".join([self.private_download_link(i['key'].encode('utf8'), space)[1] for i in data])
         return False, info
 
     @auth
@@ -334,7 +330,7 @@ class Qiniu(object):
         """
         link = self.regular_download_link(target, space)
         private_link = self.auth.private_download_url(link, expires=3600)
-        return private_link
+        return True, private_link
 
     @auth
     def download(self, target, space=None, directory=None, is_debug=False):
@@ -350,7 +346,9 @@ class Qiniu(object):
             save_path = os.path.join(directory, os.path.basename(target))
         else:
             save_path = os.path.basename(target)
-        link = self.private_download_link(target, space)
+        ret, link = self.private_download_link(target, space)
+        if not ret:
+            return False, ret
         downloader = http.HTTPCons(is_debug)
         downloader.request(link)
         feed = http.SockFeed(downloader)
@@ -363,16 +361,13 @@ class Qiniu(object):
             print("\n".join(["{} : {}".format(i, feed.headers[i]) for i in feed.headers]))
 
         if not feed.status or not int(feed.status['code']) == 200:
-            print("\033[01;31m{}\033[00m not exist !".format(target))
             if feed.file_handle and os.path.isfile(feed.file_handle.name):
                 os.unlink(feed.file_handle.name)
-            return False
+            return False, "\033[01;31m{}\033[00m not exist !".format(target)
         end = time.time()
         size = int(feed.headers.get('Content-Length', 1))
-        print("\033[01;31m{}\033[00m downloaded @speed \033[01;32m{}/s\033[00m"
-              .format(target,
-                      unit_change(size / (end - start))))
-        return True
+        return True, "\033[01;31m{}\033[00m downloaded @speed \033[01;32m{}/s\033[00m".format(target,
+                                                                                              unit_change(size / (end - start)))
 
     @auth
     def rename(self, target, to_target, space=None, is_debug=False):
@@ -392,34 +387,20 @@ class Qiniu(object):
         feed.http_response()
         if b'error' in feed.data:
             data = json.loads(feed.data.decode())
-            print("发生错误: \033[01;31m{}\033[00m".format(data['error']))
+            return False, "发生错误: \033[01;31m{}\033[00m".format(data['error'])
         else:
-            print("\033[01;31m{}\033[00m now RENAME as \033[01;32m{}\033[00m".format(target, to_target))
+            return True, "\033[01;31m{}\033[00m now RENAME as \033[01;32m{}\033[00m".format(target, to_target)
 
     @auth
-    def remove(self, target, space=None, no_prompt=False):
+    def remove(self, target, space=None):
         """
         删除指定空间中文件
         :param target: str => 文件名
         :param space: str => 指定空间或默认空间
-        :param no_prompt: bool => 无反馈，直接删除
         :return: None
         """
         if not space:
             space = self.default_space
-
-        if not no_prompt:
-            prompt = '是否确定从 \033[01;34m{space}\033[00m' \
-                     '中\033[01;31m删除\033[00m `\033[01;32m{target}\033[00m` ? y/n '.format(target=target, space=space)
-            try:
-                if sys.version_info.major == 2:
-                    if not raw_input(prompt).lower().startswith('y'):
-                        return False
-                else:
-                    if not input(prompt).lower().startswith('y'):
-                        return False
-            except:
-                return False
 
         manager_remove = http.HTTPCons()
         url = self.manager_host + '/delete/{}'.format(urlsafe_base64_encode("{}:{}".format(space, target)))
@@ -431,11 +412,9 @@ class Qiniu(object):
         data = feed.data
         if b'error' in data:
             data = json.loads(data.decode())
-            print("发生错误: \033[01;31m{}\033[00m".format(data['error']))
-            return False
+            return False, "发生错误: \033[01;31m{}\033[00m".format(data['error'])
         else:
-            print("`\033[01;31m{}\033[00m` 已从 \033[01;34m{}\033[00m 中删除".format(target, space))
-            return True
+            return True, "`\033[01;31m{}\033[00m` 已从 \033[01;34m{}\033[00m 中删除".format(target, space)
 
     @auth
     def check(self, target, space=None, is_debug=False):
@@ -461,26 +440,28 @@ class Qiniu(object):
 
         if int(feed.status['code']) == 612:
             print("文件 \033[01;31m{target}\033[00m 不存在于 \033[01;32m{space}\033[00m".format(target=target,
-                                                                                           space=space))
+                                                                                          space=space))
             nx_space = self.next_space()
             if nx_space:
                 return self.check(target, nx_space, is_debug=is_debug)
-            return False
+            return False, ""
         data = json.loads(feed.data.decode())
         if b'error' in data:
-            print("发生错误: \033[01;31m{}\033[00m".format(data['error']))
+            return False, "发生错误: \033[01;31m{}\033[00m".format(data['error'])
         else:
-            print("  {}  {}  {}".format('Space', '.' * (self.COL_WIDTH - len('Space')), "\033[01;32m{}\033[00m".format(space)))
-            print("  {}  {}  {}".format('Filename', '·' * (self.COL_WIDTH - len('filename')), target))
-            print("  {}  {}  {} ({})".format('Size', '·' * (self.COL_WIDTH - len('size')),
-                                             "\033[01;37m{}\033[00m".format(unit_change(data['fsize'])),
-                                             data['fsize']))
-            print("  {}  {}  {}".format('MimeType',  '·' * (self.COL_WIDTH - len('MimeType')), data['mimeType']))
-            print("  {}  {}  {} ({})".format('Date', '·' * (self.COL_WIDTH - len('date')),
-                                             "\033[01;37m{}\033[00m".format(time.strftime('%Y-%m-%d %H:%M:%S',
-                                                                            time.localtime(data['putTime']/10000000))),
-                                             data['putTime']))
-            return True
+            ret = "  {}  {}  {}".format('Space', '.' * (self.COL_WIDTH - len('Space')),
+                                        "\033[01;32m{}\033[00m".format(space))
+            ret += "  {}  {}  {}".format('Filename', '·' * (self.COL_WIDTH - len('filename')), target)
+            ret += "  {}  {}  {} ({})".format('Size', '·' * (self.COL_WIDTH - len('size')),
+                                              "\033[01;37m{}\033[00m".format(unit_change(data['fsize'])),
+                                              data['fsize'])
+            ret += "  {}  {}  {}".format('MimeType',  '·' * (self.COL_WIDTH - len('MimeType')), data['mimeType'])
+            ret += "  {}  {}  {} ({})".format('Date', '·' * (self.COL_WIDTH - len('date')),
+                                              "\033[01;37m{}\033[00m".format(
+                                                  time.strftime('%Y-%m-%d %H:%M:%S',
+                                                                time.localtime(data['putTime']/10000000))),
+                                              data['putTime'])
+            return True, ret
 
     @auth
     def list(self, space=None, reverse=True, by_date=True,
@@ -624,7 +605,6 @@ class Qiniu(object):
         # print url
         return url
 
-    @auth
     def __pre_upload(self, path, space=None):
         file_name = os.path.basename(path)
         if space:

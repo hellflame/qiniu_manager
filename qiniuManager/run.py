@@ -37,6 +37,7 @@ def parser():
     parse.add_argument("-c", dest="check", action="store_true", help="查看文件状态")
     parse.add_argument("-cd", dest="check_debug", action="store_true", help="调试查看文件状态的输出")
     parse.add_argument("-r", '--remove', action="store_true", help="删除云文件")
+    parse.add_argument("-rf", '--force-remove', action="store_true", help="强制删除云文件")
     parse.add_argument("-d", '--download', action="store_true", help="下载文件")
     parse.add_argument("-t", dest="target", help="选择下载`目录`")
     parse.add_argument("-dd", dest="download_debug", action="store_true", help="调试下载")
@@ -102,8 +103,8 @@ def command(args, parse):
                 default = qiniu.config.get_default_space()
                 space_list = qiniu.config.get_space_list()
                 print("已知空间名如下:")
-                print("\r\n".join(["\r\n{}.name: {}\r\n  alias: {}".format(space_list.index(s) + 1, s[0], s[1])
-                                   for s in space_list]))
+                print("\r\n-------------\r\n".join(["{}\r\n{}".format(s[0], s[1])
+                                                    for s in space_list]))
                 if default:
                     print('\n默认空间:  \033[01;31m{}\033[00m'.format(default[0]))
             else:
@@ -118,7 +119,7 @@ def command(args, parse):
             default = qiniu.config.get_default_space()
             if default:
                 qiniu.config.set_space(default, args.alias)
-                print("默认空间现在使用 {} 作为关联域名")
+                print("默认空间现在使用 {} 作为关联域名".format(args.alias))
             else:
                 print("若不指定空间，则需要设置默认空间")
 
@@ -128,87 +129,111 @@ def command(args, parse):
 
         elif args.check:
             if args.file and not args.space:
-                qiniu.check(args.file)
+                print(qiniu.check(args.file)[1])
             elif args.file and args.space:
-                qiniu.check(args.file, args.space)
+                print(qiniu.check(args.file, args.space)[1])
             else:
                 print("请指定要查看的文件")
 
         elif args.check_debug:
             if args.file and not args.space:
-                qiniu.check(args.file, is_debug=True)
+                print(qiniu.check(args.file, is_debug=True)[1])
             elif args.file and args.space:
-                qiniu.check(args.file, args.space, is_debug=True)
+                print(qiniu.check(args.file, args.space, is_debug=True)[1])
             else:
                 print("请指定要查看的文件")
 
         elif args.remove:
             if args.file and not args.space:
-                qiniu.remove(args.file)
+                prompt = '是否确定\033[01;31m删除\033[00m `\033[01;32m{target}\033[00m` ? y/n '.format(target=args.file)
             elif args.file and args.space:
-                qiniu.remove(args.file, args.space)
+                prompt = '是否确定从 \033[01;34m{space}\033[00m' \
+                         '中\033[01;31m删除\033[00m `\033[01;32m{target}\033[00m` ? y/n '.format(target=args.file,
+                                                                                              space=args.space)
+            else:
+                print("请指定要删除的文件")
+                return False
+            try:
+                if sys.version_info.major == 2:
+                    if not raw_input(prompt).lower().startswith('y'):
+                        return False
+                else:
+                    if not input(prompt).lower().startswith('y'):
+                        return False
+            except:
+                return False
+            if args.file and not args.space:
+                print(qiniu.remove(args.file)[1])
+            elif args.file and args.space:
+                print(qiniu.remove(args.file, args.space)[1])
+
+        elif args.force_remove:
+            if args.file and not args.space:
+                print(qiniu.remove(args.file)[1])
+            elif args.file and args.space:
+                print(qiniu.remove(args.file, args.space)[1])
             else:
                 print("请指定要删除的文件")
 
         elif args.download:
             if not args.target:
                 if args.file and not args.space:
-                    qiniu.download(args.file)
+                    print(qiniu.download(args.file)[1])
                 elif args.file and args.space:
-                    qiniu.download(args.file, space=args.space)
+                    print(qiniu.download(args.file, space=args.space)[1])
                 else:
                     print("请指定要下载的文件")
             else:
                 if args.file and not args.space:
-                    qiniu.download(args.file, space=None, directory=args.target)
+                    print(qiniu.download(args.file, space=None, directory=args.target)[1])
                 elif args.file and args.space:
-                    qiniu.download(args.file, space=args.space, directory=args.target)
+                    print(qiniu.download(args.file, space=args.space, directory=args.target)[1])
 
         elif args.download_debug:
             if not args.target:
                 if args.file and not args.space:
-                    qiniu.download(args.file, is_debug=True)
+                    print(qiniu.download(args.file, is_debug=True)[1])
                 elif args.file and args.space:
-                    qiniu.download(args.file, space=args.space, is_debug=True)
+                    print(qiniu.download(args.file, space=args.space, is_debug=True)[1])
                 else:
                     print("请指定要下载的文件")
             else:
                 if args.file and not args.space:
-                    qiniu.download(args.file, space=None, directory=args.target, is_debug=True)
+                    print(qiniu.download(args.file, space=None, directory=args.target, is_debug=True)[1])
                 elif args.file and args.space:
-                    qiniu.download(args.file, space=args.space, directory=args.target, is_debug=True)
+                    print(qiniu.download(args.file, space=args.space, directory=args.target, is_debug=True)[1])
                 else:
                     print("请指定要下载的文件")
 
         elif args.private_link:
             if args.file and not args.space:
-                print(qiniu.private_download_link(args.file))
+                print(qiniu.private_download_link(args.file)[1])
             elif args.file and args.space:
-                print(qiniu.private_download_link(args.file, args.space))
+                print(qiniu.private_download_link(args.file, args.space)[1])
             else:
                 print("请指定文件")
 
         elif args.link:
             if args.file and not args.space:
-                print(qiniu.regular_download_link(args.file))
+                print(qiniu.regular_download_link(args.file)[1])
             elif args.file and args.space:
-                print(qiniu.regular_download_link(args.file, args.space))
+                print(qiniu.regular_download_link(args.file, args.space)[1])
             else:
                 print("请指定文件")
 
         elif args.rename:
             if args.file and not args.space:
-                qiniu.rename(args.rename, args.file)
+                print(qiniu.rename(args.rename, args.file)[1])
             elif args.file and args.space:
-                qiniu.rename(args.rename, args.file, args.space)
+                print(qiniu.rename(args.rename, args.file, args.space)[1])
             else:
                 print("请给出新的文件名")
 
         elif args.rename_debug:
             if args.file and not args.space:
-                qiniu.rename(args.rename_debug, args.file, is_debug=True)
+                print(qiniu.rename(args.rename_debug, args.file, is_debug=True)[1])
             elif args.file and args.space:
-                qiniu.rename(args.rename_debug, args.file, args.space, is_debug=True)
+                print(qiniu.rename(args.rename_debug, args.file, args.space, is_debug=True)[1])
             else:
                 print("请给出新的文件名")
 
