@@ -22,7 +22,8 @@ class HTTPTest(unittest.TestCase):
         self.assertEqual(req.host, 'static.hellflame.net')
         self.assertEqual(req.port, 443)
         self.assertIs(connect, req.connect)
-        req.close()
+        resp = SockFeed(req)
+        resp.http_response(skip_body=True)
 
     def test_http_request(self):
         req = HTTPCons()
@@ -30,7 +31,8 @@ class HTTPTest(unittest.TestCase):
         self.assertEqual(req.host, 'static.hellflame.net')
         self.assertEqual(req.port, 80)
         self.assertIs(connect, req.connect)
-        req.close()
+        resp = SockFeed(req)
+        resp.http_response(skip_body=True)
 
     def test_response_in_memory(self):
         req = HTTPCons()
