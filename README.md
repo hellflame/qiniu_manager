@@ -99,6 +99,12 @@ $ qiniu -s share 7xqh1q.dl1.z0.glb.clouddn.com
 $ qiniu -s # 显示空间信息(bucket)
 ```
 
+> note: v1.4.4 之后需要这样绑定测试域名
+
+```bash
+$ qiniu -s share --alias 7xqh1q.dl1.z0.glb.clouddn.com
+```
+
 ![space & alias](https://static.hellflame.net/resource/e506e9787b0a693da3a4d5be381b28ad)
 
 好吧，一直用的测试域名，对于对外开放的空间访问的话，并不需要设置这个`alias`，只需要`qiniu -s share`即可（换成自己的空间名），对于私有空间，对于我而言，这个测试域名的使用是必要的
@@ -287,6 +293,15 @@ $ qiniu -r <filename> <space name> # 删除<space name>空间(bucket)中的<file
 
 想要吐槽的是，无论是七牛SDK的返回值规范性还是七牛服务器的返回值的规范性都不是很一致（与自己所认为的规范性不是很一致）
 
+> Node：在大概v1.4.7版本左右，支持强制删除选项
+
+```bash
+$ qiniu -rf <filename> 
+$ qiniu -rf <filename> <space>
+```
+
+而且也在发布这个版本前一小段时间内，七牛官方接口发生了一点点变化，如果删除的文件不存在，则会返回一条文件不存在的错误信息。
+
 ![confuse](https://static.hellflame.net/resource/8db93d0655185b086dde5ec2a4b8b9b6)
 
 其实个人的做法更倾向于在成功时也返回一个json字符串，给出一个status表示操作成功，然而这里并没有。在查看服务器的返回值时，这个就更清楚了，服务器的response中，body部分的确是空的，`Content-Length: 0`，这也让我需要对这部分请求作特别的处理，比如禁用下载进度条(这是自己写的HTTP报文发送以及接受的方法中需要的)
@@ -469,4 +484,3 @@ qiniuManager现在同时只能运行一个实例，因为manager从用户家目�
 ------
 
 ### [历史版本](https://github.com/hellflame/qiniu_manager/blob/master/CHANGELOG.md)
-
