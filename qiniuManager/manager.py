@@ -255,10 +255,11 @@ class Qiniu(object):
             self.file_handle.close()
 
     @staticmethod
-    def print_debug(feed):
+    def print_debug(feed, entity=True):
         """
         输出七牛云请求调试信息
         :param feed: SockFeed => 响应
+        :param entity: bool => 是否显示http实体
         :return: None
         """
         # ENV
@@ -270,8 +271,9 @@ class Qiniu(object):
         if feed.status:
             print('{}'.format(feed.status['status']))
         print("\n".join(["{} : {}".format(i, feed.headers[i]) for i in feed.headers]))
-        # HTTP entity
-        print('\n{}'.format(feed.data), "\n\033[01;33mEOF\033[00m")
+        if entity:
+            # HTTP entity
+            print('\n{}'.format(feed.data), "\n\033[01;33mEOF\033[00m")
 
     def next_space(self):
         """
@@ -317,8 +319,8 @@ class Qiniu(object):
         # link = os.path.join(host, urllib.quote(target))
         if sys.version_info.major == 3:
             from urllib.parse import quote
-            return os.path.join(host, quote(target))
-        return os.path.join(host, urllib.quote(target))
+            return True, os.path.join(host, quote(target))
+        return True, os.path.join(host, urllib.quote(target))
 
     @auth
     def private_download_link(self, target, space=None):
@@ -328,7 +330,7 @@ class Qiniu(object):
         :param space: str => 指定空间名，否则为默认空间
         :return: str => 私有下载链接
         """
-        link = self.regular_download_link(target, space)
+        _, link = self.regular_download_link(target, space)
         private_link = self.auth.private_download_url(link, expires=3600)
         return True, private_link
 
@@ -355,10 +357,7 @@ class Qiniu(object):
         start = time.time()
         feed.http_response(save_path)
         if is_debug:
-            print("\033[01;33mResponse:\033[00m")
-            if feed.status:
-                print('{}'.format(feed.status['status']))
-            print("\n".join(["{} : {}".format(i, feed.headers[i]) for i in feed.headers]))
+            self.print_debug(feed, entity=False)
 
         if not feed.status or not int(feed.status['code']) == 200:
             if feed.file_handle and os.path.isfile(feed.file_handle.name):

@@ -26,12 +26,18 @@ class Pro(object):
 
 class ProgressTester(unittest.TestCase):
     def test_100_progress(self):
-        print("先换行")
+        print("进度条换行")
         Pro().loader()
 
     def test_auto_width_progress(self):
-        print("先换行")
+        print("进度条换行")
         Pro().auto_loader()
+
+    def test_disable_progress(self):
+        pro = Pro()
+        pro.disable_progress = True
+        pro.title = "无进度条，也就是说应该看不到这串字符才对"
+        pro.loader()
 
 
 if __name__ == '__main__':

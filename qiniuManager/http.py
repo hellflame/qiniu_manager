@@ -201,6 +201,9 @@ class HTTPCons(object):
         self.s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.connect = None
 
+    def __del__(self):
+        self.close()
+
     def close(self):
         """
         需要请求接收完成之后手动关闭

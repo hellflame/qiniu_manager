@@ -16,6 +16,10 @@ class ParserTest(unittest.TestCase):
         target = string.ascii_letters + string.digits + ' '
         return ''.join([random.choice(target) for _ in range(length)]).replace("'", "\\\'").replace("\"", "\\\"")
 
+    def test_version(self):
+        self.assertTrue(self.parser.parse_args(['-v']).version)
+        self.assertTrue(self.parser.parse_args(['--version']).version)
+
     def test_export(self):
         args = self.parser.parse_args(shlex.split("-x"))
         self.assertEqual(args.export, [None])
@@ -71,6 +75,14 @@ class ParserTest(unittest.TestCase):
         parse = self.parser.parse_args(["--list"])
         self.assertListEqual(parse.list, [None])
 
+    def test_gt_lt(self):
+        self.assertTrue(self.parser.parse_args(['-gt']).greater)
+        self.assertTrue(self.parser.parse_args(['-lt']).littler)
+
+    def test_find_list(self):
+        self.assertTrue(self.parser.parse_args(['-f']).find)
+        self.assertTrue(self.parser.parse_args(['--find']).find)
+
     def test_list_all(self):
         self.assertTrue(self.parser.parse_args(['-la']).list_all)
         self.assertTrue(self.parser.parse_args(['--list-all']).list_all)
@@ -84,6 +96,35 @@ class ParserTest(unittest.TestCase):
         space = self.generate_random_target(10)
         self.assertListEqual(self.parser.parse_args(['-s']).space_check, [None])
         self.assertListEqual(self.parser.parse_args(['-s', space]).space_check, [space])
+
+    def test_space_alias(self):
+        alias = self.generate_random_target(10)
+        self.assertEqual(self.parser.parse_args(shlex.split("--alias '{}'".format(alias))).alias, alias)
+
+    def test_remove_space(self):
+        target = self.generate_random_target(10)
+        self.assertEqual(self.parser.parse_args(shlex.split("-sr '{}'".format(target))).space_remove, target)
+
+    def test_rename(self):
+        self.assertEqual(self.parser.parse_args(['-rn']).rename, None)
+        name = self.generate_random_target(10)
+        self.assertEqual(self.parser.parse_args(shlex.split("-rn '{}'".format(name))).rename, name)
+
+    def test_rename_debug(self):
+        name = self.generate_random_target(10)
+        self.assertEqual(self.parser.parse_args(['-rd']).rename_debug, None)
+        self.assertEqual(self.parser.parse_args(shlex.split("-rd '{}'".format(name))).rename_debug, name)
+
+    def test_download(self):
+        self.assertTrue(self.parser.parse_args(['-d']).download)
+        self.assertTrue(self.parser.parse_args(['--download']).download)
+
+    def test_download_debug(self):
+        self.assertTrue(self.parser.parse_args(['-dd']).download_debug)
+
+    def test_directory_choice(self):
+        d = self.generate_random_target(10)
+        self.assertEqual(self.parser.parse_args(shlex.split("-t '{}'".format(d))).target, d)
 
 
 if __name__ == '__main__':
