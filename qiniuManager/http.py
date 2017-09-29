@@ -140,6 +140,23 @@ class SockFeed(object):
                             'content': left[left.index(b'\r\n') + 2:]
                         }
 
+                        diff = len(self.current_chunk['content']) - self.current_chunk['size']
+                        if diff > 0:
+                            # 第一分组接收超标
+                            self.save_data(self.current_chunk['content'][: self.current_chunk['size']])
+                            left = self.current_chunk['content'][self.current_chunk['size'] + 2:]
+                            if left:
+                                size = int(self.current_chunk['content'][self.current_chunk['size'] + 2:], 16)
+                                if size == 0:
+                                    return self.finish_loop()
+                                else:
+                                    self.current_chunk = {
+                                        'size': size,
+                                        'content': data[self.current_chunk['size']:]
+                                    }
+                            else:
+                                self.current_chunk = None
+
                         self.progressed = random.randrange(1, 10)
 
         else:

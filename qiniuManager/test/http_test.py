@@ -10,12 +10,16 @@ from qiniuManager.http import *
 class HTTPTest(unittest.TestCase):
     """
     static.hellflame.net
-        域名下的文件大多数情况下都是chunked编码
+        域名下的文件大多数情况下大文件都是chunked编码，小文件可能会被缓存为正常编码
         文件内容为大小与hash已知的随机二进制文件
     raw.githubusercontent.com
         域名下文件未分块
         文件来自 https://raw.githubusercontent.com/hellflame/qiniu_manager/v1.4.6/qiniuManager/manager.py
     """
+    @staticmethod
+    def is_chunked(resp):
+        print("chunked" if resp.chunked else "unchunked")
+
     def test_https_request(self):
         req = HTTPCons()
         connect = req.request("https://static.hellflame.net/resource/de5ca9cf5320673dc43b526e3d737f05")
@@ -24,6 +28,7 @@ class HTTPTest(unittest.TestCase):
         self.assertIs(connect, req.connect)
         resp = SockFeed(req)
         resp.disable_progress = True
+        self.is_chunked(resp)
         resp.http_response(skip_body=True)
 
     def test_http_request(self):
@@ -35,6 +40,7 @@ class HTTPTest(unittest.TestCase):
         resp = SockFeed(req)
         resp.disable_progress = True
         resp.http_response(skip_body=True)
+        self.is_chunked(resp)
 
     def test_response_in_memory(self):
         req = HTTPCons()
@@ -42,6 +48,7 @@ class HTTPTest(unittest.TestCase):
         resp = SockFeed(req)
         resp.disable_progress = True
         resp.http_response()
+        self.is_chunked(resp)
         self.assertEqual(hashlib.md5(resp.data).hexdigest(), '9a50ddbef4c82eb9003bd496a00e0989')
 
     def test_response_downloading(self):
@@ -51,6 +58,7 @@ class HTTPTest(unittest.TestCase):
         resp = SockFeed(req)
         resp.disable_progress = True
         resp.http_response(file_path, overwrite=True)
+        self.is_chunked(resp)
 
         with open(file_path, 'rb') as handle:
             content = handle.read()
@@ -64,6 +72,7 @@ class HTTPTest(unittest.TestCase):
         resp = SockFeed(req)
         resp.disable_progress = True
         resp.http_response()
+        self.is_chunked(resp)
         self.assertEqual(hashlib.md5(resp.data).hexdigest(), '8688229badcaa3cb2730dab99a618be6')
 
     def test_small_response_downloading(self):
@@ -73,6 +82,7 @@ class HTTPTest(unittest.TestCase):
         resp = SockFeed(req)
         resp.disable_progress = True
         resp.http_response(file_path, overwrite=True)
+        self.is_chunked(resp)
         with open(file_path, 'rb') as handle:
             content = handle.read()
         os.remove(resp.file_handle.name)
@@ -84,6 +94,7 @@ class HTTPTest(unittest.TestCase):
         resp = SockFeed(req)
         resp.disable_progress = True
         resp.http_response()
+        self.is_chunked(resp)
         self.assertEqual(hashlib.md5(resp.data).hexdigest(), '276efce035d49f7f3ea168b720075523')
 
 
