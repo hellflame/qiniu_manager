@@ -364,7 +364,7 @@ class Qiniu(object):
                 os.unlink(feed.file_handle.name)
             return False, "\033[01;31m{}\033[00m not exist !".format(target)
         end = time.time()
-        size = int(feed.headers.get('Content-Length', 1))
+        size = os.path.getsize(save_path)
         return True, "\033[01;31m{}\033[00m downloaded @speed \033[01;32m{}/s\033[00m".format(target,
                                                                                               unit_change(size / (end - start)))
 

@@ -23,6 +23,7 @@ class HTTPTest(unittest.TestCase):
         self.assertEqual(req.port, 443)
         self.assertIs(connect, req.connect)
         resp = SockFeed(req)
+        resp.disable_progress = True
         resp.http_response(skip_body=True)
 
     def test_http_request(self):
@@ -32,6 +33,7 @@ class HTTPTest(unittest.TestCase):
         self.assertEqual(req.port, 80)
         self.assertIs(connect, req.connect)
         resp = SockFeed(req)
+        resp.disable_progress = True
         resp.http_response(skip_body=True)
 
     def test_response_in_memory(self):

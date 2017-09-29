@@ -4,6 +4,8 @@
 
   修复http库中post方法在http实体中多添加 `\r\n` 导致的 `Malformed HTTP message`
 
+  修复可能的chunked下载出错问题
+
 - v1.4.7
 
   进一步完善测试脚本，继续添加了部分测试用例，后续的开发应该更稳妥了才对
