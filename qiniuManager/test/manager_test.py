@@ -43,6 +43,7 @@ class ManagerTest(unittest.TestCase):
         self.tmp_file_name = 'tmp.data'
         self.tmp_file = os.path.join(tempfile.gettempdir(), self.tmp_file_name)
         with open(self.tmp_file, 'wb') as handle:
+            # 生成随机二进制文件
             handle.write(os.urandom(102400))
 
     def test_api(self):

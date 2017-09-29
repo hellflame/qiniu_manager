@@ -9,8 +9,12 @@ from qiniuManager.http import *
 
 class HTTPTest(unittest.TestCase):
     """
-    static.hellflame.net 域名下的文件大多数情况下都是chunked编码
-    raw.githubusercontent.com 域名下文件未分块
+    static.hellflame.net
+        域名下的文件大多数情况下都是chunked编码
+        文件内容为大小与hash已知的随机二进制文件
+    raw.githubusercontent.com
+        域名下文件未分块
+        文件来自 https://raw.githubusercontent.com/hellflame/qiniu_manager/v1.4.6/qiniuManager/manager.py
     """
     def test_https_request(self):
         req = HTTPCons()
