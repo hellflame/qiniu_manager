@@ -312,6 +312,8 @@ class HTTPCons(object):
                 for i in post_data:
                     href += '{}={}&'.format(i, post_data[i])
         data = data.format(method=method, href=href, headers=head)
+        if method == 'POST':
+            data = data[:-4]
         if self.is_debug:
             print("\033[01;33mRequest:\033[00m\033[01;31m(DANGER)\033[00m")
             print(data.__repr__().strip("'"))
