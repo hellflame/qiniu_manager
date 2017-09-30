@@ -61,6 +61,56 @@ qiniu [-k|--key] <access key> <secret key>
 https://github.com/hellflame/qiniu_manager/blob/v1.4.7/README.md
 ```
 
+### 测试
+
+> 连续不断的升级和更新，越来越让人意识到测试的重要性，也是加快代码升级更新的必要途径。
+>
+> 毕竟，就算通过了测试，也不一定能覆盖所有的可能性，之后应该还会继续更新测试脚本，让每一步都走的稳稳的。
+
+测试脚本位于项目目录下的 `bash.sh` 
+
+- 不给任何参数
+
+将自动进行py2、py3、pypy3测试，测试所有用例
+
+```bash
+./test.sh 
+```
+
+- 指定python版本
+
+将针对该python版本进行所有用例测试
+
+```bash
+./test.sh python
+# or
+./test.sh python3
+# or
+./test.sh pypy3
+# .etc
+```
+
+- 指定python路径以及测试模块
+
+将使用该python版本测试指定测试模块
+
+```bash
+./test.sh python http
+```
+
+现有可选测试模块包括:
+
+```bash
+command  # 命令行解析测试
+crypto  # 加密、解密测试
+http  # http请求与获取响应测试
+manager  # 功能逻辑测试
+progress  # 进度条测试
+utils  # 工具测试
+```
+
+测试用例位于 [这里](https://github.com/hellflame/qiniu_manager/tree/master/qiniuManager/test) ，只要符合通配符 `*_test.py` 的模块都在测试范围，也可以进行单个模块的测试
+
 ### 使用方法
 
 使用:
