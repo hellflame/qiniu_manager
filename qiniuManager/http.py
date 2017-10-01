@@ -9,6 +9,7 @@ import os
 
 __all__ = ['SockFeed', 'HTTPCons']
 
+# TODO:: 换一种chunked编码处理方式，以缓存一定量数据之后进行处理，而不是获取到分块标志之后处理，应该会加快chunked编码处理速度和正确性
 
 class SockFeed(object):
     """
