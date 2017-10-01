@@ -6,6 +6,7 @@ import unittest
 
 
 def get_modules():
+    # 只能添加test根目录下的 *_test.py 用例
     modules = []
 
     for _, _, f in os.walk(os.path.dirname(__file__) or '.'):

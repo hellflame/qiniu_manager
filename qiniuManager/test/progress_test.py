@@ -21,7 +21,7 @@ class Pro(object):
     def auto_loader(self):
         time.sleep(0.01)
         self.progressed += 1
-        self.title = "长度占满"
+        self.title = "长度占满宽度"
 
 
 class ProgressTester(unittest.TestCase):
@@ -41,6 +41,6 @@ class ProgressTester(unittest.TestCase):
 
 
 if __name__ == '__main__':
-    unittest.main()
+    unittest.main(verbosity=2)
 
 

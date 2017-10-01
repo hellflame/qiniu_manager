@@ -4,18 +4,6 @@ import string
 
 from qiniuManager.crypto import *
 
-"""
-    Test Pass Platforms:
-
-    - Python 2.7.13 (default, Jul 30 2017, 15:55:47)
-      [GCC 4.2.1 Compatible Apple LLVM 8.1.0 (clang-802.0.42)] on darwin
-    - Python 3.5.3 (a37ecfe5f142bc971a86d17305cc5d1d70abec64, Jun 10 2017, 18:23:14)
-      [PyPy 5.8.0-beta0 with GCC 4.2.1 Compatible Apple LLVM 8.1.0 (clang-802.0.42)] on darwin
-    - Python 3.6.2 (default, Sep  4 2017, 19:45:38)
-      [GCC 4.2.1 Compatible Apple LLVM 8.1.0 (clang-802.0.42)] on darwin
-
-"""
-
 
 class Tests(unittest.TestCase):
     def setUp(self):
@@ -23,18 +11,46 @@ class Tests(unittest.TestCase):
                               for _ in range(1024)])
 
     def test_is_str(self):
-        self.assertIsInstance(self.words, str)
+        self.assertIsInstance(self.words,
+                              str,
+                              "参数应该为字符串，而不是 {}".format(type(self.words)))
 
     def test_enc(self):
-        self.assertIsInstance(encrypt(self.words), str)
+        enc = encrypt(self.words)
+        self.assertIsInstance(enc,
+                              str,
+                              "加密结果应该为字符串，而不是 {}".format(type(enc)))
 
     def test_dec(self):
-        self.assertEqual(self.words, decrypt(encrypt(self.words)))
+        self.assertEqual(self.words,
+                         decrypt(encrypt(self.words)),
+                         "对称加密算法失败！")
 
     def test_dec_is_str(self):
-        self.assertIsInstance(decrypt(encrypt(self.words)), str)
+        dec = decrypt(encrypt(self.words))
+        self.assertIsInstance(dec,
+                              str,
+                              "解密结果应该为字符串，而不是 {}".format(type(dec)))
+
+    def test_cycle(self):
+        times = random.randrange(13, 30)
+
+        def toggle(t):
+            if t % 2:
+                return decrypt
+            return encrypt
+
+        # string 为不可变量
+        result = self.words
+        for i in range(times):
+            result = toggle(i)(result)
+
+        if times % 2:
+            self.assertEqual(decrypt(result), self.words, "对称加密算法失败")
+        else:
+            self.assertEqual(result, self.words)
 
 
 if __name__ == '__main__':
-    unittest.main()
+    unittest.main(verbosity=2)
 

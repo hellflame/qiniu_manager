@@ -17,8 +17,8 @@ class HTTPTest(unittest.TestCase):
         文件来自 https://raw.githubusercontent.com/hellflame/qiniu_manager/v1.4.6/qiniuManager/manager.py
     """
     @staticmethod
-    def is_chunked(resp):
-        print("chunked" if resp.chunked else "unchunked")
+    def chunked_info(resp):
+        return "分块编码" if resp.chunked else "常规编码"
 
     def test_https_request(self):
         req = HTTPCons()
@@ -28,7 +28,6 @@ class HTTPTest(unittest.TestCase):
         self.assertIs(connect, req.connect)
         resp = SockFeed(req)
         resp.disable_progress = True
-        self.is_chunked(resp)
         resp.http_response(skip_body=True)
 
     def test_http_request(self):
@@ -40,7 +39,6 @@ class HTTPTest(unittest.TestCase):
         resp = SockFeed(req)
         resp.disable_progress = True
         resp.http_response(skip_body=True)
-        self.is_chunked(resp)
 
     def test_response_in_memory(self):
         req = HTTPCons()
@@ -48,8 +46,9 @@ class HTTPTest(unittest.TestCase):
         resp = SockFeed(req)
         resp.disable_progress = True
         resp.http_response()
-        self.is_chunked(resp)
-        self.assertEqual(hashlib.md5(resp.data).hexdigest(), '9a50ddbef4c82eb9003bd496a00e0989')
+        self.assertEqual(hashlib.md5(resp.data).hexdigest(),
+                         '9a50ddbef4c82eb9003bd496a00e0989',
+                         "请保持数据获取正确完整, " + self.chunked_info(resp))
 
     def test_response_downloading(self):
         file_path = os.path.join(tempfile.gettempdir(), '1m.data')
@@ -58,13 +57,15 @@ class HTTPTest(unittest.TestCase):
         resp = SockFeed(req)
         resp.disable_progress = True
         resp.http_response(file_path, overwrite=True)
-        self.is_chunked(resp)
 
         with open(file_path, 'rb') as handle:
+            # 如果上面请求结束未关闭文件，这里将无法读取全部文件
             content = handle.read()
 
         os.remove(resp.file_handle.name)
-        self.assertEqual(hashlib.md5(content).hexdigest(), '9a50ddbef4c82eb9003bd496a00e0989')
+        self.assertEqual(hashlib.md5(content).hexdigest(),
+                         '9a50ddbef4c82eb9003bd496a00e0989',
+                         "这里出错，多半是因为没有关闭文件, " + self.chunked_info(resp))
 
     def test_small_response_in_memory(self):
         req = HTTPCons()
@@ -72,8 +73,9 @@ class HTTPTest(unittest.TestCase):
         resp = SockFeed(req)
         resp.disable_progress = True
         resp.http_response()
-        self.is_chunked(resp)
-        self.assertEqual(hashlib.md5(resp.data).hexdigest(), '8688229badcaa3cb2730dab99a618be6')
+        self.assertEqual(hashlib.md5(resp.data).hexdigest(),
+                         '8688229badcaa3cb2730dab99a618be6',
+                         "请保持数据获取正确完整, " + self.chunked_info(resp))
 
     def test_small_response_downloading(self):
         file_path = os.path.join(tempfile.gettempdir(), '3k.data')
@@ -82,11 +84,13 @@ class HTTPTest(unittest.TestCase):
         resp = SockFeed(req)
         resp.disable_progress = True
         resp.http_response(file_path, overwrite=True)
-        self.is_chunked(resp)
         with open(file_path, 'rb') as handle:
+            # 如果上面请求结束未关闭文件，这里将无法读取全部文件
             content = handle.read()
         os.remove(resp.file_handle.name)
-        self.assertEqual(hashlib.md5(content).hexdigest(), '8688229badcaa3cb2730dab99a618be6')
+        self.assertEqual(hashlib.md5(content).hexdigest(),
+                         '8688229badcaa3cb2730dab99a618be6',
+                         "这里出错，多半是因为没有关闭文件, " + self.chunked_info(resp))
 
     def test_non_chunked_in_memory(self):
         req = HTTPCons()
@@ -94,10 +98,25 @@ class HTTPTest(unittest.TestCase):
         resp = SockFeed(req)
         resp.disable_progress = True
         resp.http_response()
-        self.is_chunked(resp)
-        self.assertEqual(hashlib.md5(resp.data).hexdigest(), '276efce035d49f7f3ea168b720075523')
+        self.assertEqual(hashlib.md5(resp.data).hexdigest(),
+                         '276efce035d49f7f3ea168b720075523',
+                         "请保持数据获取正确完整，" + self.chunked_info(resp))
+
+    def test_test_non_chunked_downloading(self):
+        file_path = os.path.join(tempfile.gettempdir(), 'manager.py')
+        req = HTTPCons()
+        req.request("https://raw.githubusercontent.com/hellflame/qiniu_manager/v1.4.6/qiniuManager/manager.py")
+        resp = SockFeed(req)
+        resp.disable_progress = True
+        resp.http_response(file_path, overwrite=True)
+        with open(file_path, 'rb') as handle:
+            content = handle.read()
+        os.remove(resp.file_handle.name)
+        self.assertEqual(hashlib.md5(content).hexdigest(),
+                         '276efce035d49f7f3ea168b720075523',
+                         "请保持数据获取正确完整，" + self.chunked_info(resp))
 
 
 if __name__ == '__main__':
-    unittest.main()
+    unittest.main(verbosity=2)
 
