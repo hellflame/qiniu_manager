@@ -70,6 +70,14 @@ def get_md5(path):
 
 
 class Config(object):
+    """
+    单例模式
+    """
+    def __new__(cls):
+        if not getattr(cls, '_config', None):
+            cls._config = object.__new__(cls)
+        return cls._config
+
     def __init__(self):
         self.config_path = os.path.join(os.path.expanduser("~"), '.qiniu.sql')
         self.db = None
@@ -178,12 +186,19 @@ class Config(object):
     def remove_space(self, space_name):
         """
         删除本地数据库中存储的空间名，
-        可能删除默认空间名，需要手动重新设置默认空间
-        由于空间误删后恢复的可能性很大，没有进一步获取用户的确认信息，需要使用者考虑清楚
+        如果删除了默认空间，则尝试把空间列表中第一个空间作为默认空间
         :param space_name: str
         :return None
         """
+        # 首先删除空间
         self.cursor.execute("delete from {} WHERE name = '{}'".format(self.SPACE_ALIAS, space_name))
+
+        default_space, _ = self.get_default_space()
+        if default_space and default_space == space_name:
+            # 如果这个空间为默认空间，将数据库中的第一个空间作为默认空间
+            space_list = self.get_space_list()
+            if space_list and space_list[0]:
+                self.set_space(space_list[0][0])
 
     @db_ok
     def get_space_list(self):
@@ -267,7 +282,7 @@ class Qiniu(object):
         print("\n".join(["\033[01;31m{}\033[00m {}".format(i, j) for i, j in [('Tool Ver.', __version__),
                                                                               ('Py Ver.', sys.version)]]))
         # HTTP Response
-        print("\033[01;33mResponse:\033[00m")
+        print("\033[01;33mResponse:\033[00m @{}".format(time.time()))
         if feed.status:
             print('{}'.format(feed.status['status']))
         print("\n".join(["{} : {}".format(i, feed.headers[i]) for i in feed.headers]))
@@ -572,7 +587,6 @@ class Qiniu(object):
             self.print_debug(feed)
 
         if not feed.data:
-            # print("No such space as \033[01;31m{}\033[00m".format(space))
             return "\033[01;31m{}\033[00m 空间不存在".format(space), []
         data = json.loads(feed.data.decode())
         if b'error' in data:
