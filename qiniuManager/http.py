@@ -3,6 +3,7 @@ from __future__ import print_function
 from qiniuManager import progress, __version__
 import socket
 import random
+import time
 import sys
 import ssl
 import os
@@ -293,7 +294,7 @@ class HTTPCons(object):
         if method == 'POST':
             data = data[:-4]
         if self.is_debug:
-            print("\033[01;33mRequest:\033[00m\033[01;31m(DANGER)\033[00m")
+            print("\033[01;33mRequest:\033[00m\033[01;31m(DANGER)\033[00m @{}".format(time.time()))
             print(data.__repr__().strip("'"))
         if sys.version_info.major == 3:
             self.connect.sendall(data.encode())
