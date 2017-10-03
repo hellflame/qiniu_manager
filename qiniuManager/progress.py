@@ -8,6 +8,7 @@ import functools
 
 from subprocess import check_output
 from itertools import cycle
+from time import time
 from qiniuManager.utils import str_len
 
 __all__ = ['bar']
@@ -26,6 +27,7 @@ def bar(width=0, fill='#'):
                 print("progressed, total attribute is needed!")
                 return
             progress_cursor = 1
+            last_update = time()
             while self.progressed <= self.total:
                 func(self, *args, **kwargs)
                 if not hasattr(self, 'disable_progress') or not self.disable_progress:
@@ -40,28 +42,30 @@ def bar(width=0, fill='#'):
                             w = 50
                     else:
                         w = width
-                    if not hasattr(self, 'chunked') or not self.chunked:
-                        percent = self.progressed / float(self.total)
-                        # marks count
-                        percent_show = "{}%".format(int(percent * 100))
-                        # marks width
-                        title = getattr(self, 'title', '')
-                        mark_width = w - len(percent_show) - str_len(title) - 7
-                        mark_count = int(math.floor(mark_width * percent))
-                        sys.stdout.write(
-                            ' ' + title + ' ' +
-                            '[' + fill * mark_count + ' ' * (mark_width - mark_count) + ']  ' + percent_show + '\r')
-                    else:
-                        progress_cursor += 1
-                        title = getattr(self, 'title', '')
-                        mark_width = w - str_len(title) - 6
-                        sys.stdout.write(" " + title + " " +
-                                         "[" +
-                                         "".join([i for _, i in zip(range(mark_width),
-                                                                    cycle([">> ", " >>", "> >"][progress_cursor % 3]))])
-                                         + "] \r")
+                    if time() - last_update > .1:
+                        if not hasattr(self, 'chunked') or not self.chunked:
+                            percent = self.progressed / float(self.total)
+                            # marks count
+                            percent_show = "{}%".format(int(percent * 100))
+                            # marks width
+                            title = getattr(self, 'title', '')
+                            mark_width = w - len(percent_show) - str_len(title) - 7
+                            mark_count = int(math.floor(mark_width * percent))
+                            sys.stdout.write(
+                                ' ' + title + ' ' +
+                                '[' + fill * mark_count + ' ' * (mark_width - mark_count) + ']  ' + percent_show + '\r')
+                        else:
+                            progress_cursor += 1
+                            title = getattr(self, 'title', '')
+                            mark_width = w - str_len(title) - 6
+                            sys.stdout.write(" " + title + " " +
+                                             "[" +
+                                             "".join([i for _, i in zip(range(mark_width),
+                                                                        cycle([">> ", " >>", "> >"][progress_cursor % 3]))])
+                                             + "] \r")
 
-                    sys.stdout.flush()
+                        sys.stdout.flush()
+                        last_update = time()
 
                     if self.progressed == self.total:
                         sys.stdout.write(" " * w + '\r')
