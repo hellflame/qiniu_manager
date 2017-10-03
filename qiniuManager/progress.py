@@ -9,7 +9,7 @@ import functools
 from subprocess import check_output
 from itertools import cycle
 from time import time
-from qiniuManager.utils import str_len
+from qiniuManager.utils import str_len, unit_change
 
 __all__ = ['bar']
 
@@ -44,6 +44,7 @@ def bar(width=0, fill='#'):
                         w = width
                     if time() - last_update > .1:
                         if not hasattr(self, 'chunked') or not self.chunked:
+                            # 普通编码进度条
                             percent = self.progressed / float(self.total)
                             # marks count
                             percent_show = "{}%".format(int(percent * 100))
@@ -55,14 +56,16 @@ def bar(width=0, fill='#'):
                                 ' ' + title + ' ' +
                                 '[' + fill * mark_count + ' ' * (mark_width - mark_count) + ']  ' + percent_show + '\r')
                         else:
+                            # 分块编码进度条
                             progress_cursor += 1
                             title = getattr(self, 'title', '')
-                            mark_width = w - str_len(title) - 6
+                            chunk_recved = unit_change(self.chunk_recved)
+                            mark_width = w - str_len(title) - len(chunk_recved) - 6
                             sys.stdout.write(" " + title + " " +
                                              "[" +
                                              "".join([i for _, i in zip(range(mark_width),
                                                                         cycle([">> ", " >>", "> >"][progress_cursor % 3]))])
-                                             + "] \r")
+                                             + "] {}\r".format(chunk_recved))
 
                         sys.stdout.flush()
                         last_update = time()

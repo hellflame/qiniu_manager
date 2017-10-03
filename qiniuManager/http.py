@@ -2,7 +2,6 @@
 from __future__ import print_function
 from qiniuManager import progress, __version__
 import socket
-import random
 import time
 import sys
 import ssl
@@ -30,6 +29,7 @@ class SockFeed(object):
         self.disable_progress = False
         self.chunked = False
         self.current_chunk = b''
+        self.chunk_recved = 0
         self.title = ''
 
         self.file_handle = None
@@ -67,7 +67,6 @@ class SockFeed(object):
 
     def flush_chunk(self, data):
         self.current_chunk += data
-        self.progressed = random.randrange(20, 80)
 
         while len(self.current_chunk) > 10240 or self.current_chunk.endswith(b'0\r\n\r\n'):  # 并不意味着所有分块结束
             # 开始解析当前chunk cache
@@ -80,7 +79,9 @@ class SockFeed(object):
             if chunk_size > len(chunk_left):
                 # 说明当前分块没有接收完全
                 return False
-            self.save_data(chunk_left[: chunk_size])
+            valid_data = chunk_left[: chunk_size]
+            self.chunk_recved += len(valid_data)
+            self.save_data(valid_data)
             self.current_chunk = chunk_left[chunk_size:]
             if self.current_chunk.startswith(b'\r\n'):
                 # 如果上一个分块没有吃掉最后的 \r\n，则在这里把它剔除
