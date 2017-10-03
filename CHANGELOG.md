@@ -1,10 +1,12 @@
 ### QiniuManager历史版本
 
-- v1.4.8 (unreleased)
+- v1.4.8
 
   修复http库中post方法在http实体中多添加 `\r\n` 导致的 `Malformed HTTP message`
 
   修复可能的chunked下载出错问题
+
+  调试信息加入请求发出和获得响应的时间戳
 
 - v1.4.7
 
