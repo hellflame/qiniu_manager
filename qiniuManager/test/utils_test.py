@@ -25,11 +25,11 @@ class UtilTest(unittest.TestCase):
             self.assertEqual(str_len(u''.join([chr(random.randrange(3105, 65535)) for _ in range(100)])), 200)
 
     def test_unit_change(self):
-        self.assertEqual('0.0 B', unit_change(0))
+        self.assertEqual('0.00 B', unit_change(0))
         self.assertEqual("-10", unit_change(-10))
-        self.assertEqual("1.0 KB", unit_change(1025))
-        self.assertEqual("1024.0 B", unit_change(1024))
-        self.assertEqual("1.0 MB", unit_change(1024 * 1024 + 1))
+        self.assertEqual("1.00 KB", unit_change(1025))
+        self.assertEqual("1024.00 B", unit_change(1024))
+        self.assertEqual("1.00 MB", unit_change(1024 * 1024 + 1))
 
     def test_url_safe_base64(self):
         self.assertEqual(urlsafe_base64_encode("lin\bux\n"), base64.urlsafe_b64encode(b"lin\bux\n").decode())

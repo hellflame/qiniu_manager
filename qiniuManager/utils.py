@@ -97,7 +97,8 @@ def unit_change(target):
     while target > 1024:
         index += 1
         target /= 1024
-    return "{} {}".format(round(target, 2), unit_list[index])
+    # 输出浮点数宽度固定
+    return "{:.2f} {}".format(round(target, 2), unit_list[index])
 
 
 def urlsafe_base64_encode(data):
