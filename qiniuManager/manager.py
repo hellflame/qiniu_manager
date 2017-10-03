@@ -463,13 +463,13 @@ class Qiniu(object):
         if b'error' in data:
             return False, "发生错误: \033[01;31m{}\033[00m".format(data['error'])
         else:
-            ret = "  {}  {}  {}".format('Space', '.' * (self.COL_WIDTH - len('Space')),
+            ret = "  {}  {}  {}\r\n".format('Space', '.' * (self.COL_WIDTH - len('Space')),
                                         "\033[01;32m{}\033[00m".format(space))
-            ret += "  {}  {}  {}".format('Filename', '·' * (self.COL_WIDTH - len('filename')), target)
-            ret += "  {}  {}  {} ({})".format('Size', '·' * (self.COL_WIDTH - len('size')),
+            ret += "  {}  {}  {}\r\n".format('Filename', '·' * (self.COL_WIDTH - len('filename')), target)
+            ret += "  {}  {}  {} ({})\r\n".format('Size', '·' * (self.COL_WIDTH - len('size')),
                                               "\033[01;37m{}\033[00m".format(unit_change(data['fsize'])),
                                               data['fsize'])
-            ret += "  {}  {}  {}".format('MimeType',  '·' * (self.COL_WIDTH - len('MimeType')), data['mimeType'])
+            ret += "  {}  {}  {}\r\n".format('MimeType',  '·' * (self.COL_WIDTH - len('MimeType')), data['mimeType'])
             ret += "  {}  {}  {} ({})".format('Date', '·' * (self.COL_WIDTH - len('date')),
                                               "\033[01;37m{}\033[00m".format(
                                                   time.strftime('%Y-%m-%d %H:%M:%S',
