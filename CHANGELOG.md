@@ -1,10 +1,12 @@
 ### QiniuManager历史版本
 
-- v1.4.10 (unreleased)
+- v1.4.10
 
   http库支持chunked编码数据量监控
 
   进度条刷新间隔至少0.1s
+
+  删除功能支持通配符选择
 
 - v1.4.9
   
