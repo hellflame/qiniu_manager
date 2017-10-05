@@ -10,6 +10,7 @@ import sqlite3
 import hashlib
 import fnmatch
 
+from functools import wraps
 from qiniuManager import progress, http, __version__
 from qiniuManager.utils import *
 from qiniuManager.crypto import *
@@ -21,6 +22,7 @@ def db_ok(func):
     """
     确认数据库可用
     """
+    @wraps(func)
     def func_wrapper(self, *args, **kwargs):
         if self.db and self.cursor:
             return func(self, *args, **kwargs)
@@ -33,6 +35,7 @@ def access_ok(func):
     """
     确认qiniu API key可用
     """
+    @wraps(func)
     def access_wrap(self, *args, **kwargs):
         if self.access and self.secret:
             return func(self, *args, **kwargs)
@@ -42,6 +45,7 @@ def access_ok(func):
 
 
 def auth(func):
+    @wraps(func)
     def auth_ok(self, *args, **kwargs):
         if self.auth:
             return func(self, *args, **kwargs)
@@ -406,29 +410,65 @@ class Qiniu(object):
             return True, "\033[01;31m{}\033[00m now RENAME as \033[01;32m{}\033[00m".format(target, to_target)
 
     @auth
-    def remove(self, target, space=None):
+    def remove(self, file_pattern, space=None, stop=True):
         """
         删除指定空间中文件
-        :param target: str => 文件名
+        :param file_pattern: str => 文件名
         :param space: str => 指定空间或默认空间
-        :return: None
+        :param stop: bool => 启用带回显的删除，否则全部尝试删除
+        :return: yield => 查询状态以及删除状态列表集合
         """
+        def del_item(target):
+            manager_remove = http.HTTPCons()
+            url = self.manager_host + '/delete/{}'.format(urlsafe_base64_encode("{}:{}".format(space, target)))
+            manager_remove.request(url,
+                                   headers={'Authorization': 'QBox {}'.format(self.auth.token_of_request(url))})
+            feed = http.SockFeed(manager_remove)
+            feed.disable_progress = True
+            feed.http_response()
+            ret = feed.data
+            if b'error' in ret:
+                return False, "发生错误: \033[01;31m{}\033[00m".format(json.loads(ret.decode())['error'])
+            else:
+                return True, "`\033[01;31m{}\033[00m` 已从 \033[01;34m{}\033[00m 中删除".format(target, space)
+
         if not space:
             space = self.default_space
 
-        manager_remove = http.HTTPCons()
-        url = self.manager_host + '/delete/{}'.format(urlsafe_base64_encode("{}:{}".format(space, target)))
-        manager_remove.request(url,
-                               headers={'Authorization': 'QBox {}'.format(self.auth.token_of_request(url))})
-        feed = http.SockFeed(manager_remove)
-        feed.disable_progress = True
-        feed.http_response()
-        data = feed.data
-        if b'error' in data:
-            data = json.loads(data.decode())
-            return False, "发生错误: \033[01;31m{}\033[00m".format(data['error'])
+        info, data = self.__get_list_in_space(space, mute=True)
+        if info:
+            # 需要执行者手动捕获
+            raise Exception("{}".format(info))
         else:
-            return True, "`\033[01;31m{}\033[00m` 已从 \033[01;34m{}\033[00m 中删除".format(target, space)
+
+            targets = list(filter(lambda x: fnmatch.fnmatch(x['key'], u"{}".format(file_pattern)), data))
+
+            if stop:
+                if len(targets) <= 0:
+                    choice = yield "", space
+                    if choice is True:
+                        yield False, "{} 没有该文件 {}".format(space, file_pattern)
+                    else:
+                        yield False, ''
+                elif len(targets) == 1:
+                    choice = yield targets[0]['key'], space
+                    if choice is True:
+                        yield del_item(targets[0]['key'])
+                    else:
+                        yield False, ''
+                else:
+                    for item_del in targets:
+                        file_to_del = item_del['key']
+                        choice = yield file_to_del, space
+                        if choice is True:
+                            yield del_item(file_to_del)
+                        else:
+                            yield False, ""
+            else:
+                result = []
+                for item_del in targets:
+                    result.append(del_item(item_del['key']))
+                yield result
 
     @auth
     def check(self, target, space=None, is_debug=False):

@@ -92,7 +92,10 @@ class ManagerTest(unittest.TestCase):
             os.unlink(self.tmp_file_name)
 
         # 删除文件
-        self.assertTrue(self.manager.remove('tmp.data'))
+        r = self.manager.remove('tmp.data', stop=False)
+        result = next(r)
+        for i, _ in result:
+            self.assertTrue(i)
 
     def test_link(self):
         _, link = self.manager.regular_download_link(self.tmp_file_name)

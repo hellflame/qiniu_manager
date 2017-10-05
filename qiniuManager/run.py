@@ -3,7 +3,7 @@ from __future__ import print_function
 
 import os
 import sys
-from qiniuManager import manager, __version__, __author__
+from qiniuManager import manager, utils, __version__, __author__
 
 __all__ = ['parser', 'command']
 
@@ -144,34 +144,44 @@ def command(args, parse):
                 print("请指定要查看的文件")
 
         elif args.remove:
-            if args.file and not args.space:
-                prompt = '是否确定\033[01;31m删除\033[00m `\033[01;32m{target}\033[00m` ? y/n '.format(target=args.file)
-            elif args.file and args.space:
-                prompt = '是否确定从 \033[01;34m{space}\033[00m' \
-                         '中\033[01;31m删除\033[00m `\033[01;32m{target}\033[00m` ? y/n '.format(target=args.file,
-                                                                                              space=args.space)
+            if args.file:
+
+                r = qiniu.remove(args.file, args.space)
+                try:
+                    while True:
+                        target, space = next(r)
+                        if not target:
+                            prompt = "{} 无文件匹配 `{}` ".format(space, args.file)
+                        else:
+                            prompt = "删除来自 \033[01;34m{space}\033[00m " \
+                                     "的 `\033[01;31m{target}\033[00m` ".format(space=space,
+                                                                               target=target)
+                        if utils.prompt(prompt):
+                            _, ret = r.send(True)
+                        else:
+                            _, ret = r.send(False)
+                        if ret:
+                            print(ret)
+                except StopIteration:
+                    pass
+                except Exception as e:
+                    print(e)
+
             else:
                 print("请指定要删除的文件")
                 return False
-            try:
-                if sys.version_info.major == 2:
-                    if not raw_input(prompt).lower().startswith('y'):
-                        return False
-                else:
-                    if not input(prompt).lower().startswith('y'):
-                        return False
-            except:
-                return False
-            if args.file and not args.space:
-                print(qiniu.remove(args.file)[1])
-            elif args.file and args.space:
-                print(qiniu.remove(args.file, args.space)[1])
 
         elif args.force_remove:
-            if args.file and not args.space:
-                print(qiniu.remove(args.file)[1])
-            elif args.file and args.space:
-                print(qiniu.remove(args.file, args.space)[1])
+            if args.file:
+                try:
+                    r = qiniu.remove(args.file, args.space, stop=False)
+                    for _, i in next(r):
+                        print(i)
+                    r.close()
+                except StopIteration:
+                    pass
+                except Exception as e:
+                    print(e)
             else:
                 print("请指定要删除的文件")
 
