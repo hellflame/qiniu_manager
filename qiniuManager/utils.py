@@ -66,6 +66,16 @@ else:
         return data
 
 
+def prompt(prom):
+    if sys.version_info.major == 2:
+        if raw_input(prom).lower().startswith('y'):
+            return True
+    else:
+        if input(prom).lower().startswith('y'):
+            return True
+    return False
+
+
 def str_len(s):
     """
     获取占用等宽字体终端实际宽度，适用`Monaco`等其他等宽字体字体
