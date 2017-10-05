@@ -60,7 +60,7 @@ qiniu [-k|--key] <access key> <secret key>
 必要情况下请设置默认空间名
 
 查看更多帮助信息
-https://github.com/hellflame/qiniu_manager/blob/v1.4.7/README.md
+https://github.com/hellflame/qiniu_manager/blob/v1.4.10/README.md
 ```
 
 ### 测试
@@ -347,6 +347,19 @@ $ qiniu -rf <filename> <space>
 ```
 
 而且也在发布这个版本前一小段时间内，七牛官方接口发生了一点点变化(然而不测试测试根本不知道=。=)，如果删除的文件不存在，则会返回一条文件不存在的错误信息。
+
+> v1.7.10版本开始支持通配符匹配删除，也就是说所有的删除都是通配符删除，可以一次性删除多条匹配文件记录
+
+```bash
+$ qiniu -r *.txt  
+$ qiniu -r test-?.png <space>  # 在 <space> 中查询匹配模式 test-?.png
+
+# 无回显的删除
+$ qiniu -rf *.mp4
+$ qiniu -rf *.data <space>
+```
+
+在带回显的模式下，会一条一条的与用户确认是否删除，而 `-rf` 模式下删除将会一次性返回每一条文件记录的删除返回值，如果删除出现问题，不会影响继续删除
 
 ![confuse](https://static.hellflame.net/resource/8db93d0655185b086dde5ec2a4b8b9b6)
 
