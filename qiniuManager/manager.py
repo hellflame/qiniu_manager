@@ -80,33 +80,36 @@ class Config(object):
     def __new__(cls):
         if not getattr(cls, '_config', None):
             cls._config = object.__new__(cls)
-            cls.config_path = os.path.join(os.path.expanduser("~"), '.qiniu.sql')
-            cls.db = None
-            cls.cursor = None
-            cls.API_keys = 'API_keys'
-            cls.SPACE_ALIAS = 'spaceAlias'
+            
         return cls._config
 
     def __init__(self):
         """
         初始化本地数据库
         """
-        if not self.db:
-            try:
-                self.db = sqlite3.connect(self.config_path)
-                self.cursor = self.db.cursor()
-                self.cursor.execute("CREATE TABLE IF NOT EXISTS {} ("
-                                    "id INTEGER PRIMARY KEY AUTOINCREMENT,"
-                                    "access VARCHAR(64) NOT NULL UNIQUE,"
-                                    "secret VARCHAR(64) NOT NULL, "
-                                    "x INTEGER NOT NULL DEFAULT 0)".format(self.API_keys))
-                self.cursor.execute("CREATE TABLE IF NOT EXISTS {} ("
-                                    "id INTEGER PRIMARY KEY AUTOINCREMENT,"
-                                    "name VARCHAR(50) NOT NULL DEFAULT '',"
-                                    "alias VARCHAR(50) NOT NULL DEFAULT '',"
-                                    "as_default INTEGER NOT NULL DEFAULT 0)".format(self.SPACE_ALIAS))
-            except Exception as e:
-                print(e)
+        self.config_path = os.path.join(os.path.expanduser("~"), '.qiniu.sql')
+        self.db = None
+        self.cursor = None
+        self.API_keys = 'API_keys'
+        self.SPACE_ALIAS = 'spaceAlias'
+        self.init_db()
+
+    def init_db(self):
+        try:
+            self.db = sqlite3.connect(self.config_path)
+            self.cursor = self.db.cursor()
+            self.cursor.execute("CREATE TABLE IF NOT EXISTS {} ("
+                                "id INTEGER PRIMARY KEY AUTOINCREMENT,"
+                                "access VARCHAR(64) NOT NULL UNIQUE,"
+                                "secret VARCHAR(64) NOT NULL, "
+                                "x INTEGER NOT NULL DEFAULT 0)".format(self.API_keys))
+            self.cursor.execute("CREATE TABLE IF NOT EXISTS {} ("
+                                "id INTEGER PRIMARY KEY AUTOINCREMENT,"
+                                "name VARCHAR(50) NOT NULL DEFAULT '',"
+                                "alias VARCHAR(50) NOT NULL DEFAULT '',"
+                                "as_default INTEGER NOT NULL DEFAULT 0)".format(self.SPACE_ALIAS))
+        except Exception as e:
+            print(e)
         
     @db_ok
     def get_one_access(self):
@@ -193,9 +196,9 @@ class Config(object):
         :return None
         """
         # 首先删除空间
+        default_space, _ = self.get_default_space()
         self.cursor.execute("delete from {} WHERE name = '{}'".format(self.SPACE_ALIAS, space_name))
 
-        default_space, _ = self.get_default_space()
         if default_space and default_space == space_name:
             # 如果这个空间为默认空间，将数据库中的第一个空间作为默认空间
             space_list = self.get_space_list()
@@ -223,9 +226,8 @@ class Config(object):
             return result
         return '', ''
 
-    def __del__(self):
+    def close(self):
         if self.db:
-            """一次性commit"""
             self.db.commit()
             self.db.close()
 
@@ -268,6 +270,7 @@ class Qiniu(object):
         self.get_auth()
 
     def __del__(self):
+        self.config.close()
         if self.file_handle:
             self.file_handle.close()
 

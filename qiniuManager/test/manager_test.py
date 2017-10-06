@@ -35,6 +35,7 @@ class ConfigTest(unittest.TestCase):
         self.config.add_access(*self.origin_access)
         self.config.set_space(*self.origin_default_space)
         self.config.remove_space(self.test_space[0])
+        self.config.close()
 
 
 class ManagerTest(unittest.TestCase):
