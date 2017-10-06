@@ -1,5 +1,9 @@
 ### QiniuManager历史版本
 
+- v1.4.11
+
+  空间修改问题fix
+
 - v1.4.10
 
   http库支持chunked编码数据量监控
