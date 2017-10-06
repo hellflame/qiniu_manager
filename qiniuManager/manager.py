@@ -74,15 +74,6 @@ def get_md5(path):
 
 
 class Config(object):
-    """
-    单例模式
-    """
-    def __new__(cls):
-        if not getattr(cls, '_config', None):
-            cls._config = object.__new__(cls)
-            
-        return cls._config
-
     def __init__(self):
         """
         初始化本地数据库
