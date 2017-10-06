@@ -80,36 +80,34 @@ class Config(object):
     def __new__(cls):
         if not getattr(cls, '_config', None):
             cls._config = object.__new__(cls)
+            cls.config_path = os.path.join(os.path.expanduser("~"), '.qiniu.sql')
+            cls.db = None
+            cls.cursor = None
+            cls.API_keys = 'API_keys'
+            cls.SPACE_ALIAS = 'spaceAlias'
         return cls._config
 
     def __init__(self):
-        self.config_path = os.path.join(os.path.expanduser("~"), '.qiniu.sql')
-        self.db = None
-        self.cursor = None
-        self.API_keys = 'API_keys'
-        self.SPACE_ALIAS = 'spaceAlias'
-        self.init_db()
-
-    def init_db(self):
         """
         初始化本地数据库
         """
-        try:
-            self.db = sqlite3.connect(self.config_path)
-            self.cursor = self.db.cursor()
-            self.cursor.execute("CREATE TABLE IF NOT EXISTS {} ("
-                                "id INTEGER PRIMARY KEY AUTOINCREMENT,"
-                                "access VARCHAR(64) NOT NULL UNIQUE,"
-                                "secret VARCHAR(64) NOT NULL, "
-                                "x INTEGER NOT NULL DEFAULT 0)".format(self.API_keys))
-            self.cursor.execute("CREATE TABLE IF NOT EXISTS {} ("
-                                "id INTEGER PRIMARY KEY AUTOINCREMENT,"
-                                "name VARCHAR(50) NOT NULL DEFAULT '',"
-                                "alias VARCHAR(50) NOT NULL DEFAULT '',"
-                                "as_default INTEGER NOT NULL DEFAULT 0)".format(self.SPACE_ALIAS))
-        except Exception as e:
-            print(e)
-
+        if not self.db:
+            try:
+                self.db = sqlite3.connect(self.config_path)
+                self.cursor = self.db.cursor()
+                self.cursor.execute("CREATE TABLE IF NOT EXISTS {} ("
+                                    "id INTEGER PRIMARY KEY AUTOINCREMENT,"
+                                    "access VARCHAR(64) NOT NULL UNIQUE,"
+                                    "secret VARCHAR(64) NOT NULL, "
+                                    "x INTEGER NOT NULL DEFAULT 0)".format(self.API_keys))
+                self.cursor.execute("CREATE TABLE IF NOT EXISTS {} ("
+                                    "id INTEGER PRIMARY KEY AUTOINCREMENT,"
+                                    "name VARCHAR(50) NOT NULL DEFAULT '',"
+                                    "alias VARCHAR(50) NOT NULL DEFAULT '',"
+                                    "as_default INTEGER NOT NULL DEFAULT 0)".format(self.SPACE_ALIAS))
+            except Exception as e:
+                print(e)
+        
     @db_ok
     def get_one_access(self):
         """
