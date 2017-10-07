@@ -265,16 +265,14 @@ class HTTPCons(object):
 
     def __send(self, href, method='GET', headers=None, post_data=None):
         data = """{method} {href} HTTP/1.1\r\n{headers}\r\n\r\n"""
-        UA = "QiniuManager {version} by hellflame".format(version=__version__)
+        user_agent = "QiniuManager {version} by hellflame".format(version=__version__)
         if not headers:
-            head = """Host: {}\r\n""".format(self.host)
-            head += "User-Agent: " + UA
+            head = """Host: {}\r\nUser-Agent: {}\r\nConnection: closed""".format(self.host, user_agent)
         else:
-            head = "\r\n".join(["{}: {}".format(x, headers[x]) for x in headers])
-            if 'Host' not in headers:
-                head += """\r\nHost: {}""".format(self.host)
-            if 'User-Agent' not in headers:
-                head += "\r\nUser-Agent: " + UA
+            headers.update({'Host': self.host,
+                            'User-Agent': headers.get("User-Agent", user_agent),
+                            'Connection': 'close'})
+            head = "\r\n".join(["{}: {}".format(k, v) for k, v in headers.items()])
         if method == 'POST':
             if data and type(data) == str:
                 # upload for one time
