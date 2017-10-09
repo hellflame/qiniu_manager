@@ -69,7 +69,7 @@ https://github.com/hellflame/qiniu_manager/blob/v1.4.10/README.md
 >
 > 毕竟，就算通过了测试，也不一定能覆盖所有的可能性，之后应该还会继续更新测试脚本，让每一步都走的稳稳的。
 
-测试脚本位于项目目录下的 `bash.sh` 
+测试脚本位于项目目录下的 `test.sh` 
 
 - 不给任何参数
 
