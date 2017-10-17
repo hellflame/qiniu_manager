@@ -12,14 +12,14 @@ function module_exist {
 function test_module {
     py="$1"
     module="$2"
-    path=`command -v $py`
+    path=`command -v ${py}`
     if [ -x "$path" ]; then
         echo "using $path"
-        if module_exist $module; then
+        if module_exist ${module}; then
             echo "Testing $2"
-            eval "$path -m $MODULE_NAME.test.$2_test "
+            eval "${path} -m ${MODULE_NAME}.test.${module}_test "
         else
-            eval "$path -m $MODULE_NAME.test.run"
+            eval "${path} -m ${MODULE_NAME}.test.run"
         fi
     else
         echo "$py 不可执行"
@@ -27,19 +27,19 @@ function test_module {
 }
 
 
-function test {
+function test_runner {
     py_exe="$1"
     module="$2"
     if [ -n "$py_exe" ]; then
-        test_module $py_exe $module
+        test_module ${py_exe} ${module}
 
     else
         echo "自动测试"
         if [ -x "`command -v python2`" ]; then
 
             echo "Python2 Test"
-            python2 --version
-            command python2 -m $MODULE_NAME.test.run
+            command python2 --version
+            command python2 -m ${MODULE_NAME}.test.run
             echo "----------"
 
         fi
@@ -47,8 +47,8 @@ function test {
         if [ -x "`command -v python3`" ]; then
 
             echo "Python3 Test"
-            python3 --version
-            python3 -m $MODULE_NAME.test.run
+            command python3 --version
+            command python3 -m ${MODULE_NAME}.test.run
             echo "----------"
 
         fi
@@ -56,12 +56,12 @@ function test {
         if [ -x "`command -v pypy3`" ]; then
 
             echo "Pypy3 Test"
-            pypy3 --version
-            pypy3 -m $MODULE_NAME.test.run
+            command pypy3 --version
+            command pypy3 -m ${MODULE_NAME}.test.run
             echo "----------"
 
         fi
     fi
 }
 
-test $1 $2
+test_runner $1 $2
